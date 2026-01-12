@@ -1,13 +1,15 @@
 import { Injectable, signal, effect, inject } from '@angular/core';
 import { firstValueFrom, forkJoin, map } from 'rxjs';
 import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon } from '../models';
-import { ApiService } from './supabase.service'; // Agora importa o ApiService
+import { ApiService } from './supabase.service';
+import { ImageUploadService } from './image-upload.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
   private apiService = inject(ApiService);
+  private imageUploadService = inject(ImageUploadService);
 
   settings = signal<ShopSettings>(this.getDefaultSettings());
   categories = signal<Category[]>([]);
@@ -86,10 +88,6 @@ export class DataService {
     });
   }
   
-  /**
-   * NOTA: A funcionalidade de realtime foi removida para garantir estabilidade.
-   * O painel de admin agora usa "polling" (verifica a cada 20s) para novos pedidos.
-   */
   public async fetchTable(tableName: string) {
     try {
         const data = await firstValueFrom(this.apiService.get<any>(tableName));
@@ -154,7 +152,14 @@ export class DataService {
      await this.fetchTable('products'); return data[0];
   }
   
-  async deleteProduct(id: string) { await firstValueFrom(this.apiService.delete('products', `id=eq.${id}`)); await this.fetchTable('products'); }
+  async deleteProduct(id: string) {
+    const productToDelete = this.products().find(p => p.id === id);
+    if (productToDelete && productToDelete.image_url) {
+        await this.imageUploadService.deleteImage(productToDelete.image_url);
+    }
+    await firstValueFrom(this.apiService.delete('products', `id=eq.${id}`)); 
+    await this.fetchTable('products'); 
+  }
   
    async saveCategory(category: Category) {
      const data = await firstValueFrom(this.apiService.upsert<Category>('categories', category));

@@ -7,10 +7,10 @@ export interface DayOpeningHours {
 export interface ShopSettings {
   id?: number;
   name: string;
-  logo_url: string; // Will now store base64
-  banner_url: string; // Will now store base64
-  slider_images: string[]; // array of base64 images
-  pdv_background_image_url?: string; // Will now store base64
+  logo_url: string; // Will now store a public URL from Supabase Storage
+  banner_url: string; // Will now store a public URL from Supabase Storage
+  slider_images: string[]; // array of public URLs from Supabase Storage
+  pdv_background_image_url?: string; // Will now store a public URL from Supabase Storage
   address: string;
   whatsapp: string;
   delivery_whatsapp?: string;
@@ -84,7 +84,7 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  image_url: string; // Will now store base64
+  image_url: string; // Will now store a public URL from Supabase Storage
   category_id: string;
   price_type?: 'sized' | 'fixed';
   price?: number;
@@ -130,7 +130,7 @@ export interface Order {
   neighborhood?: string;
   payment_method: PaymentMethod;
   change_for?: number;
-  pix_proof_url?: string; // This is base64
+  pix_proof_url?: string; // Will now store a public URL from Supabase Storage
   items: CartItem[];
   subtotal: number;
   delivery_fee: number;

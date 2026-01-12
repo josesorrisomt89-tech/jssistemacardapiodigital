@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { ImageUploadService } from '../../services/image-upload.service';
 import { Product, AddonCategory, ProductSize, Addon, CartItem, Order, NeighborhoodFee, DayOpeningHours, Coupon } from '../../models';
 
 @Component({
@@ -17,6 +18,7 @@ export class MenuComponent implements OnInit {
   private dataService: DataService = inject(DataService);
   cartService: CartService = inject(CartService);
   private authService: AuthService = inject(AuthService);
+  private imageUploadService: ImageUploadService = inject(ImageUploadService);
   private fb: FormBuilder = inject(FormBuilder);
 
   settings = this.dataService.settings;
@@ -60,6 +62,7 @@ export class MenuComponent implements OnInit {
   pixProofFile = signal<File | null>(null);
   pixProofPreview = signal<string | null>(null);
   hasCheckoutData = signal(false);
+  isSubmittingOrder = signal(false);
 
   isCouponsModalOpen = signal(false);
   appliedCoupon = signal<Coupon | null>(null);
@@ -342,64 +345,63 @@ export class MenuComponent implements OnInit {
     return [`${street || ''}, ${number || ''}`, complement, reference ? `(Ref: ${reference})` : ''].filter(p => p).join(' - ');
   }
 
-  private async toBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
-  }
-
   async finalizeOrder() {
-    const formValue = this.checkoutForm.getRawValue();
-    const order: Omit<Order, 'id' | 'date' | 'status'> = {
-      customer_name: formValue.customer_name,
-      delivery_option: formValue.delivery_option as 'delivery' | 'pickup',
-      delivery_address: formValue.delivery_option === 'delivery' ? this.composedAddress : undefined,
-      neighborhood: formValue.delivery_option === 'delivery' ? formValue.neighborhood : undefined,
-      payment_method: formValue.payment_method as any,
-      change_for: formValue.payment_method === 'cash' ? Number(formValue.change_for) || undefined : undefined,
-      pix_proof_url: this.pixProofFile() ? await this.toBase64(this.pixProofFile()!) : undefined,
-      items: this.cartService.items(),
-      subtotal: this.cartService.subtotal(),
-      delivery_fee: this.currentDeliveryFee(),
-      total: this.total(),
-      coupon_code: this.appliedCoupon()?.code,
-      discount_amount: this.discountAmount(),
-      shipping_discount_amount: this.shippingDiscount(),
-      loyalty_discount_amount: this.appliedLoyaltyDiscount(),
-      loyalty_shipping_discount_amount: this.loyaltyShippingDiscount(),
-      scheduled_time: formValue.scheduled_time || undefined
-    };
-
-    const whatsappNumber = this.settings().whatsapp;
-    const isScheduled = !!order.scheduled_time;
-    let message = isScheduled ? `*NOVO PEDIDO AGENDADO* \n\n` : `*NOVO PEDIDO* \n\n`;
-    message += `*Cliente:* ${order.customer_name}\n`;
-    if(order.scheduled_time) message += `*Horário:* ${order.scheduled_time}\n`;
-    message += `*Entrega:* ${order.delivery_option === 'delivery' ? 'Delivery' : 'Retirada na Loja'}\n`;
-    if (order.delivery_option === 'delivery') {
-      message += `*Endereço:* ${order.delivery_address}\n*Bairro:* ${order.neighborhood}\n`;
-    }
-    message += `\n*Itens do Pedido:*\n`;
-    order.items.forEach(item => {
-      message += `  - ${item.quantity}x ${item.product_name} ${item.size.name !== 'Único' ? `(${item.size.name})` : ''}\n`;
-      if (item.addons.length > 0) message += `    *Adicionais:* ${this.getAddonNames(item.addons)}\n`;
-    });
-    message += `\n*Subtotal:* ${new CurrencyPipe('pt-BR').transform(order.subtotal, 'BRL', 'symbol', '1.2-2')}\n`;
-    if (order.delivery_fee > 0) message += `*Taxa de Entrega:* ${new CurrencyPipe('pt-BR').transform(order.delivery_fee, 'BRL', 'symbol', '1.2-2')}\n`;
-    if ((order.discount_amount ?? 0) > 0) message += `*Desconto:* -${new CurrencyPipe('pt-BR').transform(order.discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-    if ((order.shipping_discount_amount ?? 0) > 0) message += `*Desc. Frete:* -${new CurrencyPipe('pt-BR').transform(order.shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-    if ((order.loyalty_discount_amount ?? 0) > 0) message += `*Desc. Fidelidade:* -${new CurrencyPipe('pt-BR').transform(order.loyalty_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-    if ((order.loyalty_shipping_discount_amount ?? 0) > 0) message += `*Frete Grátis (Fidelidade):* -${new CurrencyPipe('pt-BR').transform(order.loyalty_shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-    message += `*TOTAL:* *${new CurrencyPipe('pt-BR').transform(order.total, 'BRL', 'symbol', '1.2-2')}*\n\n`;
-    message += `*Forma de Pagamento:* ${order.payment_method}\n`;
-    if (order.payment_method === 'cash' && order.change_for) {
-      message += `*Troco para:* ${new CurrencyPipe('pt-BR').transform(order.change_for, 'BRL', 'symbol', '1.2-2')}\n`;
-    }
+    if (this.isSubmittingOrder()) return;
+    this.isSubmittingOrder.set(true);
 
     try {
+      const formValue = this.checkoutForm.getRawValue();
+      let pixProofUrl: string | undefined;
+      if (this.pixProofFile()) {
+        pixProofUrl = await this.imageUploadService.uploadImage(this.pixProofFile()!, 'proofs');
+      }
+
+      const order: Omit<Order, 'id' | 'date' | 'status'> = {
+        customer_name: formValue.customer_name,
+        delivery_option: formValue.delivery_option as 'delivery' | 'pickup',
+        delivery_address: formValue.delivery_option === 'delivery' ? this.composedAddress : undefined,
+        neighborhood: formValue.delivery_option === 'delivery' ? formValue.neighborhood : undefined,
+        payment_method: formValue.payment_method as any,
+        change_for: formValue.payment_method === 'cash' ? Number(formValue.change_for) || undefined : undefined,
+        pix_proof_url: pixProofUrl,
+        items: this.cartService.items(),
+        subtotal: this.cartService.subtotal(),
+        delivery_fee: this.currentDeliveryFee(),
+        total: this.total(),
+        coupon_code: this.appliedCoupon()?.code,
+        discount_amount: this.discountAmount(),
+        shipping_discount_amount: this.shippingDiscount(),
+        loyalty_discount_amount: this.appliedLoyaltyDiscount(),
+        loyalty_shipping_discount_amount: this.loyaltyShippingDiscount(),
+        scheduled_time: formValue.scheduled_time || undefined
+      };
+
+      const whatsappNumber = this.settings().whatsapp;
+      const isScheduled = !!order.scheduled_time;
+      let message = isScheduled ? `*NOVO PEDIDO AGENDADO* \n\n` : `*NOVO PEDIDO* \n\n`;
+      message += `*Cliente:* ${order.customer_name}\n`;
+      if(order.scheduled_time) message += `*Horário:* ${order.scheduled_time}\n`;
+      message += `*Entrega:* ${order.delivery_option === 'delivery' ? 'Delivery' : 'Retirada na Loja'}\n`;
+      if (order.delivery_option === 'delivery') {
+        message += `*Endereço:* ${order.delivery_address}\n*Bairro:* ${order.neighborhood}\n`;
+      }
+      message += `\n*Itens do Pedido:*\n`;
+      order.items.forEach(item => {
+        message += `  - ${item.quantity}x ${item.product_name} ${item.size.name !== 'Único' ? `(${item.size.name})` : ''}\n`;
+        if (item.addons.length > 0) message += `    *Adicionais:* ${this.getAddonNames(item.addons)}\n`;
+      });
+      message += `\n*Subtotal:* ${new CurrencyPipe('pt-BR').transform(order.subtotal, 'BRL', 'symbol', '1.2-2')}\n`;
+      if (order.delivery_fee > 0) message += `*Taxa de Entrega:* ${new CurrencyPipe('pt-BR').transform(order.delivery_fee, 'BRL', 'symbol', '1.2-2')}\n`;
+      if ((order.discount_amount ?? 0) > 0) message += `*Desconto:* -${new CurrencyPipe('pt-BR').transform(order.discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
+      if ((order.shipping_discount_amount ?? 0) > 0) message += `*Desc. Frete:* -${new CurrencyPipe('pt-BR').transform(order.shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
+      if ((order.loyalty_discount_amount ?? 0) > 0) message += `*Desc. Fidelidade:* -${new CurrencyPipe('pt-BR').transform(order.loyalty_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
+      if ((order.loyalty_shipping_discount_amount ?? 0) > 0) message += `*Frete Grátis (Fidelidade):* -${new CurrencyPipe('pt-BR').transform(order.loyalty_shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
+      message += `*TOTAL:* *${new CurrencyPipe('pt-BR').transform(order.total, 'BRL', 'symbol', '1.2-2')}*\n\n`;
+      message += `*Forma de Pagamento:* ${order.payment_method}\n`;
+      if (order.payment_method === 'cash' && order.change_for) {
+        message += `*Troco para:* ${new CurrencyPipe('pt-BR').transform(order.change_for, 'BRL', 'symbol', '1.2-2')}\n`;
+      }
+
       const newOrder = await this.dataService.addOrder(order);
       this.trackOrder(newOrder.id);
       this.savePastOrderId(newOrder.id);
@@ -419,6 +421,8 @@ export class MenuComponent implements OnInit {
     } catch (error) {
       console.error('Failed to save order:', error);
       alert('Houve um erro ao registrar seu pedido. Tente novamente.');
+    } finally {
+      this.isSubmittingOrder.set(false);
     }
   }
 

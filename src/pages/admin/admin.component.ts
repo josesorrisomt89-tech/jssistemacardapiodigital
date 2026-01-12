@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, FormArray, FormGroup, Validators } fr
 import { Router } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
+import { ImageUploadService } from '../../services/image-upload.service';
 import { ShopSettings, Category, Product, AddonCategory, ProductSize, Addon, Order, NeighborhoodFee, OrderStatus, Coupon, CartItem, Receivable, Expense, DeliveryDriver, DriverPayment } from '../../models';
 import { LayoutPreviewComponent } from '../../components/layout-preview/layout-preview.component';
 import { ReceiptComponent } from '../../components/receipt/receipt.component';
@@ -21,6 +22,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   private fb: FormBuilder = inject(FormBuilder);
   private router: Router = inject(Router);
   private geminiService: GeminiService = inject(GeminiService);
+  private imageUploadService: ImageUploadService = inject(ImageUploadService);
   
   @ViewChild('newOrderSound') newOrderSound!: ElementRef<HTMLAudioElement>;
   isNewOrderNotificationActive = signal(false);
@@ -118,6 +120,9 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   isGeneratingDescription = signal(false);
   isGeneratingImage = signal(false);
+  isUploading = signal(false);
+  
+  private productFile = signal<File | null>(null);
 
   reportDeliveries = computed(() => {
     const driverId = this.selectedDriverForReport()?.id;
@@ -401,28 +406,33 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.authService.adminLogout();
   }
 
-  onFileChange(event: Event, formControlName: string, formGroup: FormGroup = this.mainSettingsForm) {
-    const reader = new FileReader();
+  async onFileChange(event: Event, formControlName: string) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length) {
-      const file = input.files[0];
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        formGroup.patchValue({ [formControlName]: reader.result as string });
-      };
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    this.isUploading.set(true);
+    try {
+        const currentUrl = this.mainSettingsForm.get(formControlName)?.value;
+        const newUrl = await this.imageUploadService.uploadImage(file, formControlName, currentUrl);
+        this.mainSettingsForm.get(formControlName)?.setValue(newUrl);
+    } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Falha no upload da imagem.');
+    } finally {
+        this.isUploading.set(false);
     }
   }
 
-  onSliderFileChange(event: Event, index: number) {
-    const reader = new FileReader();
+  async onProductFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length) {
-      const file = input.files[0];
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        this.sliderImages.at(index).setValue(reader.result as string);
-      };
-    }
+    if (!input.files || input.files.length === 0) return;
+    this.productFile.set(input.files[0]);
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => this.productForm.get('image_url')?.setValue(e.target?.result as string);
+    reader.readAsDataURL(this.productFile()!);
   }
 
   patchSettingsForm(settings: ShopSettings) {
@@ -442,20 +452,25 @@ export class AdminComponent implements OnInit, OnDestroy {
       alert('Por favor, corrija os erros no formulário antes de salvar.');
       return;
     }
-    const formValue = this.mainSettingsForm.getRawValue();
-    const currentSettings = this.dataService.settings();
+    this.isUploading.set(true);
+    try {
+      const formValue = this.mainSettingsForm.getRawValue();
+      const currentSettings = this.dataService.settings();
 
-    if (!formValue.admin_password || formValue.admin_password.trim() === '') {
-        formValue.admin_password = currentSettings.admin_password;
+      if (!formValue.admin_password || formValue.admin_password.trim() === '') {
+          formValue.admin_password = currentSettings.admin_password;
+      }
+      
+      const settingsToSave: ShopSettings = { ...currentSettings, ...formValue, id: 1 };
+      await this.dataService.saveSettings(settingsToSave);
+      alert('Configurações salvas!');
+      this.mainSettingsForm.get('admin_password')?.reset('');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Falha ao salvar configurações.');
+    } finally {
+      this.isUploading.set(false);
     }
-    
-    const settingsToSave = { ...currentSettings, ...formValue };
-    const settingsWithId: ShopSettings = { ...settingsToSave, id: 1 };
-
-
-    await this.dataService.saveSettings(settingsWithId);
-    alert('Configurações salvas!');
-    this.mainSettingsForm.get('admin_password')?.reset('');
   }
 
   async toggleTemporaryClosure() {
@@ -478,8 +493,35 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   addNeighborhood(hood?: NeighborhoodFee) { this.deliveryNeighborhoods.push(this.fb.group({ name: [hood?.name || ''], fee: [hood?.fee || 0] })); }
   removeNeighborhood(index: number) { this.deliveryNeighborhoods.removeAt(index); }
-  addSliderImage(imageUrl?: string) { this.sliderImages.push(this.fb.control(imageUrl || '')); }
-  removeSliderImage(index: number) { this.sliderImages.removeAt(index); }
+  
+  // Slider images are now handled by Supabase Storage, but the UI for adding/removing URLs remains.
+  // FIX: The original function accepted no arguments, causing an error when populating the form from existing settings.
+  // It now accepts an optional image URL string, defaulting to an empty string.
+  addSliderImage(image: string = '') { this.sliderImages.push(this.fb.control(image)); }
+  async removeSliderImage(index: number) {
+    const urlToRemove = this.sliderImages.at(index).value;
+    if (urlToRemove) {
+      this.isUploading.set(true);
+      await this.imageUploadService.deleteImage(urlToRemove);
+      this.isUploading.set(false);
+    }
+    this.sliderImages.removeAt(index);
+  }
+  async onSliderFileChange(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    this.isUploading.set(true);
+    try {
+      const currentUrl = this.sliderImages.at(index).value;
+      const newUrl = await this.imageUploadService.uploadImage(file, `slider/${Date.now()}`, currentUrl);
+      this.sliderImages.at(index).setValue(newUrl);
+    } catch (e) {
+      alert('Falha no upload da imagem do slider.');
+    } finally {
+      this.isUploading.set(false);
+    }
+  }
   
   async moveItem<T extends { order: number, id: string }>(listName: 'categories' | 'products' | 'addonCategories', index: number, direction: 'up' | 'down') {
     const listSignal = this.dataService[listName] as signal<(T)[]>;
@@ -502,6 +544,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   editProduct(product: Product | null) {
+    this.productFile.set(null);
     this.productForm.reset({ addon_categories: [], is_available: true, price_type: 'sized' });
     this.productSizes.clear();
     if (product) {
@@ -523,20 +566,32 @@ export class AdminComponent implements OnInit, OnDestroy {
   async saveProduct() {
     if (this.productForm.invalid) { alert('Por favor, preencha todos os campos obrigatórios do produto.'); return; }
     
-    const formData = this.productForm.getRawValue();
-    if (formData.price_type === 'fixed') formData.sizes = []; else formData.price = 0;
-    
-    if (!formData.id) {
-      formData.id = Date.now().toString();
-      formData.order = this.dataService.products().length;
-    }
-
+    this.isUploading.set(true);
     try {
+      const formData = this.productForm.getRawValue();
+      const currentProduct = this.editingProduct();
+
+      if (this.productFile()) {
+        const pathPrefix = `products/${formData.id || Date.now()}`;
+        const newUrl = await this.imageUploadService.uploadImage(this.productFile()!, pathPrefix, currentProduct?.image_url);
+        formData.image_url = newUrl;
+      }
+      
+      if (formData.price_type === 'fixed') formData.sizes = []; else formData.price = 0;
+      
+      if (!formData.id) {
+        formData.id = Date.now().toString();
+        formData.order = this.dataService.products().length;
+      }
+      
       await this.dataService.saveProduct(formData as Product);
       this.editingProduct.set(null);
+      this.productFile.set(null);
     } catch (error) {
       console.error('Failed to save product:', error);
       alert('Falha ao salvar o produto.');
+    } finally {
+      this.isUploading.set(false);
     }
   }
 
@@ -886,9 +941,13 @@ export class AdminComponent implements OnInit, OnDestroy {
     }
     this.isGeneratingImage.set(true);
     try {
-      const imageUrl = await this.geminiService.generateImage(productName, productDescription || 'Um delicioso item do nosso cardápio');
-      if (imageUrl) {
-        this.productForm.get('image_url')?.setValue(imageUrl);
+      const base64Image = await this.geminiService.generateImage(productName, productDescription || 'Um delicioso item do nosso cardápio');
+      if (base64Image) {
+        // Convert base64 to File and set it for upload
+        const file = this.imageUploadService.base64ToFile(base64Image, `${productName.replace(/\s/g, '_')}.jpg`);
+        this.productFile.set(file);
+        // Set preview
+        this.productForm.get('image_url')?.setValue(base64Image);
       } else {
         alert('Não foi possível gerar a imagem. Tente novamente.');
       }
