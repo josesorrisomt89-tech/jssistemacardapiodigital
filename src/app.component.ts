@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DataService } from './services/data.service';
+import { SupabaseService } from './services/supabase.service';
 
 @Component({
   selector: 'app-root',
@@ -10,13 +11,12 @@ import { DataService } from './services/data.service';
 })
 export class AppComponent implements OnInit {
   private dataService = inject(DataService);
+  private supabaseService = inject(SupabaseService);
+  
   loadingStatus = this.dataService.loadingStatus;
+  initializationError = this.supabaseService.initializationError;
 
   ngOnInit() {
-    // A inicialização dos dados é movida para ngOnInit, que é um gancho de ciclo de vida mais seguro
-    // para efeitos colaterais como chamadas de API. Isso garante que o componente
-    // esteja totalmente construído antes de iniciar o carregamento de dados, evitando
-    // possíveis condições de corrida durante a inicialização do aplicativo.
     this.dataService.load();
   }
 }

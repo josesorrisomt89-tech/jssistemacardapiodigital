@@ -34,6 +34,13 @@ export class DataService {
     }
     this.isInitialized = true;
     this.loadingStatus.set('loading');
+
+    // Checa se o serviço do Supabase foi inicializado corretamente.
+    if (this.supabaseService.initializationError()) {
+      console.error('Abortando carregamento de dados devido a erro de inicialização do Supabase.');
+      this.loadingStatus.set('error');
+      return;
+    }
     
     try {
         await this.initializeData();

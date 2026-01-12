@@ -1,4 +1,10 @@
-@if (loadingStatus() === 'loading' || loadingStatus() === 'idle') {
+@if (initializationError()) {
+  <div class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center text-white z-[999] p-6 text-center">
+      <h2 class="text-2xl font-bold text-red-500">Erro de Configuração</h2>
+      <p class="mt-2 text-yellow-300 bg-red-900/50 p-3 rounded-md font-mono text-sm">{{ initializationError() }}</p>
+      <p class="mt-4 text-xs text-gray-500">O aplicativo não pode ser iniciado. Por favor, corrija o problema e recarregue a página.</p>
+  </div>
+} @else if (loadingStatus() === 'loading' || loadingStatus() === 'idle') {
   <div class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center text-white z-[999]">
     <svg class="animate-spin h-12 w-12 text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -15,6 +21,6 @@
     </div>
 }
 
-<main class="h-screen w-screen" [class.invisible]="loadingStatus() !== 'loaded'">
+<main class="h-screen w-screen" [class.invisible]="loadingStatus() !== 'loaded' || !!initializationError()">
   <router-outlet></router-outlet>
 </main>
