@@ -78,13 +78,23 @@ export class DataService {
     this.supabase
       .channel('public-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-        console.log('Change received!', payload);
+        console.log('Realtime change received!', payload);
+        // Refetch data for the changed table
         switch(payload.table) {
           case 'orders': this.supabase.from('orders').select('*').then(({ data }) => data && this.orders.set(data)); break;
           case 'products': this.supabase.from('products').select('*').then(({ data }) => data && this.products.set(data)); break;
+          case 'settings': this.initializeData(); break; // Refetch all for simplicity on settings change
         }
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to Supabase realtime changes!');
+        }
+        if (status === 'CHANNEL_ERROR' || err) {
+          console.error('Supabase realtime subscription error:', err);
+          // This error handler is crucial to prevent the app from crashing on connection failure.
+        }
+      });
   }
 
   isShopOpen = (): { is_open: boolean, hoursToday: DayOpeningHours | null, is_temporarily_closed: boolean, message: string } => {
