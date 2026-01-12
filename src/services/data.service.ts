@@ -20,7 +20,7 @@ export class DataService {
   receivables = signal<Receivable[]>([]);
   expenses = signal<Expense[]>([]);
   deliveryDrivers = signal<DeliveryDriver[]>([]);
-  currentDriver = signal<DeliveryDriver | null>(this.loadFromLocalStorage('acai_current_driver', null));
+  currentDriver = signal<DeliveryDriver | null>(null); // Inicialização pura, sem side-effects.
   driverPayments = signal<DriverPayment[]>([]);
   
   loadingStatus = signal<'idle' | 'loading' | 'loaded' | 'error'>('idle');
@@ -38,13 +38,15 @@ export class DataService {
     this.isInitialized = true;
     this.loadingStatus.set('loading');
 
+    // Carrega o estado do localStorage aqui, em um ponto seguro do ciclo de vida.
+    this.currentDriver.set(this.loadFromLocalStorage('acai_current_driver', null));
+
     // O effect agora é criado de forma segura aqui, dentro do contexto de injeção.
-    // Isso adia sua criação para um momento em que a aplicação está mais estável.
     runInInjectionContext(this.injector, () => {
         effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
     });
 
-    // Inicializa o Supabase de forma segura aqui, em vez de no construtor.
+    // Inicializa o Supabase de forma segura aqui.
     if (!this.supabaseService.init()) {
       console.error('Abortando carregamento de dados devido a erro de inicialização do Supabase.');
       this.loadingError.set(this.supabaseService.initializationError());

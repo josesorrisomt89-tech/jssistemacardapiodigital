@@ -13,14 +13,14 @@ export class AuthService {
   private router: Router = inject(Router);
   private dataService = inject(DataService);
 
-  // Signal para o cliente/usuário do cardápio (agora salvo no localStorage)
-  currentUser = signal<User | null>(this.loadUserFromStorage());
-  
-  // Signal para o administrador logado (agora salvo no sessionStorage)
-  isAdminLoggedIn = signal<boolean>(this.loadAdminStateFromStorage());
+  // Signals são inicializados puros, sem side-effects.
+  currentUser = signal<User | null>(null);
+  isAdminLoggedIn = signal<boolean>(false);
 
   constructor() {
-    // Supabase auth listener is no longer needed for admin login.
+    // O estado é carregado do storage de forma segura dentro do construtor.
+    this.currentUser.set(this.loadUserFromStorage());
+    this.isAdminLoggedIn.set(this.loadAdminStateFromStorage());
   }
 
   private loadUserFromStorage(): User | null {
