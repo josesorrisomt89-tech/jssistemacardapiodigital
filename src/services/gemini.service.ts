@@ -10,8 +10,11 @@ export class GeminiService {
 
   constructor() {
     try {
-      if (!process.env.API_KEY) {
-        throw new Error('A variável de ambiente API_KEY não está configurada.');
+      // Adicionada verificação de segurança para ambientes onde 'process' não está definido.
+      if (typeof process === 'undefined' || typeof process.env === 'undefined' || !process.env.API_KEY) {
+        console.warn('API_KEY do Gemini não foi encontrada no ambiente. As funcionalidades de IA generativa estarão desabilitadas.');
+        this.error.set('Chave de API do Gemini não configurada.');
+        return; // Impede a continuação da inicialização se a chave não existir.
       }
       this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     } catch (e) {
