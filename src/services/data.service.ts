@@ -1,4 +1,4 @@
-import { Injectable, signal, effect, inject, Injector, runInInjectionContext } from '@angular/core';
+import { Injectable, signal, effect, inject } from '@angular/core';
 import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon } from '../models';
 import { SupabaseService } from './supabase.service';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -8,7 +8,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
 })
 export class DataService {
   private supabaseService = inject(SupabaseService);
-  private injector = inject(Injector);
   private supabase!: SupabaseClient;
 
   settings = signal<ShopSettings>(this.getDefaultSettings());
@@ -26,10 +25,12 @@ export class DataService {
   loadingStatus = signal<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   loadingError = signal<string|null>(null);
   private isInitialized = false;
-  private effectInitialized = false;
 
   constructor() {
-    // O construtor agora está 100% vazio para garantir a inicialização mais segura possível.
+    // O effect para persistir o estado do motorista é criado aqui, no construtor.
+    // Este é o local mais seguro e correto, garantindo que o "injection context" do Angular
+    // esteja sempre presente, eliminando a causa raiz dos erros de inicialização.
+    effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
   }
 
   public async load(): Promise<void> {
@@ -39,16 +40,8 @@ export class DataService {
     this.isInitialized = true;
     this.loadingStatus.set('loading');
 
-    // O effect para persistir o estado do motorista é criado aqui, de forma segura,
-    // apenas uma vez, quando o app já está rodando, usando o contexto de injeção.
-    if (!this.effectInitialized) {
-      runInInjectionContext(this.injector, () => {
-        effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
-      });
-      this.effectInitialized = true;
-    }
-
-    // Carrega o estado do localStorage para o driver.
+    // Carrega o estado inicial do driver a partir do localStorage.
+    // O `effect` no construtor irá lidar com as futuras atualizações.
     this.currentDriver.set(this.loadFromLocalStorage('acai_current_driver', null));
 
     // Inicializa o Supabase de forma segura aqui.
