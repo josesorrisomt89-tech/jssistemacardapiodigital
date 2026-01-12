@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { User, ShopSettings } from '../models';
 import { DataService } from './data.service';
@@ -11,14 +11,32 @@ const ADMIN_LOGGED_IN_KEY = 'acai_admin_logged_in';
 })
 export class AuthService {
   private router: Router = inject(Router);
-  private dataService = inject(DataService);
+  private injector = inject(Injector);
+  private _dataService: DataService | null = null;
 
   // Signals são inicializados puros, sem side-effects.
   currentUser = signal<User | null>(null);
   isAdminLoggedIn = signal<boolean>(false);
+  private isInitialized = false;
 
   constructor() {
-    // O estado é carregado do storage de forma segura dentro do construtor.
+    // O construtor é 100% puro, sem efeitos colaterais, para garantir a estabilidade da inicialização.
+  }
+
+  // Getter privado para injetar o DataService de forma tardia (lazy), quebrando a dependência circular.
+  private get dataService(): DataService {
+    if (!this._dataService) {
+      this._dataService = this.injector.get(DataService);
+    }
+    return this._dataService;
+  }
+
+  public init(): void {
+    if (this.isInitialized) {
+      return;
+    }
+    this.isInitialized = true;
+    // O estado é carregado do storage de forma segura aqui, quando o app já está rodando.
     this.currentUser.set(this.loadUserFromStorage());
     this.isAdminLoggedIn.set(this.loadAdminStateFromStorage());
   }
