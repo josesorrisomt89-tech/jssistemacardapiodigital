@@ -1,42 +1,52 @@
 import { Injectable, signal } from '@angular/core';
-// Use a type-only import to prevent the module from being loaded on startup.
-// This is a key change to fix potential startup crashes from external modules.
-import type { GoogleGenAI } from '@google/genai';
+
+// Local type definitions to avoid direct module dependency at build/startup time.
+// This is a key part of the fix to prevent the app from crashing on start.
+interface GenerateContentResponse {
+  text: string;
+}
+interface GenerateImagesResponse {
+  generatedImages: { image: { imageBytes: string } }[];
+}
+interface GenAIModels {
+  generateContent(params: { model: string; contents: string; }): Promise<GenerateContentResponse>;
+  generateImages(params: { model: string; prompt: string; config: any; }): Promise<GenerateImagesResponse>;
+}
+interface GoogleGenAI {
+  models: GenAIModels;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class GeminiService {
   private ai: GoogleGenAI | null = null;
-  // Use a promise to handle the async initialization and prevent multiple initializations
   private initPromise: Promise<void> | null = null;
   error = signal<string | null>(null);
 
   constructor() {}
 
   private initialize(): Promise<void> {
-    // If initialization is already in progress or done, return the existing promise
     if (this.initPromise) {
       return this.initPromise;
     }
 
-    // Start the initialization process
     this.initPromise = (async () => {
       try {
         if (typeof process === 'undefined' || typeof process.env === 'undefined' || !process.env.API_KEY) {
           throw new Error('Chave de API do Gemini não configurada.');
         }
         
-        // Dynamically import the module only when it's first needed.
-        // This prevents it from blocking the initial app load.
-        const { GoogleGenAI } = await import('@google/genai');
-        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        // Dynamically import the module using its full CDN URL.
+        // This completely bypasses the importmap and ensures the module is only loaded when needed.
+        const genaiModule: any = await import('https://esm.sh/@google/genai@^1.34.0?external=rxjs');
+        const GoogleGenAI_Class = genaiModule.GoogleGenAI;
+        this.ai = new GoogleGenAI_Class({ apiKey: process.env.API_KEY });
 
       } catch (e) {
         const msg = `Não foi possível inicializar o serviço de IA: ${(e as Error).message}`;
         console.error(msg, e);
         this.error.set(msg);
-        // Rethrow to notify the caller that initialization failed
         throw e;
       }
     })();
