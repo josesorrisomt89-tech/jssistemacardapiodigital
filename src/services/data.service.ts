@@ -20,20 +20,29 @@ export class DataService {
   deliveryDrivers = signal<DeliveryDriver[]>([]);
   currentDriver = signal<DeliveryDriver | null>(this.loadFromLocalStorage('acai_current_driver', null));
   driverPayments = signal<DriverPayment[]>([]);
-
+  
+  loadingStatus = signal<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   private isInitialized = false;
 
   constructor() {
     effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
   }
 
-  public load(): void {
+  public async load(): Promise<void> {
     if (this.isInitialized) {
       return;
     }
     this.isInitialized = true;
-    this.initializeData();
-    this.listenToChanges();
+    this.loadingStatus.set('loading');
+    
+    try {
+        await this.initializeData();
+        this.listenToChanges();
+        this.loadingStatus.set('loaded');
+    } catch (error) {
+        console.error('Falha crítica ao carregar dados iniciais.', error);
+        this.loadingStatus.set('error');
+    }
   }
 
   async initializeData() {
@@ -80,6 +89,8 @@ export class DataService {
       // Nesse caso, as configurações padrão já estão no signal, o que é o comportamento desejado.
       // Apenas registramos o erro no console para fins de depuração.
       console.error('Error initializing data from Supabase:', error); 
+      // Lançamos o erro para que seja capturado pelo método load().
+      throw error;
     }
   }
   
