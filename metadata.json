@@ -1,0 +1,5 @@
+{
+  "name": "Cardápio Digital Açaí",
+  "description": "Um cardápio digital para açaíterias que permite aos clientes fazer pedidos e enviá-los para o WhatsApp da loja.",
+  "requestFramePermissions": []
+}

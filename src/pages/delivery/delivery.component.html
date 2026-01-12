@@ -1,0 +1,188 @@
+<div class="min-h-screen" [style.backgroundColor]="settings().layout.background_color" [style.color]="settings().layout.text_color">
+  <audio #newDeliverySound src="https://actions.google.com/sounds/v1/vehicles/motorcycle_horn.ogg"></audio>
+  
+  @if (currentDriver(); as driver) {
+    <!-- Logged In View -->
+    <div class="flex flex-col h-screen">
+      <header class="sticky top-0 z-20 p-4 flex items-center justify-between shadow-lg" [style.backgroundColor]="settings().layout.card_color">
+        <div>
+            <h1 class="text-xl font-bold">Olá, {{ driver.name }}</h1>
+            <p class="text-xs text-gray-400">Painel do Entregador</p>
+        </div>
+        <button (click)="logout()" class="text-sm text-purple-400 hover:text-purple-300">Sair</button>
+      </header>
+      
+      @if(newDeliveryAvailable()) {
+        <div class="sticky top-0 z-20 bg-yellow-400 text-black text-center font-bold p-3 animate-pulse">
+          <p>🏍️ NOVA ENTREGA DISPONÍVEL! 🏍️</p>
+        </div>
+      }
+
+      <main class="flex-grow overflow-y-auto">
+        @switch (activeTab()) {
+          @case ('orders') {
+            <div class="p-2 sm:p-4">
+              @if (deliveryOrders().length > 0) {
+                <div class="space-y-4">
+                  @for (order of deliveryOrders(); track order.id) {
+                    <div class="rounded-lg p-4" [style.backgroundColor]="settings().layout.card_color">
+                      <div class="border-b pb-2 mb-2" [style.borderColor]="settings().layout.background_color">
+                        <div class="flex justify-between items-center">
+                          <h2 class="text-lg font-bold">Pedido #{{ order.id.slice(-4) }}</h2>
+                           <span class="px-2 py-1 text-xs font-semibold rounded-full"
+                              [class.bg-yellow-500]="!order.assigned_driver_id"
+                              [class.bg-purple-500]="order.status === 'Em Preparo' && !!order.assigned_driver_id"
+                              [class.bg-teal-500]="order.status === 'Aguardando Retirada' && !!order.assigned_driver_id"
+                              [class.bg-blue-500]="order.status === 'Saiu para Entrega'">
+                              @if(!order.assigned_driver_id) {
+                                  Disponível
+                              } @else if (order.status === 'Em Preparo') {
+                                  Aceito (Na Cozinha)
+                              } @else if (order.status === 'Aguardando Retirada') {
+                                  Pronto para Retirar
+                              } @else {
+                                  {{ order.status }}
+                              }
+                           </span>
+                        </div>
+                        <p class="text-sm text-gray-400">{{ order.customer_name }}</p>
+                      </div>
+                      
+                      <div class="space-y-2 text-sm mb-4">
+                        <p><b>Endereço:</b> {{ order.delivery_address }}, {{ order.neighborhood }}</p>
+                        <p><b>Total:</b> <span class="font-bold" [style.color]="settings().layout.accent_color">{{ order.total | currency:'BRL' }}</span></p>
+                        <p><b>Pagamento:</b> {{ order.payment_method }}
+                          @if (order.payment_method === 'cash' && order.change_for) {
+                            <span class="text-yellow-400">(Levar troco para {{ order.change_for | currency:'BRL' }})</span>
+                          }
+                        </p>
+                      </div>
+                      
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <a [href]="getGoogleMapsLink(order)" target="_blank" class="w-full text-center bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                          Ver no Mapa
+                        </a>
+                        @if ((order.status === 'Em Preparo' || order.status === 'Aguardando Retirada') && !order.assigned_driver_id) {
+                          <button (click)="acceptOrder(order)" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            Aceitar Pedido
+                          </button>
+                        } @else if (order.status === 'Em Preparo' && order.assigned_driver_id === driver.id) {
+                           <div class="w-full flex items-center justify-center bg-gray-700 text-gray-400 font-bold py-3 px-4 rounded-lg">
+                              Aguardando preparo...
+                           </div>
+                        } @else if (order.status === 'Aguardando Retirada' && order.assigned_driver_id === driver.id) {
+                           <button (click)="updateOrderStatus(order.id, 'Saiu para Entrega')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            Retirar Pedido
+                          </button>
+                        } @else if (order.status === 'Saiu para Entrega' && order.assigned_driver_id === driver.id) {
+                          <button (click)="updateOrderStatus(order.id, 'Entregue')" class="w-full text-white font-bold py-3 px-4 rounded-lg transition-colors" [style.backgroundColor]="settings().layout.primary_color">
+                            Finalizar Entrega
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="text-center py-16">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                  <h3 class="mt-2 text-lg font-medium text-gray-300">Nenhuma entrega pendente</h3>
+                  <p class="mt-1 text-sm text-gray-500">Aguardando novos pedidos da loja.</p>
+                </div>
+              }
+            </div>
+          }
+          @case('stats') {
+             <div class="p-2 sm:p-4 space-y-4">
+                <h2 class="text-xl font-bold">Relatório de Entregas</h2>
+                <!-- Period Selector -->
+                <div class="flex space-x-2 rounded-lg p-1" [style.backgroundColor]="settings().layout.background_color">
+                  <button (click)="statsPeriod.set('day')" class="flex-1 p-2 rounded text-sm" [class.bg-purple-600]="statsPeriod() === 'day'">Hoje</button>
+                  <button (click)="statsPeriod.set('week')" class="flex-1 p-2 rounded text-sm" [class.bg-purple-600]="statsPeriod() === 'week'">Semana</button>
+                  <button (click)="statsPeriod.set('month')" class="flex-1 p-2 rounded text-sm" [class.bg-purple-600]="statsPeriod() === 'month'">Mês</button>
+                  <button (click)="statsPeriod.set('custom')" class="flex-1 p-2 rounded text-sm" [class.bg-purple-600]="statsPeriod() === 'custom'">Período</button>
+                </div>
+                @if (statsPeriod() === 'custom') {
+                   <div class="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                         <label class="block mb-1 text-xs text-gray-400">Data Início</label>
+                         <input type="date" [value]="customStartDate()" (change)="customStartDate.set($event.target.value)" class="w-full p-2 rounded bg-gray-700 border-gray-600">
+                      </div>
+                      <div>
+                          <label class="block mb-1 text-xs text-gray-400">Data Fim</label>
+                          <input type="date" [value]="customEndDate()" (change)="customEndDate.set($event.target.value)" class="w-full p-2 rounded bg-gray-700 border-gray-600">
+                      </div>
+                   </div>
+                }
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="p-4 rounded-lg" [style.backgroundColor]="settings().layout.card_color">
+                        <p class="text-2xl font-bold" [style.color]="settings().layout.accent_color">{{ deliveryStats().count }}</p>
+                        <p class="text-sm text-gray-400">Entregas Realizadas</p>
+                    </div>
+                     <div class="p-4 rounded-lg" [style.backgroundColor]="settings().layout.card_color">
+                        <p class="text-2xl font-bold" [style.color]="settings().layout.accent_color">{{ deliveryStats().totalFee | currency:'BRL' }}</p>
+                        <p class="text-sm text-gray-400">Total em Taxas</p>
+                    </div>
+                </div>
+             </div>
+          }
+        }
+      </main>
+
+      <nav class="flex justify-around p-2" [style.backgroundColor]="settings().layout.card_color">
+        <button (click)="activeTab.set('orders')" class="p-2 rounded-lg text-center w-full" [class.text-purple-400]="activeTab() === 'orders'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" viewBox="0 0 20 20" fill="currentColor"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" /><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v5.05a2.5 2.5 0 014.9 0V8a1 1 0 00-1-1h-3.95z" /></svg>
+          <span class="text-xs">Entregas</span>
+        </button>
+        <button (click)="activeTab.set('stats')" class="p-2 rounded-lg text-center w-full" [class.text-purple-400]="activeTab() === 'stats'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11h1.5a.5.5 0 01.5.5v5a.5.5 0 01-.5.5H2a1 1 0 01-1-1v-4a1 1 0 011-1zm3 4h1.5a.5.5 0 01.5.5v2a.5.5 0 01-.5.5H5a1 1 0 01-1-1v-1a1 1 0 011-1zm3-7h1.5a.5.5 0 01.5.5v10a.5.5 0 01-.5.5H8a1 1 0 01-1-1V9a1 1 0 011-1zm3 2h1.5a.5.5 0 01.5.5v8a.5.5 0 01-.5.5H11a1 1 0 01-1-1v-7a1 1 0 011-1zm3-4h1.5a.5.5 0 01.5.5v12a.5.5 0 01-.5.5H14a1 1 0 01-1-1V4a1 1 0 011-1z" /></svg>
+          <span class="text-xs">Relatório</span>
+        </button>
+      </nav>
+    </div>
+  } @else {
+    <!-- Login/Register View -->
+    <div class="flex flex-col items-center justify-center min-h-screen p-4">
+      <img [src]="settings().logo_url || 'https://picsum.photos/id/1060/200/200'" alt="Logo" class="w-24 h-24 rounded-full border-4 shadow-lg mb-6" [style.borderColor]="settings().layout.primary_color">
+      <div class="w-full max-w-sm">
+        @if (activeView() === 'login') {
+          <div class="p-6 rounded-lg space-y-4" [style.backgroundColor]="settings().layout.card_color">
+            <h2 class="text-2xl font-bold text-center">Login do Entregador</h2>
+            <form [formGroup]="loginForm" (ngSubmit)="handleLogin()" class="space-y-4">
+              <input formControlName="name" placeholder="Seu Nome" class="w-full bg-gray-700 p-3 rounded-lg">
+              <input formControlName="password" type="password" placeholder="Senha" class="w-full bg-gray-700 p-3 rounded-lg">
+              @if(loginError()) { <p class="text-red-400 text-sm text-center">{{loginError()}}</p> }
+              <button type="submit" class="w-full text-white font-bold py-3 rounded-lg" [style.backgroundColor]="settings().layout.primary_color">Entrar</button>
+            </form>
+            <p class="text-center text-sm">Não tem uma conta? <button (click)="activeView.set('register')" class="font-semibold" [style.color]="settings().layout.accent_color">Cadastre-se</button></p>
+          </div>
+        } @else if (activeView() === 'register') {
+          <div class="p-6 rounded-lg space-y-4" [style.backgroundColor]="settings().layout.card_color">
+            <h2 class="text-2xl font-bold text-center">Cadastro de Entregador</h2>
+            <form [formGroup]="registerForm" (ngSubmit)="handleRegister()" class="space-y-4">
+              <input formControlName="name" placeholder="Seu Nome Completo" class="w-full bg-gray-700 p-3 rounded-lg">
+              <input formControlName="whatsapp" placeholder="Telefone WhatsApp" class="w-full bg-gray-700 p-3 rounded-lg">
+              <input formControlName="address" placeholder="Seu Endereço" class="w-full bg-gray-700 p-3 rounded-lg">
+              <input formControlName="cnh" placeholder="Número da CNH" class="w-full bg-gray-700 p-3 rounded-lg">
+              <input formControlName="password" type="password" placeholder="Crie uma Senha" class="w-full bg-gray-700 p-3 rounded-lg">
+               @if(registerError()) { <p class="text-red-400 text-sm text-center">{{registerError()}}</p> }
+              <button type="submit" class="w-full text-white font-bold py-3 rounded-lg" [style.backgroundColor]="settings().layout.primary_color">Enviar para Análise</button>
+            </form>
+            <p class="text-center text-sm">Já tem uma conta? <button (click)="activeView.set('login')" class="font-semibold" [style.color]="settings().layout.accent_color">Faça Login</button></p>
+          </div>
+        } @else if (activeView() === 'pending') {
+            <div class="p-6 rounded-lg text-center" [style.backgroundColor]="settings().layout.card_color">
+                <h2 class="text-2xl font-bold mb-4">Cadastro Enviado!</h2>
+                <p class="text-gray-300 mb-6">Seu cadastro foi enviado para análise. Aguarde a aprovação do administrador da loja para poder acessar o painel.</p>
+                <button (click)="activeView.set('login')" class="w-full text-white font-bold py-3 rounded-lg" [style.backgroundColor]="settings().layout.primary_color">Voltar para Login</button>
+            </div>
+        }
+      </div>
+      <a routerLink="/" class="mt-8 text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        Sair e voltar ao início
+      </a>
+    </div>
+  }
+</div>
