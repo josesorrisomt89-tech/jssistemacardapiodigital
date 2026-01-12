@@ -41,7 +41,22 @@ export class DataService {
         this.supabase.from('delivery_drivers').select('*'),
         this.supabase.from('driver_payments').select('*'),
       ]);
-      if (settingsRes.data) this.settings.set(settingsRes.data);
+
+      if (settingsRes.data) {
+        const defaults = this.getDefaultSettings();
+        // Deep merge para garantir que objetos aninhados não sejam nulos e que o app não quebre.
+        const mergedSettings: ShopSettings = {
+          ...defaults,
+          ...settingsRes.data,
+          opening_hours: { ...defaults.opening_hours, ...(settingsRes.data.opening_hours || {}) },
+          delivery: { ...defaults.delivery, ...(settingsRes.data.delivery || {}) },
+          layout: { ...defaults.layout, ...(settingsRes.data.layout || {}) },
+          loyalty_program: { ...defaults.loyalty_program, ...(settingsRes.data.loyalty_program || {}) },
+          slider_images: settingsRes.data.slider_images || [],
+        };
+        this.settings.set(mergedSettings);
+      }
+      
       if (categoriesRes.data) this.categories.set(categoriesRes.data);
       if (productsRes.data) this.products.set(productsRes.data);
       if (addonsRes.data) this.addonCategories.set(addonsRes.data);
@@ -51,7 +66,12 @@ export class DataService {
       if (expensesRes.data) this.expenses.set(expensesRes.data);
       if (driversRes.data) this.deliveryDrivers.set(driversRes.data);
       if (driverPaymentsRes.data) this.driverPayments.set(driverPaymentsRes.data);
-    } catch (error) { console.error('Error initializing data from Supabase:', error); }
+    } catch (error) { 
+      // O erro pode ocorrer se a tabela 'settings' estiver vazia, por causa do .single().
+      // Nesse caso, as configurações padrão já estão no signal, o que é o comportamento desejado.
+      // Apenas registramos o erro no console para fins de depuração.
+      console.error('Error initializing data from Supabase:', error); 
+    }
   }
   
   private listenToChanges() {
