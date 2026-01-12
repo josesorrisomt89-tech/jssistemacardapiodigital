@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { ShopSettings, Category, Product, AddonCategory, ProductSize, Addon, Order, NeighborhoodFee, OrderStatus, Coupon, CartItem, Receivable, Expense, DeliveryDriver, DriverPayment } from '../../models';
 import { LayoutPreviewComponent } from '../../components/layout-preview/layout-preview.component';
 import { ReceiptComponent } from '../../components/receipt/receipt.component';
+import { GeminiService } from '../../services/gemini.service';
 
 @Component({
   selector: 'app-admin',
@@ -19,6 +20,7 @@ export class AdminComponent {
   authService: AuthService = inject(AuthService);
   fb: FormBuilder = inject(FormBuilder);
   router: Router = inject(Router);
+  geminiService: GeminiService = inject(GeminiService);
   
   @ViewChild('newOrderSound') newOrderSound!: ElementRef<HTMLAudioElement>;
   isNewOrderNotificationActive = signal(false);
@@ -112,6 +114,9 @@ export class AdminComponent {
   driverView = signal<'management' | 'reports'>('management');
   selectedDriverForReport = signal<DeliveryDriver | null>(null);
   driverPaymentForm: FormGroup;
+
+  isGeneratingDescription = signal(false);
+  isGeneratingImage = signal(false);
 
   reportDeliveries = computed(() => {
     const driverId = this.selectedDriverForReport()?.id;
@@ -836,5 +841,46 @@ export class AdminComponent {
     const paymentData = this.driverPaymentForm.value;
     await this.dataService.addDriverPayment({ driver_id: driver.id, driver_name: driver.name, amount: paymentData.amount, payment_date: paymentData.payment_date, notes: paymentData.notes || undefined });
     this.driverPaymentForm.reset({ payment_date: new Date().toISOString().split('T')[0] });
+  }
+
+  async generateDescription() {
+    const productName = this.productForm.get('name')?.value;
+    if (!productName) {
+      alert('Por favor, insira um nome para o produto primeiro.');
+      return;
+    }
+    this.isGeneratingDescription.set(true);
+    try {
+      const description = await this.geminiService.generateDescription(productName);
+      this.productForm.get('description')?.setValue(description);
+    } catch (error) {
+      console.error(error);
+      alert('Ocorreu um erro ao gerar a descrição.');
+    } finally {
+      this.isGeneratingDescription.set(false);
+    }
+  }
+
+  async generateImage() {
+    const productName = this.productForm.get('name')?.value;
+    const productDescription = this.productForm.get('description')?.value;
+    if (!productName) {
+      alert('Por favor, insira um nome para o produto primeiro.');
+      return;
+    }
+    this.isGeneratingImage.set(true);
+    try {
+      const imageUrl = await this.geminiService.generateImage(productName, productDescription || 'Um delicioso item do nosso cardápio');
+      if (imageUrl) {
+        this.productForm.get('image_url')?.setValue(imageUrl);
+      } else {
+        alert('Não foi possível gerar a imagem. Tente novamente.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Ocorreu um erro ao gerar a imagem.');
+    } finally {
+      this.isGeneratingImage.set(false);
+    }
   }
 }

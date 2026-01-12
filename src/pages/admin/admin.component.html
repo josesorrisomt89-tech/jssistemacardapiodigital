@@ -438,10 +438,38 @@
                     </div>
                     <div><label class="block text-sm">Nome</label><input formControlName="name" class="w-full bg-gray-700 p-2 rounded"></div>
                     <div>
-                      <label class="block text-sm">Descrição</label>
+                      <div class="flex justify-between items-center mb-1">
+                        <label class="block text-sm">Descrição</label>
+                        <button type="button" (click)="generateDescription()" [disabled]="isGeneratingDescription()" class="text-xs bg-purple-600 hover:bg-purple-700 disabled:bg-purple-900 disabled:cursor-wait text-white font-bold py-1 px-2 rounded-lg flex items-center space-x-1">
+                          @if (isGeneratingDescription()) {
+                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>Gerando...</span>
+                          } @else {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                            <span>Gerar com IA</span>
+                          }
+                        </button>
+                      </div>
                       <textarea formControlName="description" class="w-full bg-gray-700 p-2 rounded" rows="3"></textarea>
                     </div>
-                    <div><label class="block text-sm">Imagem</label><input type="file" (change)="onFileChange($event, 'image_url', productForm)" class="w-full text-sm text-gray-400 file:bg-gray-600 file:border-0 file:px-4 file:py-2 file:rounded-lg file:mr-4"></div>
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <label class="block text-sm">Imagem</label>
+                         <button type="button" (click)="generateImage()" [disabled]="isGeneratingImage()" class="text-xs bg-purple-600 hover:bg-purple-700 disabled:bg-purple-900 disabled:cursor-wait text-white font-bold py-1 px-2 rounded-lg flex items-center space-x-1">
+                          @if (isGeneratingImage()) {
+                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>Gerando...</span>
+                          } @else {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                            <span>Gerar com IA</span>
+                          }
+                        </button>
+                      </div>
+                       @if (productForm.get('image_url')?.value) {
+                        <img [src]="productForm.get('image_url')?.value" alt="Preview da imagem" class="w-full h-40 object-cover rounded-lg my-2 bg-gray-800">
+                      }
+                      <input type="file" (change)="onFileChange($event, 'image_url', productForm)" class="w-full text-sm text-gray-400 file:bg-gray-600 file:border-0 file:px-4 file:py-2 file:rounded-lg file:mr-4">
+                    </div>
                     <div><label class="block text-sm">Categoria</label><select formControlName="category_id" class="w-full bg-gray-700 p-2 rounded"> @for(cat of sortedCategories(); track cat.id) { <option [value]="cat.id">{{cat.name}}</option> } </select></div>
                     
                     <div>

@@ -19,6 +19,12 @@ export class SupabaseService {
         throw new Error(errorMessage);
       }
       
+      if (!supabaseAnonKey.startsWith('eyJ')) {
+        const errorMessage = `Erro Crítico: A Chave Anônima (anonKey) do Supabase parece estar incorreta. Uma chave válida geralmente começa com "eyJ". A chave fornecida foi: "${supabaseAnonKey}". Por favor, verifique o arquivo 'src/supabase-config.ts' e cole a chave correta da seção API nas configurações do seu projeto Supabase.`;
+        document.body.innerHTML = `<div style="font-family: sans-serif; color: #fbd38d; background-color: #1a202c; padding: 2rem; height: 100vh;">${errorMessage}</div>`;
+        throw new Error(errorMessage);
+      }
+      
       this.supabase = createClient(supabaseUrl, supabaseAnonKey);
     } catch (error) {
         const errorMessage = `Erro Crítico: Não foi possível conectar ao Supabase. Verifique se a URL e a Chave estão corretas e se o seu projeto Supabase está ativo. Detalhes: ${(error as Error).message}`;
