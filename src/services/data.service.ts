@@ -1,13 +1,14 @@
 import { Injectable, signal, effect, inject } from '@angular/core';
 import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon } from '../models';
 import { SupabaseService } from './supabase.service';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
   private supabaseService = inject(SupabaseService);
-  private supabase = this.supabaseService.supabase;
+  private supabase!: SupabaseClient;
 
   settings = signal<ShopSettings>(this.getDefaultSettings());
   categories = signal<Category[]>([]);
@@ -22,6 +23,7 @@ export class DataService {
   driverPayments = signal<DriverPayment[]>([]);
   
   loadingStatus = signal<'idle' | 'loading' | 'loaded' | 'error'>('idle');
+  loadingError = signal<string|null>(null);
   private isInitialized = false;
 
   constructor() {
@@ -35,18 +37,22 @@ export class DataService {
     this.isInitialized = true;
     this.loadingStatus.set('loading');
 
-    // Checa se o serviço do Supabase foi inicializado corretamente.
-    if (this.supabaseService.initializationError()) {
+    // Inicializa o Supabase de forma segura aqui, em vez de no construtor.
+    if (!this.supabaseService.init()) {
       console.error('Abortando carregamento de dados devido a erro de inicialização do Supabase.');
+      this.loadingError.set(this.supabaseService.initializationError());
       this.loadingStatus.set('error');
       return;
     }
+    this.supabase = this.supabaseService.supabase;
     
     try {
         await this.initializeData();
         this.listenToChanges();
         this.loadingStatus.set('loaded');
     } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.loadingError.set(`Falha ao carregar dados iniciais: ${message}`);
         console.error('Falha crítica ao carregar dados iniciais.', error);
         this.loadingStatus.set('error');
     }
@@ -69,7 +75,6 @@ export class DataService {
 
       if (settingsRes.data) {
         const defaults = this.getDefaultSettings();
-        // Deep merge para garantir que objetos aninhados não sejam nulos e que o app não quebre.
         const mergedSettings: ShopSettings = {
           ...defaults,
           ...settingsRes.data,
@@ -92,11 +97,7 @@ export class DataService {
       if (driversRes.data) this.deliveryDrivers.set(driversRes.data);
       if (driverPaymentsRes.data) this.driverPayments.set(driverPaymentsRes.data);
     } catch (error) { 
-      // O erro pode ocorrer se a tabela 'settings' estiver vazia, por causa do .single().
-      // Nesse caso, as configurações padrão já estão no signal, o que é o comportamento desejado.
-      // Apenas registramos o erro no console para fins de depuração.
       console.error('Error initializing data from Supabase:', error); 
-      // Lançamos o erro para que seja capturado pelo método load().
       throw error;
     }
   }
@@ -106,11 +107,10 @@ export class DataService {
       .channel('public-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
         console.log('Realtime change received!', payload);
-        // Refetch data for the changed table
         switch(payload.table) {
           case 'orders': this.supabase.from('orders').select('*').then(({ data }) => data && this.orders.set(data)); break;
           case 'products': this.supabase.from('products').select('*').then(({ data }) => data && this.products.set(data)); break;
-          case 'settings': this.initializeData(); break; // Refetch all for simplicity on settings change
+          case 'settings': this.initializeData(); break;
         }
       })
       .subscribe((status, err) => {
@@ -119,7 +119,6 @@ export class DataService {
         }
         if (status === 'CHANNEL_ERROR' || err) {
           console.error('Supabase realtime subscription error:', err);
-          // This error handler is crucial to prevent the app from crashing on connection failure.
         }
       });
   }

@@ -1,10 +1,4 @@
-@if (initializationError()) {
-  <div class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center text-white z-[999] p-6 text-center">
-      <h2 class="text-2xl font-bold text-red-500">Erro de Configuração</h2>
-      <p class="mt-2 text-yellow-300 bg-red-900/50 p-3 rounded-md font-mono text-sm">{{ initializationError() }}</p>
-      <p class="mt-4 text-xs text-gray-500">O aplicativo não pode ser iniciado. Por favor, corrija o problema e recarregue a página.</p>
-  </div>
-} @else if (loadingStatus() === 'loading' || loadingStatus() === 'idle') {
+@if (loadingStatus() === 'loading' || loadingStatus() === 'idle') {
   <div class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center text-white z-[999]">
     <svg class="animate-spin h-12 w-12 text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -16,11 +10,11 @@
 } @else if (loadingStatus() === 'error') {
     <div class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center text-white z-[999] p-4 text-center">
         <h2 class="text-2xl font-bold text-red-500">Ocorreu um Erro</h2>
-        <p class="mt-2 text-gray-300">Não foi possível carregar o cardápio. Por favor, verifique sua conexão com a internet e tente recarregar a página.</p>
-        <p class="mt-4 text-xs text-gray-500">Se o problema persistir, entre em contato com o suporte da loja.</p>
+        <p class="mt-2 text-gray-300">{{ loadingError() || 'Não foi possível carregar o cardápio.' }}</p>
+        <p class="mt-4 text-xs text-gray-500">Por favor, verifique sua conexão com a internet, a configuração do aplicativo e recarregue a página.</p>
     </div>
 }
 
-<main class="h-screen w-screen" [class.invisible]="loadingStatus() !== 'loaded' || !!initializationError()">
+<main class="h-screen w-screen" [class.invisible]="loadingStatus() !== 'loaded'">
   <router-outlet></router-outlet>
 </main>
