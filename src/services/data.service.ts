@@ -9,7 +9,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
 })
 export class DataService {
   private supabaseService = inject(SupabaseService);
-  private authService = inject(AuthService);
   private injector = inject(Injector);
   private supabase!: SupabaseClient;
 
@@ -40,8 +39,10 @@ export class DataService {
     this.isInitialized = true;
     this.loadingStatus.set('loading');
 
+    // Injeção tardia do AuthService para quebrar o ciclo de dependência.
+    const authService = this.injector.get(AuthService);
     // Inicializa o AuthService para carregar seu estado do localStorage de forma segura.
-    this.authService.init();
+    authService.init();
 
     // Carrega o estado do localStorage para o driver aqui, em um ponto seguro do ciclo de vida.
     this.currentDriver.set(this.loadFromLocalStorage('acai_current_driver', null));
