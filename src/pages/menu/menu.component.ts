@@ -14,9 +14,9 @@ import { Product, AddonCategory, ProductSize, Addon, CartItem, Order, Neighborho
   imports: [RouterLink, ReactiveFormsModule, CurrencyPipe, DatePipe]
 })
 export class MenuComponent implements OnInit {
-  dataService: DataService = inject(DataService);
+  private dataService: DataService = inject(DataService);
   cartService: CartService = inject(CartService);
-  authService: AuthService = inject(AuthService);
+  private authService: AuthService = inject(AuthService);
   private fb: FormBuilder = inject(FormBuilder);
 
   settings = this.dataService.settings;

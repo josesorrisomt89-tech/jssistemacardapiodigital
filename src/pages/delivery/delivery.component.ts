@@ -12,9 +12,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
   imports: [CurrencyPipe, DatePipe, RouterLink, ReactiveFormsModule],
 })
 export class DeliveryComponent {
-  dataService: DataService = inject(DataService);
-  router: Router = inject(Router);
-  fb: FormBuilder = inject(FormBuilder);
+  private dataService: DataService = inject(DataService);
+  private router: Router = inject(Router);
+  private fb: FormBuilder = inject(FormBuilder);
   
   @ViewChild('newDeliverySound') newDeliverySound!: ElementRef<HTMLAudioElement>;
   newDeliveryAvailable = signal(false);

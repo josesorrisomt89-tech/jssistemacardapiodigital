@@ -10,12 +10,9 @@ import { AuthService } from '../../services/auth.service';
   imports: [RouterLink]
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
-  // FIX: Explicitly type injected services to resolve type inference issues.
-  dataService: DataService = inject(DataService);
-  // FIX: Explicitly type injected services to resolve type inference issues.
-  authService: AuthService = inject(AuthService);
-  // FIX: Explicitly type injected services to resolve type inference issues.
-  router: Router = inject(Router);
+  private dataService: DataService = inject(DataService);
+  private authService: AuthService = inject(AuthService);
+  private router: Router = inject(Router);
   settings = this.dataService.settings;
   user = this.authService.currentUser;
 

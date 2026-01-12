@@ -16,11 +16,11 @@ import { GeminiService } from '../../services/gemini.service';
   imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, LayoutPreviewComponent, ReceiptComponent]
 })
 export class AdminComponent {
-  dataService: DataService = inject(DataService);
-  authService: AuthService = inject(AuthService);
-  fb: FormBuilder = inject(FormBuilder);
-  router: Router = inject(Router);
-  geminiService: GeminiService = inject(GeminiService);
+  private dataService: DataService = inject(DataService);
+  private authService: AuthService = inject(AuthService);
+  private fb: FormBuilder = inject(FormBuilder);
+  private router: Router = inject(Router);
+  private geminiService: GeminiService = inject(GeminiService);
   
   @ViewChild('newOrderSound') newOrderSound!: ElementRef<HTMLAudioElement>;
   isNewOrderNotificationActive = signal(false);
