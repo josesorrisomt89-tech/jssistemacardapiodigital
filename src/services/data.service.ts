@@ -21,10 +21,19 @@ export class DataService {
   currentDriver = signal<DeliveryDriver | null>(this.loadFromLocalStorage('acai_current_driver', null));
   driverPayments = signal<DriverPayment[]>([]);
 
+  private isInitialized = false;
+
   constructor() {
+    effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
+  }
+
+  public load(): void {
+    if (this.isInitialized) {
+      return;
+    }
+    this.isInitialized = true;
     this.initializeData();
     this.listenToChanges();
-    effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
   }
 
   async initializeData() {
