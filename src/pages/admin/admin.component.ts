@@ -371,7 +371,8 @@ export class AdminComponent {
         return;
     }
     const { username, password } = this.loginForm.getRawValue();
-    const { error } = this.authService.adminLogin(username!, password!);
+    const settings = this.dataService.settings();
+    const { error } = this.authService.adminLogin(username!, password!, settings);
     if (error) {
         this.loginError.set(error);
     } else {
