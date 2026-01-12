@@ -1,13 +1,13 @@
 import { Injectable, signal, effect, inject } from '@angular/core';
+import { firstValueFrom, forkJoin, map } from 'rxjs';
 import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon } from '../models';
-import { SupabaseService, SupabaseClient } from './supabase.service';
+import { ApiService } from './supabase.service'; // Agora importa o ApiService
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-  private supabaseService = inject(SupabaseService);
-  private supabase!: SupabaseClient;
+  private apiService = inject(ApiService);
 
   settings = signal<ShopSettings>(this.getDefaultSettings());
   categories = signal<Category[]>([]);
@@ -23,114 +23,78 @@ export class DataService {
   
   loadingStatus = signal<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   loadingError = signal<string|null>(null);
-  private isInitialized = false;
-
+  
   constructor() {
     effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
   }
 
-  public async load(): Promise<void> {
-    if (this.isInitialized) {
-      return;
-    }
-    this.isInitialized = true;
+  public load(): void {
     this.loadingStatus.set('loading');
-
     this.currentDriver.set(this.loadFromLocalStorage('acai_current_driver', null));
+    this.initializeData();
+  }
 
-    // A inicialização do Supabase agora é assíncrona e precisa ser aguardada.
-    const supabaseInitialized = await this.supabaseService.init();
-    if (!supabaseInitialized) {
-      console.error('Abortando carregamento de dados devido a erro de inicialização do Supabase.');
-      this.loadingError.set(this.supabaseService.initializationError());
-      this.loadingStatus.set('error');
-      return;
-    }
-    this.supabase = this.supabaseService.supabase;
-    
-    try {
-        await this.initializeData();
-        this.listenToChanges();
+  private initializeData() {
+    const requests = {
+      settings: this.apiService.get<ShopSettings>('settings', 'limit=1'),
+      categories: this.apiService.get<Category>('categories'),
+      products: this.apiService.get<Product>('products'),
+      addonCategories: this.apiService.get<AddonCategory>('addon_categories'),
+      orders: this.apiService.get<Order>('orders'),
+      coupons: this.apiService.get<Coupon>('coupons'),
+      receivables: this.apiService.get<Receivable>('receivables'),
+      expenses: this.apiService.get<Expense>('expenses'),
+      deliveryDrivers: this.apiService.get<DeliveryDriver>('delivery_drivers'),
+      driverPayments: this.apiService.get<DriverPayment>('driver_payments'),
+    };
+
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        const settingsRes = responses.settings[0];
+        if (settingsRes) {
+          const defaults = this.getDefaultSettings();
+          const mergedSettings: ShopSettings = { ...defaults, ...settingsRes,
+            opening_hours: { ...defaults.opening_hours, ...(settingsRes.opening_hours || {}) },
+            delivery: { ...defaults.delivery, ...(settingsRes.delivery || {}) },
+            layout: { ...defaults.layout, ...(settingsRes.layout || {}) },
+            loyalty_program: { ...defaults.loyalty_program, ...(settingsRes.loyalty_program || {}) },
+            slider_images: settingsRes.slider_images || [],
+          };
+          this.settings.set(mergedSettings);
+        } else {
+          this.settings.set(this.getDefaultSettings());
+        }
+
+        this.categories.set(responses.categories);
+        this.products.set(responses.products);
+        this.addonCategories.set(responses.addonCategories);
+        this.orders.set(responses.orders);
+        this.coupons.set(responses.coupons);
+        this.receivables.set(responses.receivables);
+        this.expenses.set(responses.expenses);
+        this.deliveryDrivers.set(responses.deliveryDrivers);
+        this.driverPayments.set(responses.driverPayments);
+
         this.loadingStatus.set('loaded');
-    } catch (error) {
+      },
+      error: (error) => {
         const message = error instanceof Error ? error.message : String(error);
         this.loadingError.set(`Falha ao carregar dados iniciais: ${message}`);
         console.error('Falha crítica ao carregar dados iniciais.', error);
         this.loadingStatus.set('error');
-    }
-  }
-
-  async initializeData() {
-    try {
-      const [ settingsRes, categoriesRes, productsRes, addonsRes, ordersRes, couponsRes, receivablesRes, expensesRes, driversRes, driverPaymentsRes ] = await Promise.all([
-        this.supabase.from('settings').select('*').limit(1).maybeSingle(),
-        this.supabase.from('categories').select('*'),
-        this.supabase.from('products').select('*'),
-        this.supabase.from('addon_categories').select('*'),
-        this.supabase.from('orders').select('*'),
-        this.supabase.from('coupons').select('*'),
-        this.supabase.from('receivables').select('*'),
-        this.supabase.from('expenses').select('*'),
-        this.supabase.from('delivery_drivers').select('*'),
-        this.supabase.from('driver_payments').select('*'),
-      ]);
-
-      if (settingsRes.data) {
-        const defaults = this.getDefaultSettings();
-        const mergedSettings: ShopSettings = {
-          ...defaults,
-          ...settingsRes.data,
-          opening_hours: { ...defaults.opening_hours, ...(settingsRes.data.opening_hours || {}) },
-          delivery: { ...defaults.delivery, ...(settingsRes.data.delivery || {}) },
-          layout: { ...defaults.layout, ...(settingsRes.data.layout || {}) },
-          loyalty_program: { ...defaults.loyalty_program, ...(settingsRes.data.loyalty_program || {}) },
-          slider_images: settingsRes.data.slider_images || [],
-        };
-        this.settings.set(mergedSettings);
-      } else {
-        this.settings.set(this.getDefaultSettings());
       }
-      
-      if (categoriesRes.data) this.categories.set(categoriesRes.data);
-      if (productsRes.data) this.products.set(productsRes.data);
-      if (addonsRes.data) this.addonCategories.set(addonsRes.data);
-      if (ordersRes.data) this.orders.set(ordersRes.data);
-      if (couponsRes.data) this.coupons.set(couponsRes.data);
-      if (receivablesRes.data) this.receivables.set(receivablesRes.data);
-      if (expensesRes.data) this.expenses.set(expensesRes.data);
-      if (driversRes.data) this.deliveryDrivers.set(driversRes.data);
-      if (driverPaymentsRes.data) this.driverPayments.set(driverPaymentsRes.data);
-    } catch (error) { 
-      console.error('Error initializing data from Supabase:', error); 
-      throw error;
-    }
+    });
   }
   
-  private listenToChanges() {
-    this.supabase
-      .channel('public-changes')
-      .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-        console.log('Realtime change received!', payload);
-        const table = payload.table as string;
-        this.fetchTable(table);
-      })
-      .subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to Supabase realtime changes!');
-        }
-        if (status === 'CHANNEL_ERROR' || err) {
-          console.error('Supabase realtime subscription error:', err);
-        }
-      });
-  }
-  
-  private async fetchTable(tableName: string) {
+  /**
+   * NOTA: A funcionalidade de realtime foi removida para garantir estabilidade.
+   * O painel de admin agora usa "polling" (verifica a cada 20s) para novos pedidos.
+   */
+  public async fetchTable(tableName: string) {
     try {
-        const { data, error } = await this.supabase.from(tableName).select('*');
-        if (error) throw error;
-        
+        const data = await firstValueFrom(this.apiService.get<any>(tableName));
         switch(tableName) {
-            case 'settings': this.initializeData(); break; // Reload all if settings change
+            case 'settings': this.initializeData(); break;
             case 'categories': this.categories.set(data); break;
             case 'products': this.products.set(data); break;
             case 'addon_categories': this.addonCategories.set(data); break;
@@ -154,7 +118,6 @@ export class DataService {
     const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayIndex] as keyof ShopSettings['opening_hours'];
     if (!settings.opening_hours) { return { is_open: false, hoursToday: null, is_temporarily_closed: false, message: 'Horário de funcionamento não configurado.' }; }
     const hoursToday = settings.opening_hours[dayName];
-    // Adicionada verificação de segurança para prevenir crash com dados incompletos
     if (!hoursToday || !hoursToday.is_open || !hoursToday.start || !hoursToday.end || !hoursToday.start.includes(':') || !hoursToday.end.includes(':')) {
       return { is_open: false, hoursToday, is_temporarily_closed: false, message: '' };
     }
@@ -173,86 +136,81 @@ export class DataService {
     if (order.payment_method === 'credit' && creditDetails) {
         const newReceivable: Receivable = { ...creditDetails, id: `rec_${newOrderId}`, order_id: newOrderId, amount: order.total, status: 'pending', created_at: new Date().toISOString() };
         newOrder.receivable_id = newReceivable.id;
-        await this.supabase.from('receivables').insert(newReceivable);
+        await firstValueFrom(this.apiService.post('receivables', newReceivable));
     }
-    const { data, error } = await this.supabase.from('orders').insert(newOrder).select().single();
-    if (error) { console.error("Error adding order:", error); throw error; }
-    return data;
+    const data = await firstValueFrom(this.apiService.post<Order>('orders', newOrder, 'return=representation'));
+    this.orders.update(orders => [...orders, data[0]]);
+    return data[0];
   }
   
   async saveSettings(settings: ShopSettings) {
-    const { data, error } = await this.supabase.from('settings').upsert(settings).eq('id', 1).select().single();
-    if (error) throw error;
-    // this.settings.set(data); // Realtime will handle this update
-    return data;
+    const data = await firstValueFrom(this.apiService.patch<ShopSettings>('settings', 'id=eq.1', settings));
+    this.settings.set(data[0]);
+    return data[0];
   }
   
   async saveProduct(product: Product) {
-     const { data, error } = await this.supabase.from('products').upsert(product).select().single();
-     if(error) throw error; return data;
+     const data = await firstValueFrom(this.apiService.upsert<Product>('products', product));
+     await this.fetchTable('products'); return data[0];
   }
   
-  async deleteProduct(id: string) {
-    const { error } = await this.supabase.from('products').delete().eq('id', id); if(error) throw error;
-  }
+  async deleteProduct(id: string) { await firstValueFrom(this.apiService.delete('products', `id=eq.${id}`)); await this.fetchTable('products'); }
   
    async saveCategory(category: Category) {
-     const { data, error } = await this.supabase.from('categories').upsert(category).select().single(); if(error) throw error; return data;
+     const data = await firstValueFrom(this.apiService.upsert<Category>('categories', category));
+     await this.fetchTable('categories'); return data[0];
   }
   
-  async deleteCategory(id: string) {
-    const { error } = await this.supabase.from('categories').delete().eq('id', id); if(error) throw error;
-  }
+  async deleteCategory(id: string) { await firstValueFrom(this.apiService.delete('categories', `id=eq.${id}`)); await this.fetchTable('categories'); }
 
   async saveAddonCategory(addonCategory: AddonCategory) {
-     const { data, error } = await this.supabase.from('addon_categories').upsert(addonCategory).select().single(); if(error) throw error; return data;
+     const data = await firstValueFrom(this.apiService.upsert<AddonCategory>('addon_categories', addonCategory));
+     await this.fetchTable('addon_categories'); return data[0];
   }
   
-  async deleteAddonCategory(id: string) {
-    const { error } = await this.supabase.from('addon_categories').delete().eq('id', id); if(error) throw error;
-  }
+  async deleteAddonCategory(id: string) { await firstValueFrom(this.apiService.delete('addon_categories', `id=eq.${id}`)); await this.fetchTable('addon_categories'); }
   
   async saveCoupon(coupon: Coupon) {
-     const { data, error } = await this.supabase.from('coupons').upsert(coupon).select().single(); if(error) throw error; return data;
+     const data = await firstValueFrom(this.apiService.upsert<Coupon>('coupons', coupon));
+     await this.fetchTable('coupons'); return data[0];
   }
   
-  async deleteCoupon(id: string) {
-    const { error } = await this.supabase.from('coupons').delete().eq('id', id); if(error) throw error;
-  }
+  async deleteCoupon(id: string) { await firstValueFrom(this.apiService.delete('coupons', `id=eq.${id}`)); await this.fetchTable('coupons'); }
 
   async updateOrderStatus(orderId: string, status: OrderStatus, assignment?: { driverId: string | null, driverName: string | null, isBroadcast: boolean }) {
      let updateObject: Partial<Order> = { status };
-     if (assignment) { 
-        Object.assign(updateObject, { 
-            assigned_driver_id: assignment.driverId,
-            assigned_driver_name: assignment.driverName,
-            is_delivery_broadcasted: assignment.isBroadcast,
-        });
-     }
-     const { data, error } = await this.supabase.from('orders').update(updateObject).eq('id', orderId).select().single(); if(error) throw error; return data;
+     if (assignment) { Object.assign(updateObject, { assigned_driver_id: assignment.driverId, assigned_driver_name: assignment.driverName, is_delivery_broadcasted: assignment.isBroadcast }); }
+     const data = await firstValueFrom(this.apiService.patch<Order>('orders', `id=eq.${orderId}`, updateObject));
+     await this.fetchTable('orders'); return data[0];
   }
 
   async addExpense(expense: Omit<Expense, 'id'>): Promise<Expense> {
-    const { data, error } = await this.supabase.from('expenses').insert({ ...expense, id: Date.now().toString() }).select().single(); if(error) throw error;
-    return data;
+    const newExpense = { ...expense, id: Date.now().toString() };
+    const data = await firstValueFrom(this.apiService.post<Expense>('expenses', newExpense, 'return=representation'));
+    await this.fetchTable('expenses'); return data[0];
   }
 
   async updateExpense(updatedExpense: Expense): Promise<void> {
-    const { error } = await this.supabase.from('expenses').update(updatedExpense).eq('id', updatedExpense.id); if(error) throw error;
+    await firstValueFrom(this.apiService.patch('expenses', `id=eq.${updatedExpense.id}`, updatedExpense));
+    await this.fetchTable('expenses');
   }
 
   async deleteExpense(id: string): Promise<void> {
-    const { error } = await this.supabase.from('expenses').delete().eq('id', id); if(error) throw error;
+    await firstValueFrom(this.apiService.delete('expenses', `id=eq.${id}`));
+    await this.fetchTable('expenses');
   }
 
   async updateReceivableStatus(id: string, status: 'pending' | 'paid'): Promise<void> {
-    const { error } = await this.supabase.from('receivables').update({ status }).eq('id', id); if(error) throw error;
+    await firstValueFrom(this.apiService.patch('receivables', `id=eq.${id}`, { status }));
+    await this.fetchTable('receivables');
   }
   
   async registerDriver(driverData: Omit<DeliveryDriver, 'id' | 'status'>): Promise<{ success: string } | { error: string }> {
-    const { data: existing, error: findError } = await this.supabase.from('delivery_drivers').select('id').eq('name', driverData.name).maybeSingle();
-    if(findError) return { error: findError.message }; if(existing) return { error: 'Um entregador com este nome já existe.' };
-    const { error } = await this.supabase.from('delivery_drivers').insert({ ...driverData, id: Date.now().toString(), status: 'pending' }); if(error) return { error: error.message };
+    const existing = await firstValueFrom(this.apiService.get<DeliveryDriver>('delivery_drivers', `name=eq.${driverData.name}&limit=1`));
+    if(existing.length > 0) return { error: 'Um entregador com este nome já existe.' };
+    
+    await firstValueFrom(this.apiService.post('delivery_drivers', { ...driverData, id: Date.now().toString(), status: 'pending' }));
+    await this.fetchTable('delivery_drivers');
     return { success: 'Cadastro enviado para análise.' };
   }
 
@@ -268,16 +226,20 @@ export class DataService {
   logoutDriver() { this.currentDriver.set(null); }
   
   async updateDriverStatus(driverId: string, status: DeliveryDriver['status']) {
-    const { error } = await this.supabase.from('delivery_drivers').update({ status }).eq('id', driverId); if(error) throw error;
+    await firstValueFrom(this.apiService.patch('delivery_drivers', `id=eq.${driverId}`, { status }));
+    await this.fetchTable('delivery_drivers');
   }
 
   async deleteDriver(driverId: string) {
-    const { error } = await this.supabase.from('delivery_drivers').delete().eq('id', driverId); if(error) throw error;
+    await firstValueFrom(this.apiService.delete('delivery_drivers', `id=eq.${driverId}`));
+    await this.fetchTable('delivery_drivers');
   }
   
   async addDriverPayment(payment: Omit<DriverPayment, 'id'>) {
-    const { data, error } = await this.supabase.from('driver_payments').insert({ ...payment, id: Date.now().toString() }).select().single(); if(error) throw error;
-    return data;
+    const newPayment = { ...payment, id: Date.now().toString() };
+    const data = await firstValueFrom(this.apiService.post<DriverPayment>('driver_payments', newPayment, 'return=representation'));
+    await this.fetchTable('driver_payments');
+    return data[0];
   }
   
   private loadFromLocalStorage<T>(key: string, defaultValue: T): T {

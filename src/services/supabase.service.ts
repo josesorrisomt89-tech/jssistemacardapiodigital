@@ -1,70 +1,55 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { supabaseConfig } from '../supabase-config';
 
-// Define um tipo placeholder para o cliente Supabase para evitar a importação estática.
-// A biblioteca real será carregada dinamicamente.
-export type SupabaseClient = any;
-
+/**
+ * NOTA DE ARQUITETURA: Este serviço substitui o cliente Supabase-JS.
+ * Ele usa o HttpClient nativo do Angular para se comunicar diretamente com a API REST do Supabase.
+ * Isso resolve um erro fatal de inicialização causado por incompatibilidades da biblioteca externa.
+ */
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
-export class SupabaseService {
-  private _supabase: SupabaseClient | null = null;
-  public readonly initializationError = signal<string | null>(null);
-  private initPromise: Promise<boolean> | null = null;
+export class ApiService {
+  private http = inject(HttpClient);
+  private apiUrl = supabaseConfig.url;
+  private apiKey = supabaseConfig.anonKey;
 
-  get supabase(): SupabaseClient {
-    if (!this._supabase) {
-      throw new Error('O cliente Supabase não foi inicializado. Chame o método init() primeiro.');
+  private getHeaders(prefer?: string): HttpHeaders {
+    let headers = new HttpHeaders({
+      'apikey': this.apiKey,
+      'Authorization': `Bearer ${this.apiKey}`,
+      'Content-Type': 'application/json'
+    });
+    if (prefer) {
+      headers = headers.set('Prefer', prefer);
     }
-    return this._supabase;
+    return headers;
   }
 
-  constructor() {}
+  get<T>(tableName: string, params: string = ''): Observable<T[]> {
+    const url = `${this.apiUrl}/rest/v1/${tableName}?${params}`;
+    return this.http.get<T[]>(url, { headers: this.getHeaders() });
+  }
 
-  /**
-   * Inicializa o cliente Supabase de forma assíncrona e dinâmica.
-   * Isso garante que a biblioteca do Supabase seja carregada apenas quando necessário,
-   * após o aplicativo Angular já ter sido inicializado, evitando crashes na inicialização.
-   * Utiliza uma "trava" de promessa (initPromise) para evitar múltiplas inicializações.
-   * @returns Uma promessa que resolve para `true` em caso de sucesso e `false` em caso de falha.
-   */
-  init(): Promise<boolean> {
-    if (this.initPromise) {
-      return this.initPromise;
-    }
+  post<T>(tableName: string, body: any, prefer?: string): Observable<T[]> {
+    const url = `${this.apiUrl}/rest/v1/${tableName}`;
+    // A API REST do Supabase retorna a representação do objeto dentro de um array
+    return this.http.post<T[]>(url, body, { headers: this.getHeaders(prefer) });
+  }
+  
+  patch<T>(tableName: string, query: string, body: any): Observable<T[]> {
+    const url = `${this.apiUrl}/rest/v1/${tableName}?${query}`;
+    return this.http.patch<T[]>(url, body, { headers: this.getHeaders('return=representation') });
+  }
 
-    this.initPromise = (async () => {
-      const supabaseUrl = supabaseConfig.url;
-      const supabaseAnonKey = supabaseConfig.anonKey;
-
-      if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('COLOQUE_A_URL') || supabaseAnonKey.includes('COLOQUE_A_CHAVE')) {
-        const errorMessage = 'Erro Crítico: A configuração do Supabase (URL/Chave) não foi encontrada ou é inválida. Verifique o arquivo `src/supabase-config.ts`.';
-        this.initializationError.set(errorMessage);
-        console.error(errorMessage);
-        return false;
-      }
-
-      if (!supabaseAnonKey.startsWith('eyJ')) {
-        const errorMessage = `Erro Crítico: A Chave Anônima (anonKey) do Supabase parece estar incorreta. Uma chave válida geralmente começa com "eyJ". Por favor, verifique o arquivo 'src/supabase-config.ts'.`;
-        this.initializationError.set(errorMessage);
-        console.error(errorMessage);
-        return false;
-      }
-
-      try {
-        // Importa dinamicamente a função createClient da URL completa do CDN.
-        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@^2');
-        this._supabase = createClient(supabaseUrl, supabaseAnonKey);
-        return true;
-      } catch (error) {
-        const errorMessage = `Erro Crítico: Não foi possível inicializar o cliente Supabase. Detalhes: ${(error as Error).message}`;
-        console.error("FALHA AO INICIALIZAR SUPABASE:", error);
-        this.initializationError.set(errorMessage);
-        return false;
-      }
-    })();
-
-    return this.initPromise;
+  delete(tableName: string, query: string): Observable<void> {
+    const url = `${this.apiUrl}/rest/v1/${tableName}?${query}`;
+    return this.http.delete<void>(url, { headers: this.getHeaders() });
+  }
+  
+  upsert<T>(tableName: string, body: any): Observable<T[]> {
+      return this.post<T>(tableName, body, 'resolution=merge-duplicates');
   }
 }

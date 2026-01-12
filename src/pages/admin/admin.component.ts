@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormArray, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,7 +15,7 @@ import { GeminiService } from '../../services/gemini.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, LayoutPreviewComponent, ReceiptComponent]
 })
-export class AdminComponent {
+export class AdminComponent implements OnInit, OnDestroy {
   private dataService: DataService = inject(DataService);
   private authService: AuthService = inject(AuthService);
   private fb: FormBuilder = inject(FormBuilder);
@@ -25,6 +25,7 @@ export class AdminComponent {
   @ViewChild('newOrderSound') newOrderSound!: ElementRef<HTMLAudioElement>;
   isNewOrderNotificationActive = signal(false);
   private knownReceivedOrderIds = new Set<string>();
+  private orderPollingInterval: any;
 
   isLoggedIn = this.authService.isAdminLoggedIn;
   loginForm = this.fb.group({
@@ -348,6 +349,22 @@ export class AdminComponent {
     });
   }
 
+  ngOnInit(): void {
+    // Inicia o polling para verificar novos pedidos a cada 20 segundos
+    this.orderPollingInterval = setInterval(() => {
+      console.log('Verificando novos pedidos...');
+      this.dataService.fetchTable('orders');
+    }, 20000);
+  }
+
+  ngOnDestroy(): void {
+    // Limpa o intervalo quando o componente é destruído para evitar vazamentos de memória
+    if (this.orderPollingInterval) {
+      clearInterval(this.orderPollingInterval);
+    }
+    this.stopNewOrderSound();
+  }
+
   playNewOrderSound() {
     this.newOrderSound?.nativeElement.play().catch(e => console.error("Audio playback failed:", e));
   }
@@ -432,9 +449,7 @@ export class AdminComponent {
         formValue.admin_password = currentSettings.admin_password;
     }
     
-    // Create a new object to send to Supabase, to avoid potential readonly issues with signals.
     const settingsToSave = { ...currentSettings, ...formValue };
-    // The settings table should only have one row, with a fixed ID.
     const settingsWithId: ShopSettings = { ...settingsToSave, id: 1 };
 
 
