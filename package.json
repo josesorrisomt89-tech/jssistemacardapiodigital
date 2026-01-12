@@ -16,7 +16,6 @@
     "@angular/core": "^20.1.0",
     "@angular/common": "^20.1.0",
     "@angular/forms": "^20.1.0",
-    "@supabase/supabase-js": "^2",
     "@angular/build": "^20.1.0",
     "@angular/cli": "^20.1.0",
     "@angular/compiler-cli": "^20.1.0",

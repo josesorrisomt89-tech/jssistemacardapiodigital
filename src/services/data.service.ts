@@ -1,7 +1,6 @@
 import { Injectable, signal, effect, inject } from '@angular/core';
 import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon } from '../models';
-import { SupabaseService } from './supabase.service';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseService, SupabaseClient } from './supabase.service';
 
 @Injectable({
   providedIn: 'root'
@@ -27,9 +26,6 @@ export class DataService {
   private isInitialized = false;
 
   constructor() {
-    // O effect para persistir o estado do motorista é criado aqui, no construtor.
-    // Este é o local mais seguro e correto, garantindo que o "injection context" do Angular
-    // esteja sempre presente, eliminando a causa raiz dos erros de inicialização.
     effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
   }
 
@@ -40,12 +36,11 @@ export class DataService {
     this.isInitialized = true;
     this.loadingStatus.set('loading');
 
-    // Carrega o estado inicial do driver a partir do localStorage.
-    // O `effect` no construtor irá lidar com as futuras atualizações.
     this.currentDriver.set(this.loadFromLocalStorage('acai_current_driver', null));
 
-    // Inicializa o Supabase de forma segura aqui.
-    if (!this.supabaseService.init()) {
+    // A inicialização do Supabase agora é assíncrona e precisa ser aguardada.
+    const supabaseInitialized = await this.supabaseService.init();
+    if (!supabaseInitialized) {
       console.error('Abortando carregamento de dados devido a erro de inicialização do Supabase.');
       this.loadingError.set(this.supabaseService.initializationError());
       this.loadingStatus.set('error');
