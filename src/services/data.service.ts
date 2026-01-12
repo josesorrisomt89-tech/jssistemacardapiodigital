@@ -30,7 +30,7 @@ export class DataService {
   async initializeData() {
     try {
       const [ settingsRes, categoriesRes, productsRes, addonsRes, ordersRes, couponsRes, receivablesRes, expensesRes, driversRes, driverPaymentsRes ] = await Promise.all([
-        this.supabase.from('settings').select('*').limit(1).single(),
+        this.supabase.from('settings').select('*').limit(1).maybeSingle(),
         this.supabase.from('categories').select('*'),
         this.supabase.from('products').select('*'),
         this.supabase.from('addon_categories').select('*'),
