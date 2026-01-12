@@ -1,4 +1,4 @@
-import { Injectable, signal, effect, inject } from '@angular/core';
+import { Injectable, signal, effect, inject, Injector, runInInjectionContext } from '@angular/core';
 import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon } from '../models';
 import { SupabaseService } from './supabase.service';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -8,6 +8,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 })
 export class DataService {
   private supabaseService = inject(SupabaseService);
+  private injector = inject(Injector);
   private supabase!: SupabaseClient;
 
   settings = signal<ShopSettings>(this.getDefaultSettings());
@@ -27,7 +28,7 @@ export class DataService {
   private isInitialized = false;
 
   constructor() {
-    effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
+    // O construtor agora está vazio para prevenir qualquer problema durante a injeção de dependências.
   }
 
   public async load(): Promise<void> {
@@ -36,6 +37,12 @@ export class DataService {
     }
     this.isInitialized = true;
     this.loadingStatus.set('loading');
+
+    // O effect agora é criado de forma segura aqui, dentro do contexto de injeção.
+    // Isso adia sua criação para um momento em que a aplicação está mais estável.
+    runInInjectionContext(this.injector, () => {
+        effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
+    });
 
     // Inicializa o Supabase de forma segura aqui, em vez de no construtor.
     if (!this.supabaseService.init()) {
