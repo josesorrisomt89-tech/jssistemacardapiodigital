@@ -166,7 +166,10 @@ export class DataService {
     const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayIndex] as keyof ShopSettings['opening_hours'];
     if (!settings.opening_hours) { return { is_open: false, hoursToday: null, is_temporarily_closed: false, message: 'Horário de funcionamento não configurado.' }; }
     const hoursToday = settings.opening_hours[dayName];
-    if (!hoursToday || !hoursToday.is_open) { return { is_open: false, hoursToday, is_temporarily_closed: false, message: '' }; }
+    // Adicionada verificação de segurança para prevenir crash com dados incompletos
+    if (!hoursToday || !hoursToday.is_open || !hoursToday.start || !hoursToday.end || !hoursToday.start.includes(':') || !hoursToday.end.includes(':')) {
+      return { is_open: false, hoursToday, is_temporarily_closed: false, message: '' };
+    }
     const currentTime = now.getHours() * 60 + now.getMinutes();
     const [startH, startM] = hoursToday.start.split(':').map(Number);
     const startTime = startH * 60 + startM;
