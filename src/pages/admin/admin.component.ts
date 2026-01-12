@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef, OnInit, OnDestroy, Signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormArray, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -137,7 +137,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (!driverId) return [];
     return this.dataService.driverPayments()
       .filter(p => p.driver_id === driverId)
-      .sort((a,b) => new Date(b.payment_date).getTime() - new Date(a.date).getTime());
+      .sort((a,b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
   });
 
   reportTotals = computed(() => {
@@ -524,7 +524,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
   
   async moveItem<T extends { order: number, id: string }>(listName: 'categories' | 'products' | 'addonCategories', index: number, direction: 'up' | 'down') {
-    const listSignal = this.dataService[listName] as signal<(T)[]>;
+    const listSignal = this.dataService[listName] as Signal<(T)[]>;
     const list = [...listSignal()].sort((a,b) => a.order - b.order);
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= list.length) return;
@@ -621,7 +621,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   async deleteCategory(id: string) { if(confirm('Tem certeza?')) { await this.dataService.deleteCategory(id); } }
   
   editAddonCategory(ac: AddonCategory | null) {
-      this.addonCategoryForm.reset({required: false, addon_categories: []});
+      this.addonCategoryForm.reset({required: false});
       this.addonCategoryAddons.clear();
       if (ac) {
           this.editingAddonCategory.set(ac);
@@ -639,7 +639,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   async saveAddonCategory() {
       if (this.addonCategoryForm.invalid) { alert('Preencha todos os campos da categoria de adicionais.'); return; }
       const formData = this.addonCategoryForm.value;
-      formData.addons?.forEach((addon, index) => addon.order = index);
+      (formData.addons as any[])?.forEach((addon: any, index: number) => addon.order = index);
 
       if (!formData.id) {
           formData.id = Date.now().toString();

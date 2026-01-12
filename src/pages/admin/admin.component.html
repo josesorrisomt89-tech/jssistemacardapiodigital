@@ -468,7 +468,7 @@
                        @if (productForm.get('image_url')?.value) {
                         <img [src]="productForm.get('image_url')?.value" alt="Preview da imagem" class="w-full h-40 object-cover rounded-lg my-2 bg-gray-800">
                       }
-                      <input type="file" (change)="onFileChange($event, 'image_url', productForm)" class="w-full text-sm text-gray-400 file:bg-gray-600 file:border-0 file:px-4 file:py-2 file:rounded-lg file:mr-4">
+                      <input type="file" (change)="onProductFileChange($event)" class="w-full text-sm text-gray-400 file:bg-gray-600 file:border-0 file:px-4 file:py-2 file:rounded-lg file:mr-4">
                     </div>
                     <div><label class="block text-sm">Categoria</label><select formControlName="category_id" class="w-full bg-gray-700 p-2 rounded"> @for(cat of sortedCategories(); track cat.id) { <option [value]="cat.id">{{cat.name}}</option> } </select></div>
                     

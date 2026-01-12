@@ -39,6 +39,7 @@ export class GeminiService {
         
         // Dynamically import the module using its full CDN URL.
         // This completely bypasses the importmap and ensures the module is only loaded when needed.
+        // @ts-ignore
         const genaiModule: any = await import('https://esm.sh/@google/genai@^1.34.0?external=rxjs');
         const GoogleGenAI_Class = genaiModule.GoogleGenAI;
         this.ai = new GoogleGenAI_Class({ apiKey: process.env.API_KEY });
