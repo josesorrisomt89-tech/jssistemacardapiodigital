@@ -1,7 +1,6 @@
-import { Injectable, signal, effect, inject, Injector, runInInjectionContext } from '@angular/core';
+import { Injectable, signal, effect, inject } from '@angular/core';
 import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon } from '../models';
 import { SupabaseService } from './supabase.service';
-import { AuthService } from './auth.service';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable({
@@ -9,7 +8,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
 })
 export class DataService {
   private supabaseService = inject(SupabaseService);
-  private injector = inject(Injector);
   private supabase!: SupabaseClient;
 
   settings = signal<ShopSettings>(this.getDefaultSettings());
@@ -21,7 +19,7 @@ export class DataService {
   receivables = signal<Receivable[]>([]);
   expenses = signal<Expense[]>([]);
   deliveryDrivers = signal<DeliveryDriver[]>([]);
-  currentDriver = signal<DeliveryDriver | null>(null); // Inicialização pura, sem side-effects.
+  currentDriver = signal<DeliveryDriver | null>(null);
   driverPayments = signal<DriverPayment[]>([]);
   
   loadingStatus = signal<'idle' | 'loading' | 'loaded' | 'error'>('idle');
@@ -29,7 +27,9 @@ export class DataService {
   private isInitialized = false;
 
   constructor() {
-    // O construtor agora está vazio para prevenir qualquer problema durante a injeção de dependências.
+    // O effect para persistir o estado do motorista é colocado no construtor,
+    // que é o local ideal e seguro para sua criação.
+    effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
   }
 
   public async load(): Promise<void> {
@@ -39,18 +39,8 @@ export class DataService {
     this.isInitialized = true;
     this.loadingStatus.set('loading');
 
-    // Injeção tardia do AuthService para quebrar o ciclo de dependência.
-    const authService = this.injector.get(AuthService);
-    // Inicializa o AuthService para carregar seu estado do localStorage de forma segura.
-    authService.init();
-
     // Carrega o estado do localStorage para o driver aqui, em um ponto seguro do ciclo de vida.
     this.currentDriver.set(this.loadFromLocalStorage('acai_current_driver', null));
-
-    // O effect agora é criado de forma segura aqui, dentro do contexto de injeção.
-    runInInjectionContext(this.injector, () => {
-        effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
-    });
 
     // Inicializa o Supabase de forma segura aqui.
     if (!this.supabaseService.init()) {
@@ -100,6 +90,8 @@ export class DataService {
           slider_images: settingsRes.data.slider_images || [],
         };
         this.settings.set(mergedSettings);
+      } else {
+        this.settings.set(this.getDefaultSettings());
       }
       
       if (categoriesRes.data) this.categories.set(categoriesRes.data);
@@ -122,11 +114,8 @@ export class DataService {
       .channel('public-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
         console.log('Realtime change received!', payload);
-        switch(payload.table) {
-          case 'orders': this.supabase.from('orders').select('*').then(({ data }) => data && this.orders.set(data)); break;
-          case 'products': this.supabase.from('products').select('*').then(({ data }) => data && this.products.set(data)); break;
-          case 'settings': this.initializeData(); break;
-        }
+        const table = payload.table as string;
+        this.fetchTable(table);
       })
       .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
@@ -136,6 +125,28 @@ export class DataService {
           console.error('Supabase realtime subscription error:', err);
         }
       });
+  }
+  
+  private async fetchTable(tableName: string) {
+    try {
+        const { data, error } = await this.supabase.from(tableName).select('*');
+        if (error) throw error;
+        
+        switch(tableName) {
+            case 'settings': this.initializeData(); break; // Reload all if settings change
+            case 'categories': this.categories.set(data); break;
+            case 'products': this.products.set(data); break;
+            case 'addon_categories': this.addonCategories.set(data); break;
+            case 'orders': this.orders.set(data); break;
+            case 'coupons': this.coupons.set(data); break;
+            case 'receivables': this.receivables.set(data); break;
+            case 'expenses': this.expenses.set(data); break;
+            case 'delivery_drivers': this.deliveryDrivers.set(data); break;
+            case 'driver_payments': this.driverPayments.set(data); break;
+        }
+    } catch(error) {
+        console.error(`Error fetching table ${tableName}:`, error);
+    }
   }
 
   isShopOpen = (): { is_open: boolean, hoursToday: DayOpeningHours | null, is_temporarily_closed: boolean, message: string } => {
@@ -172,7 +183,7 @@ export class DataService {
   async saveSettings(settings: ShopSettings) {
     const { data, error } = await this.supabase.from('settings').upsert(settings).eq('id', 1).select().single();
     if (error) throw error;
-    this.settings.set(data);
+    // this.settings.set(data); // Realtime will handle this update
     return data;
   }
   
@@ -211,34 +222,37 @@ export class DataService {
 
   async updateOrderStatus(orderId: string, status: OrderStatus, assignment?: { driverId: string | null, driverName: string | null, isBroadcast: boolean }) {
      let updateObject: Partial<Order> = { status };
-     if (assignment) { Object.assign(updateObject, assignment); }
+     if (assignment) { 
+        Object.assign(updateObject, { 
+            assigned_driver_id: assignment.driverId,
+            assigned_driver_name: assignment.driverName,
+            is_delivery_broadcasted: assignment.isBroadcast,
+        });
+     }
      const { data, error } = await this.supabase.from('orders').update(updateObject).eq('id', orderId).select().single(); if(error) throw error; return data;
   }
 
   async addExpense(expense: Omit<Expense, 'id'>): Promise<Expense> {
-    const { data, error } = await this.supabase.from('expenses').insert(expense).select().single(); if(error) throw error;
-    this.expenses.update(e => [data, ...e]); return data;
+    const { data, error } = await this.supabase.from('expenses').insert({ ...expense, id: Date.now().toString() }).select().single(); if(error) throw error;
+    return data;
   }
 
   async updateExpense(updatedExpense: Expense): Promise<void> {
     const { error } = await this.supabase.from('expenses').update(updatedExpense).eq('id', updatedExpense.id); if(error) throw error;
-    this.expenses.update(e => e.map(exp => exp.id === updatedExpense.id ? updatedExpense : exp));
   }
 
   async deleteExpense(id: string): Promise<void> {
     const { error } = await this.supabase.from('expenses').delete().eq('id', id); if(error) throw error;
-    this.expenses.update(e => e.filter(exp => exp.id !== id));
   }
 
   async updateReceivableStatus(id: string, status: 'pending' | 'paid'): Promise<void> {
     const { error } = await this.supabase.from('receivables').update({ status }).eq('id', id); if(error) throw error;
-    this.receivables.update(r => r.map(rec => rec.id === id ? { ...rec, status } : rec));
   }
   
   async registerDriver(driverData: Omit<DeliveryDriver, 'id' | 'status'>): Promise<{ success: string } | { error: string }> {
     const { data: existing, error: findError } = await this.supabase.from('delivery_drivers').select('id').eq('name', driverData.name).maybeSingle();
     if(findError) return { error: findError.message }; if(existing) return { error: 'Um entregador com este nome já existe.' };
-    const { error } = await this.supabase.from('delivery_drivers').insert({ ...driverData, status: 'pending' }); if(error) return { error: error.message };
+    const { error } = await this.supabase.from('delivery_drivers').insert({ ...driverData, id: Date.now().toString(), status: 'pending' }); if(error) return { error: error.message };
     return { success: 'Cadastro enviado para análise.' };
   }
 
@@ -255,17 +269,15 @@ export class DataService {
   
   async updateDriverStatus(driverId: string, status: DeliveryDriver['status']) {
     const { error } = await this.supabase.from('delivery_drivers').update({ status }).eq('id', driverId); if(error) throw error;
-    this.deliveryDrivers.update(drivers => drivers.map(d => d.id === driverId ? { ...d, status } : d));
   }
 
   async deleteDriver(driverId: string) {
     const { error } = await this.supabase.from('delivery_drivers').delete().eq('id', driverId); if(error) throw error;
-    this.deliveryDrivers.update(drivers => drivers.filter(d => d.id !== driverId));
   }
   
   async addDriverPayment(payment: Omit<DriverPayment, 'id'>) {
-    const { data, error } = await this.supabase.from('driver_payments').insert(payment).select().single(); if(error) throw error;
-    this.driverPayments.update(p => [data, ...p]); return data;
+    const { data, error } = await this.supabase.from('driver_payments').insert({ ...payment, id: Date.now().toString() }).select().single(); if(error) throw error;
+    return data;
   }
   
   private loadFromLocalStorage<T>(key: string, defaultValue: T): T {
