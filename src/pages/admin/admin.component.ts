@@ -520,40 +520,63 @@ export class AdminComponent implements OnInit, OnDestroy {
     }
   }
   
-  // Fix: The previous generic implementation caused a type error.
-  // This refactored version removes the generic and uses type guards to handle different lists,
-  // which is safer and resolves the compilation issue.
   async moveItem(listName: 'categories' | 'products' | 'addonCategories', index: number, direction: 'up' | 'down') {
-    const listSignal = this.dataService[listName];
-    // The cast to `any[]` is a pragmatic way to handle the union of different array types for sorting.
-    const list: Array<Category | Product | AddonCategory> = [...(listSignal() as any[])].sort((a, b) => a.order - b.order);
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= list.length) return;
+    // This is verbose, but it's completely type-safe and avoids generics or `any` casts
+    // that can cause issues with the Angular compiler in this specific environment.
+    if (listName === 'categories') {
+        const list = [...this.dataService.categories()].sort((a, b) => a.order - b.order);
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= list.length) return;
 
-    [list[index], list[newIndex]] = [list[newIndex], list[index]];
+        [list[index], list[newIndex]] = [list[newIndex], list[index]];
+        
+        const updatedList = list.map((item, idx) => ({ ...item, order: idx }));
+        this.dataService.categories.set(updatedList); // Optimistic update
+        
+        // Backend update
+        const updates = updatedList.map(item => this.dataService.saveCategory(item));
+        await Promise.all(updates).catch(async (err) => {
+            console.error('Error saving category order, reverting.', err);
+            await this.dataService.fetchTable('categories'); // Revert on error
+        });
 
-    const updates = list.map(async (item, idx) => {
-      const updatedItem = { ...item, order: idx };
-      if (listName === 'categories') {
-        await this.dataService.saveCategory(updatedItem as Category);
-      } else if (listName === 'products') {
-        await this.dataService.saveProduct(updatedItem as Product);
-      } else if (listName === 'addonCategories') {
-        await this.dataService.saveAddonCategory(updatedItem as AddonCategory);
-      }
-      return updatedItem;
-    });
+    } else if (listName === 'products') {
+        const list = [...this.dataService.products()].sort((a, b) => a.order - b.order);
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= list.length) return;
 
-    const updatedList = await Promise.all(updates);
-    
-    // Optimistically update the UI with the reordered list.
-    // A cast to `any` is used here because TypeScript cannot resolve the correct `set` method signature on the signal union type.
-    (listSignal as any).set(updatedList);
+        [list[index], list[newIndex]] = [list[newIndex], list[index]];
+
+        const updatedList = list.map((item, idx) => ({ ...item, order: idx }));
+        this.dataService.products.set(updatedList); // Optimistic update
+
+        const updates = updatedList.map(item => this.dataService.saveProduct(item));
+        await Promise.all(updates).catch(async (err) => {
+            console.error('Error saving product order, reverting.', err);
+            await this.dataService.fetchTable('products');
+        });
+
+    } else if (listName === 'addonCategories') {
+        const list = [...this.dataService.addonCategories()].sort((a, b) => a.order - b.order);
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= list.length) return;
+        
+        [list[index], list[newIndex]] = [list[newIndex], list[index]];
+
+        const updatedList = list.map((item, idx) => ({ ...item, order: idx }));
+        this.dataService.addonCategories.set(updatedList); // Optimistic update
+        
+        const updates = updatedList.map(item => this.dataService.saveAddonCategory(item));
+        await Promise.all(updates).catch(async (err) => {
+            console.error('Error saving addon category order, reverting.', err);
+            await this.dataService.fetchTable('addonCategories');
+        });
+    }
   }
 
   editProduct(product: Product | null) {
     this.productFile.set(null);
-    this.productForm.reset({ addon_categories: [], is_available: true, price_type: 'sized' });
+    this.productForm.reset({ is_available: true, price_type: 'sized', addon_categories: [] });
     this.productSizes.clear();
     if (product) {
       this.editingProduct.set(product);

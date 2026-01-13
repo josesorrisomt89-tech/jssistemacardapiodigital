@@ -106,11 +106,11 @@
                    <div class="grid grid-cols-2 gap-2 text-sm">
                       <div>
                          <label class="block mb-1 text-xs text-gray-400">Data Início</label>
-                         <input type="date" [value]="customStartDate()" (change)="customStartDate.set($event.target.value)" class="w-full p-2 rounded bg-gray-700 border-gray-600">
+                         <input type="date" [value]="customStartDate()" (change)="customStartDate.set($any($event.target).value)" class="w-full p-2 rounded bg-gray-700 border-gray-600">
                       </div>
                       <div>
                           <label class="block mb-1 text-xs text-gray-400">Data Fim</label>
-                          <input type="date" [value]="customEndDate()" (change)="customEndDate.set($event.target.value)" class="w-full p-2 rounded bg-gray-700 border-gray-600">
+                          <input type="date" [value]="customEndDate()" (change)="customEndDate.set($any($event.target).value)" class="w-full p-2 rounded bg-gray-700 border-gray-600">
                       </div>
                    </div>
                 }
