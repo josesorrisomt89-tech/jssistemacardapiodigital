@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, ViewChild, ElementRef } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { Order, OrderStatus, DeliveryDriver } from '../../models';
@@ -9,7 +9,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
   selector: 'app-delivery',
   templateUrl: './delivery.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, DatePipe, RouterLink, ReactiveFormsModule],
+  imports: [CurrencyPipe, RouterLink, ReactiveFormsModule],
 })
 export class DeliveryComponent {
   private dataService: DataService = inject(DataService);

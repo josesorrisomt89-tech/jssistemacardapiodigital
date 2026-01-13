@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef, OnInit, OnDestroy, Signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef, OnInit, OnDestroy, Signal, WritableSignal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormArray, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -494,9 +494,6 @@ export class AdminComponent implements OnInit, OnDestroy {
   addNeighborhood(hood?: NeighborhoodFee) { this.deliveryNeighborhoods.push(this.fb.group({ name: [hood?.name || ''], fee: [hood?.fee || 0] })); }
   removeNeighborhood(index: number) { this.deliveryNeighborhoods.removeAt(index); }
   
-  // Slider images are now handled by Supabase Storage, but the UI for adding/removing URLs remains.
-  // FIX: The original function accepted no arguments, causing an error when populating the form from existing settings.
-  // It now accepts an optional image URL string, defaulting to an empty string.
   addSliderImage(image: string = '') { this.sliderImages.push(this.fb.control(image)); }
   async removeSliderImage(index: number) {
     const urlToRemove = this.sliderImages.at(index).value;
@@ -523,24 +520,35 @@ export class AdminComponent implements OnInit, OnDestroy {
     }
   }
   
-  async moveItem<T extends { order: number, id: string }>(listName: 'categories' | 'products' | 'addonCategories', index: number, direction: 'up' | 'down') {
-    const listSignal = this.dataService[listName] as Signal<(T)[]>;
-    const list = [...listSignal()].sort((a,b) => a.order - b.order);
+  // Fix: The previous generic implementation caused a type error.
+  // This refactored version removes the generic and uses type guards to handle different lists,
+  // which is safer and resolves the compilation issue.
+  async moveItem(listName: 'categories' | 'products' | 'addonCategories', index: number, direction: 'up' | 'down') {
+    const listSignal = this.dataService[listName];
+    // The cast to `any[]` is a pragmatic way to handle the union of different array types for sorting.
+    const list: Array<Category | Product | AddonCategory> = [...(listSignal() as any[])].sort((a, b) => a.order - b.order);
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= list.length) return;
-    
+
     [list[index], list[newIndex]] = [list[newIndex], list[index]];
-    
+
     const updates = list.map(async (item, idx) => {
-        const updatedItem = { ...item, order: idx };
-        if (listName === 'categories') await this.dataService.saveCategory(updatedItem as any);
-        if (listName === 'products') await this.dataService.saveProduct(updatedItem as any);
-        if (listName === 'addonCategories') await this.dataService.saveAddonCategory(updatedItem as any);
-        return updatedItem;
+      const updatedItem = { ...item, order: idx };
+      if (listName === 'categories') {
+        await this.dataService.saveCategory(updatedItem as Category);
+      } else if (listName === 'products') {
+        await this.dataService.saveProduct(updatedItem as Product);
+      } else if (listName === 'addonCategories') {
+        await this.dataService.saveAddonCategory(updatedItem as AddonCategory);
+      }
+      return updatedItem;
     });
-    
+
     const updatedList = await Promise.all(updates);
-    listSignal.set(updatedList);
+    
+    // Optimistically update the UI with the reordered list.
+    // A cast to `any` is used here because TypeScript cannot resolve the correct `set` method signature on the signal union type.
+    (listSignal as any).set(updatedList);
   }
 
   editProduct(product: Product | null) {
@@ -574,14 +582,14 @@ export class AdminComponent implements OnInit, OnDestroy {
       if (this.productFile()) {
         const pathPrefix = `products/${formData.id || Date.now()}`;
         const newUrl = await this.imageUploadService.uploadImage(this.productFile()!, pathPrefix, currentProduct?.image_url);
-        formData.image_url = newUrl;
+        (formData as any).image_url = newUrl;
       }
       
-      if (formData.price_type === 'fixed') formData.sizes = []; else formData.price = 0;
+      if (formData.price_type === 'fixed') (formData as any).sizes = []; else (formData as any).price = 0;
       
       if (!formData.id) {
-        formData.id = Date.now().toString();
-        formData.order = this.dataService.products().length;
+        (formData as any).id = Date.now().toString();
+        (formData as any).order = this.dataService.products().length;
       }
       
       await this.dataService.saveProduct(formData as Product);
@@ -611,8 +619,8 @@ export class AdminComponent implements OnInit, OnDestroy {
       if (this.categoryForm.invalid) { alert('O nome da categoria é obrigatório.'); return; }
       const formData = this.categoryForm.value;
       if (!formData.id) {
-        formData.id = Date.now().toString();
-        formData.order = this.dataService.categories().length;
+        (formData as any).id = Date.now().toString();
+        (formData as any).order = this.dataService.categories().length;
       }
       await this.dataService.saveCategory(formData as Category);
       this.editingCategory.set(null);
@@ -642,8 +650,8 @@ export class AdminComponent implements OnInit, OnDestroy {
       (formData.addons as any[])?.forEach((addon: any, index: number) => addon.order = index);
 
       if (!formData.id) {
-          formData.id = Date.now().toString();
-          formData.order = this.dataService.addonCategories().length;
+          (formData as any).id = Date.now().toString();
+          (formData as any).order = this.dataService.addonCategories().length;
       }
       await this.dataService.saveAddonCategory(formData as AddonCategory);
       this.editingAddonCategory.set(null);
@@ -666,7 +674,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (this.couponForm.invalid) { alert('Preencha os campos do cupom.'); return; }
     
     const formData = this.couponForm.getRawValue();
-    if (!formData.id) formData.id = Date.now().toString();
+    if (!formData.id) (formData as any).id = Date.now().toString();
     
     await this.dataService.saveCoupon(formData as Coupon);
     this.editingCoupon.set(null);
@@ -836,7 +844,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     if(this.pdvCart().length === 0) { alert('O carrinho está vazio.'); return; }
     if(this.pdvCheckoutForm.invalid) { alert('Preencha todos os campos obrigatórios.'); return; }
     const formValue = this.pdvCheckoutForm.getRawValue();
-    const baseOrder: Omit<Order, 'id' | 'date' | 'status' | 'delivery_option'> = { customer_name: formValue.customer_name, payment_method: formValue.payment_method, change_for: formValue.payment_method === 'cash' ? Number(formValue.change_for) || undefined : undefined, items: this.pdvCart(), subtotal: this.pdvSubtotal(), total: this.pdvTotal(), delivery_fee: this.pdvDeliveryFee(), };
+    const baseOrder: Omit<Order, 'id' | 'date' | 'status' | 'delivery_option'> = { customer_name: formValue.customer_name, payment_method: formValue.payment_method as any, change_for: formValue.payment_method === 'cash' ? Number(formValue.change_for) || undefined : undefined, items: this.pdvCart(), subtotal: this.pdvSubtotal(), total: this.pdvTotal(), delivery_fee: this.pdvDeliveryFee(), };
     if (this.pdvState() === 'balcao') {
         const newOrder = await this.dataService.addOrder({ ...baseOrder, delivery_option: 'counter' });
         await this.dataService.updateOrderStatus(newOrder.id, 'Entregue');
@@ -943,10 +951,8 @@ export class AdminComponent implements OnInit, OnDestroy {
     try {
       const base64Image = await this.geminiService.generateImage(productName, productDescription || 'Um delicioso item do nosso cardápio');
       if (base64Image) {
-        // Convert base64 to File and set it for upload
         const file = this.imageUploadService.base64ToFile(base64Image, `${productName.replace(/\s/g, '_')}.jpg`);
         this.productFile.set(file);
-        // Set preview
         this.productForm.get('image_url')?.setValue(base64Image);
       } else {
         alert('Não foi possível gerar a imagem. Tente novamente.');
