@@ -22,7 +22,7 @@ export class AuthService {
   constructor() {}
 
   public init(): void {
-    if (this.isInitialized) {
+    if (this.isInitialized || !this.isBrowser()) {
       return;
     }
     this.isInitialized = true;
