@@ -1,4 +1,5 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { User, ShopSettings } from '../models';
 
@@ -10,27 +11,32 @@ const ADMIN_LOGGED_IN_KEY = 'acai_admin_logged_in';
 })
 export class AuthService {
   private router: Router = inject(Router);
+  
+  // A injeção do PLATFORM_ID nos permite verificar se o código está rodando em um navegador.
+  @Inject(PLATFORM_ID) private platformId: Object;
 
-  // Signals são inicializados puros, sem side-effects.
   currentUser = signal<User | null>(null);
   isAdminLoggedIn = signal<boolean>(false);
   private isInitialized = false;
 
-  constructor() {
-    // O construtor é 100% puro, sem efeitos colaterais, para garantir a estabilidade da inicialização.
-  }
+  constructor() {}
 
   public init(): void {
     if (this.isInitialized) {
       return;
     }
     this.isInitialized = true;
-    // O estado é carregado do storage de forma segura aqui, quando o app já está rodando.
     this.currentUser.set(this.loadUserFromStorage());
     this.isAdminLoggedIn.set(this.loadAdminStateFromStorage());
   }
 
+  // Verifica se está no navegador antes de tentar acessar o localStorage.
+  private isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
+  }
+
   private loadUserFromStorage(): User | null {
+    if (!this.isBrowser()) return null;
     try {
       const userJson = localStorage.getItem(USER_STORAGE_KEY);
       return userJson ? JSON.parse(userJson) : null;
@@ -41,6 +47,7 @@ export class AuthService {
   }
 
   private saveUserToStorage(user: User | null) {
+    if (!this.isBrowser()) return;
     try {
       if (user) {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
@@ -53,6 +60,7 @@ export class AuthService {
   }
 
   private loadAdminStateFromStorage(): boolean {
+    if (!this.isBrowser()) return false;
     try {
       const stored = sessionStorage.getItem(ADMIN_LOGGED_IN_KEY);
       return stored === 'true';
@@ -63,6 +71,7 @@ export class AuthService {
   }
 
   private saveAdminStateToStorage(isLoggedIn: boolean) {
+    if (!this.isBrowser()) return;
     try {
       if (isLoggedIn) {
         sessionStorage.setItem(ADMIN_LOGGED_IN_KEY, 'true');
@@ -77,7 +86,6 @@ export class AuthService {
 
   // Login para Clientes (agora 100% local, sem Supabase)
   loginWithGoogle(): void {
-    // Se já existe um usuário no storage, usa ele. Senão, cria um novo.
     let user = this.loadUserFromStorage();
     if (!user) {
         user = {
@@ -102,7 +110,6 @@ export class AuthService {
 
   // Login para Administradores
   adminLogin(username: string, password: string, settings: ShopSettings): { error: string | null } {
-    // Use default credentials if not set in settings, for initial setup.
     const adminUser = settings.admin_username || 'admin';
     const adminPass = settings.admin_password || 'admin';
 
