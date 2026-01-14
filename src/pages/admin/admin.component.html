@@ -967,37 +967,37 @@
                         <!-- Step 1 -->
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 1.1: Acesse a área de Autenticação</h4>
-                            <p class="mt-1">No painel do seu projeto no <a href="https://app.supabase.com" target="_blank" class="text-purple-400 underline">site do Supabase</a>, procure na barra lateral esquerda por um ícone de um <b class="text-yellow-400">escudo com uma fechadura (🛡️)</b>. Este é o menu de <strong>"Authentication"</strong>. Clique nele.</p>
+                            <p class="mt-1">No painel do seu projeto no <a href="https://app.supabase.com" target="_blank" class="text-purple-400 underline">site do Supabase</a>, procure na barra lateral esquerda por um ícone de <b class="text-yellow-400">usuários (👥)</b>. Este é o menu de <strong>"Authentication"</strong>. Clique nele.</p>
                         </div>
                         <!-- Step 2 -->
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 1.2: Encontre as Políticas de Acesso (Policies)</h4>
-                            <p class="mt-1">Dentro da seção de "Authentication", você verá um segundo menu. Procure e clique na opção <strong>"Policies"</strong>.</p>
+                            <p class="mt-1">Dentro da seção de "Authentication", no menu de navegação que aparece, procure e clique na opção <strong>"Policies"</strong>.</p>
                         </div>
                         <!-- Step 3 -->
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 1.3: Entendendo a Tela de Políticas</h4>
-                            <p class="mt-1">Você verá uma lista de todas as tabelas do seu banco de dados (`products`, `categories`, etc.). Ao lado de cada uma, provavelmente estará a mensagem em verde <code class="bg-gray-700 px-1 rounded">RLS is enabled</code>, mas com <code class="bg-gray-700 px-1 rounded">0 policies</code>.</p>
+                            <p class="mt-1">Você verá uma lista de todas as tabelas do seu banco de dados (`products`, `categories`, etc.). Ao lado de cada uma, provavelmente estará a mensagem em verde <code class="bg-gray-700 px-1 rounded">RLS is enabled</code>, mas com <code class="bg-gray-700 px-1 rounded">No policies created yet</code>.</p>
                             <p class="mt-1 text-sm text-gray-400">Isso significa: "A segurança está LIGADA, mas NENHUMA regra foi criada". O resultado é que o Supabase bloqueia TUDO.</p>
                         </div>
                         <!-- Step 4 -->
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 1.4: Crie uma Nova Política</h4>
-                            <p class="mt-1">Para cada tabela, você precisa criar uma regra. Comece com a tabela <strong><code>categories</code></strong>. Clique nela e depois clique no botão <strong>"+ New Policy"</strong>.</p>
-                            <p class="mt-1">Um painel lateral irá aparecer com o título "Create a new policy". Clique na primeira opção: <b class="text-yellow-400">"Get started from scratch"</b>.</p>
+                            <p class="mt-1">Para cada tabela, você precisa criar uma regra. Comece com a tabela <strong><code>addon_categories</code></strong>. Clique no botão <strong>"Create policy"</strong> ao lado dela.</p>
+                            <p class="mt-1">Uma nova tela chamada <b class="text-yellow-400">"Create a new Row Level Security policy"</b> irá aparecer. Ignore os "Templates" à direita e preencha o formulário principal que apareceu.</p>
                         </div>
                         <!-- Step 5 -->
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 1.5: Configure a Política de Acesso Total</h4>
                             <p class="mt-1">Preencha o formulário exatamente como a seguir:</p>
                             <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
-                                <li><strong>Policy Name:</strong> Digite <code>Permitir Acesso Total</code></li>
-                                <li><strong>Allowed operation:</strong> Marque a opção <strong>ALL</strong>.</li>
-                                <li><strong>Target roles:</strong> Deixe como está, com <code>public</code> selecionado.</li>
-                                <li><strong>USING expression:</strong> No campo de texto, digite apenas a palavra <code>true</code>.</li>
-                                <li><strong>WITH CHECK expression:</strong> No campo de texto, digite também a palavra <code>true</code>.</li>
+                                <li><strong>Policy Name:</strong> Digite <code>Public Access</code></li>
+                                <li><strong>Policy Command:</strong> Marque a bolinha ao lado de <strong>ALL</strong>.</li>
+                                <li><strong>Target Roles:</strong> Deixe como está, com <code>public</code> selecionado.</li>
+                                <li>No editor de código abaixo, na seção <b class="text-yellow-400">USING expression</b>, apague o comentário e digite apenas a palavra <code>true</code>.</li>
+                                <li>Faça o mesmo para a seção <b class="text-yellow-400">WITH CHECK expression</b>: apague o comentário e digite <code>true</code>.</li>
                             </ul>
-                            <p class="mt-2">Clique em <strong>"Review"</strong> e depois em <strong>"Save Policy"</strong>.</p>
+                            <p class="mt-2">Clique no botão verde <strong>"Save policy"</strong> no final da página.</p>
                         </div>
                          <!-- Step 6 -->
                         <div>
@@ -1037,24 +1037,22 @@
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Upload e Visualização</h4>
                             <p class="mt-1">Você verá 4 tipos de operação: `SELECT`, `INSERT`, `UPDATE`, `DELETE`. Você precisa criar uma política para cada uma para que seu app possa fazer upload, visualizar, atualizar e deletar imagens.</p>
-                            <p class="mt-2 font-bold">1. Política de Upload (INSERT):</p>
+                            <p class="mt-2 font-bold">1. Política de Visualização (SELECT):</p>
                             <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
-                               <li>Ao lado de <strong>INSERT</strong>, clique em <strong>"+ New Policy"</strong>.</li>
-                               <li>Um painel lateral irá aparecer. Clique na opção <b class="text-yellow-400">"Get started from scratch"</b>.</li>
-                               <li><strong>Policy Name:</strong> Digite <code>Permitir Uploads Públicos</code></li>
-                               <li><strong>Allowed operation:</strong> Marque apenas <strong>INSERT</strong>.</li>
-                               <li><strong>Target roles:</strong> Marque a opção <code>public</code>.</li>
-                               <li><strong>WITH CHECK expression:</strong> Digite <code>true</code>.</li>
-                               <li>Salve a política.</li>
+                               <li>Ao lado de <strong>SELECT</strong>, clique em <strong>"+ Create a new policy"</strong>.</li>
+                               <li>Na barra lateral de "Templates" que aparece à direita, clique no primeiro template: <b class="text-yellow-400">"Enable read access for all users"</b>.</li>
+                               <li>Isso preencherá o formulário para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
                             </ul>
-                             <p class="mt-2 font-bold">2. Política de Visualização (SELECT):</p>
-                            <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
-                               <li>Ao lado de <strong>SELECT</strong>, clique em <strong>"+ New Policy"</strong>.</li>
-                               <li>Use um template: clique na opção <strong>"Enable read access to everyone"</strong>. Isso preencherá tudo para você.</li>
-                               <li>Confirme e salve a política.</li>
-                            </ul>
-                             <p class="mt-2 font-bold">3. Repita para UPDATE e DELETE:</p>
-                             <p class="text-sm mt-1">Crie políticas para <strong>UPDATE</strong> e <strong>DELETE</strong> seguindo os mesmos passos da política de <strong>INSERT</strong> (usando a opção "Get started from scratch"), mas dando nomes apropriados (ex: `Permitir Updates Públicos`) e marcando a operação correspondente.</p>
+                             <p class="mt-2 font-bold">2. Política de Upload, Update e Delete (INSERT, UPDATE, DELETE):</p>
+                             <p class="text-sm mt-1">Agora, para <strong>INSERT</strong>, <strong>UPDATE</strong> e <strong>DELETE</strong>, você precisa criar uma política manual para cada um.</p>
+                             <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
+                                <li>Clique em <strong>"+ Create a new policy"</strong> ao lado de <strong>INSERT</strong>.</li>
+                                <li><strong>Policy Name:</strong> Digite <code>Public Uploads</code></li>
+                                <li><strong>Policy Command:</strong> Marque apenas <strong>INSERT</strong>.</li>
+                                <li><strong>WITH CHECK expression:</strong> No editor de código, apague o comentário e digite <code>true</code>.</li>
+                                <li>Salve a política.</li>
+                                <li><b class="text-yellow-400">REPITA</b> este processo para <strong>UPDATE</strong> (dando o nome de <code>Public Updates</code>) e <strong>DELETE</strong> (dando o nome de <code>Public Deletes</code>), marcando a opção correta em "Policy Command" a cada vez.</li>
+                             </ul>
                         </div>
                     </div>
                 </div>
