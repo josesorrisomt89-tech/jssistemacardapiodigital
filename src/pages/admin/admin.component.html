@@ -1027,17 +1027,17 @@
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 2.1: Crie o "Bucket" de Imagens</h4>
                             <p class="mt-1">Na barra lateral esquerda do Supabase, clique no ícone de um <b class="text-yellow-400">cilindro (🛢️)</b> para ir para <strong>"Storage"</strong>.</p>
-                            <p class="mt-1">Se um bucket chamado <code>images</code> já existir, pule para o Passo 2.2. Caso contrário, clique em <strong>"+ New bucket"</strong>.</p>
+                            <p class="mt-1">Se um bucket chamado <code>IMAGENS</code> já existir, pule para o Passo 2.2. Caso contrário, clique em <strong>"+ New bucket"</strong>.</p>
                             <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
-                                <li>No campo "Name", digite <b class="text-red-500">exatamente</b> <code>images</code>. O nome precisa ser este para o aplicativo funcionar.</li>
+                                <li>No campo "Name", digite <b class="text-red-500">exatamente</b> <code>IMAGENS</code>. O nome precisa ser este, em maiúsculas, para o aplicativo funcionar.</li>
                                 <li>Ative a opção <strong>"Public bucket"</strong>. Isso é muito importante!</li>
                                 <li>Clique em <strong>"Save"</strong>.</li>
                             </ul>
                         </div>
                         <!-- Step 2 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.2: Acesse as Políticas do Bucket `images`</h4>
-                            <p class="mt-1">Na lista de buckets, encontre o bucket <code>images</code>. Clique no menu de três pontinhos (<code>...</code>) ao lado dele e selecione <strong>"Policies"</strong>.</p>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.2: Acesse as Políticas do Bucket `IMAGENS`</h4>
+                            <p class="mt-1">Na lista de buckets, encontre o bucket <code>IMAGENS</code>. Clique no menu de três pontinhos (<code>...</code>) ao lado dele e selecione <strong>"Policies"</strong>.</p>
                         </div>
                         <!-- Step 3 -->
                         <div>
@@ -1048,19 +1048,19 @@
                                 <li>Clique em <strong>"+ New policy"</strong> ao lado da operação correspondente (comece com `INSERT`).</li>
                                 <li>Na tela que aparece, no lado direito, clique no template <b class="text-yellow-400">"Enable insert for all users"</b> (ou "update/delete" dependendo da política que está criando).</li>
                                 <li>O Supabase vai preencher tudo para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
-                                <li><b class="text-yellow-400">REPITA</b> este processo simples para `UPDATE` e `DELETE`. No final, você terá 4 políticas no total para o bucket `images`.</li>
+                                <li><b class="text-yellow-400">REPITA</b> este processo simples para `UPDATE` e `DELETE`. No final, você terá 4 políticas no total para o bucket `IMAGENS`.</li>
                              </ul>
                         </div>
                         <!-- Step 4 -->
                         <div class="p-3 rounded-lg border border-red-500/50 bg-red-500/10">
                             <h4 class="text-lg font-semibold text-red-500">Passo 2.4 (MUITO IMPORTANTE): Limpeza de Políticas Antigas</h4>
-                            <p class="mt-1">Sua segunda imagem mostra que você criou políticas em um local incorreto. Precisamos removê-las para evitar conflitos.</p>
+                            <p class="mt-1">Se você seguiu guias anteriores, pode ter criado políticas em um local incorreto. Precisamos removê-las para evitar conflitos.</p>
                             <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
                                <li>Volte para a seção de <strong>Authentication (ícone 👥) -> Policies</strong>.</li>
                                <li>Na barra de busca "Filter tables and policies", digite <code>storage</code>.</li>
                                <li>Você verá as tabelas <code>storage.objects</code> e <code>storage.buckets</code>.</li>
                                <li>Clique em cada uma delas e <b class="text-yellow-400">DELETE TODAS AS POLÍTICAS</b> que aparecem listadas (ex: "Public Updates", "Public Deletes"). Para deletar, clique nos três pontinhos ao lado da política e escolha "Delete".</li>
-                               <li>Faça isso para <code>storage.objects</code> e para <code>storage.buckets</code> até que não reste nenhuma política para elas.</li>
+                               <li>Faça isso para <code>storage.objects</code> e para <code>storage.buckets</code> até que não reste nenhuma política para elas. A sua configuração correta deve ser como na primeira imagem que você enviou: apenas políticas no bucket, e nenhuma no schema.</li>
                             </ul>
                         </div>
                     </div>

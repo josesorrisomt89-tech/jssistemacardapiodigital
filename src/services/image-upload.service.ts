@@ -7,7 +7,7 @@ import { ApiService } from './supabase.service';
 })
 export class ImageUploadService {
   private apiService = inject(ApiService);
-  private readonly BUCKET_NAME = 'images';
+  private readonly BUCKET_NAME = 'IMAGENS';
 
   /**
    * Faz o upload de uma nova imagem, opcionalmente deletando uma antiga.
