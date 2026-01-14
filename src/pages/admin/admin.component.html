@@ -974,35 +974,29 @@
                             <h4 class="text-lg font-semibold text-purple-400">Passo 1.2: Encontre as Políticas de Acesso (Policies)</h4>
                             <p class="mt-1">Dentro da seção de "Authentication", no menu de navegação que aparece, procure e clique na opção <strong>"Policies"</strong>.</p>
                         </div>
-                        <!-- Step 3 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.3: Entendendo a Tela de Políticas</h4>
-                            <p class="mt-1">Você verá uma lista de todas as tabelas do seu banco de dados (`products`, `categories`, etc.). Ao lado de cada uma, provavelmente estará a mensagem em verde <code class="bg-gray-700 px-1 rounded">RLS is enabled</code>, mas com <code class="bg-gray-700 px-1 rounded">No policies created yet</code>.</p>
-                            <p class="mt-1 text-sm text-gray-400">Isso significa: "A segurança está LIGADA, mas NENHUMA regra foi criada". O resultado é que o Supabase bloqueia TUDO.</p>
-                        </div>
                         <!-- Step 4 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.4: Crie uma Nova Política</h4>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.3: Crie uma Nova Política</h4>
                             <p class="mt-1">Para cada tabela, você precisa criar uma regra. Comece com a tabela <strong><code>addon_categories</code></strong>. Clique no botão <strong>"Create policy"</strong> ao lado dela.</p>
-                            <p class="mt-1">Uma nova tela chamada <b class="text-yellow-400">"Create a new Row Level Security policy"</b> irá aparecer. Clique em <b class="text-yellow-400">"Create a policy from scratch"</b> para ir para o formulário completo.</p>
+                            <p class="mt-1">Na janela que aparece, clique em <b class="text-yellow-400">"For full customization"</b> (ou "Create a policy from scratch") para ir para o formulário completo.</p>
                         </div>
                         <!-- Step 5 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.5: Configure a Política de Acesso Total</h4>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.4: Configure a Política de Acesso Total</h4>
                             <p class="mt-1">Preencha o formulário exatamente como a seguir:</p>
                             <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
                                 <li><strong>Policy Name:</strong> Digite <code>Public Access</code></li>
-                                <li><strong>Policy Command:</strong> Marque a bolinha ao lado de <strong>ALL</strong>.</li>
+                                <li><strong>Policy Command (ou Allowed operation):</strong> Marque a bolinha ao lado de <strong>ALL</strong>.</li>
                                 <li><strong>Target Roles:</strong> Deixe como está, com <code>public</code> selecionado.</li>
-                                <li>No editor de código abaixo, na seção <b class="text-yellow-400">USING expression</b>, apague o comentário e digite apenas a palavra <code>true</code>.</li>
-                                <li>Faça o mesmo para a seção <b class="text-yellow-400">WITH CHECK expression</b>: apague o comentário e digite <code>true</code>.</li>
+                                <li>Na seção <b class="text-yellow-400">USING expression</b>, apague o que estiver lá e digite apenas a palavra <code>true</code>.</li>
+                                <li>Na seção <b class="text-yellow-400">WITH CHECK expression</b>, faça o mesmo: digite <code>true</code>.</li>
                             </ul>
-                            <p class="mt-2">Clique no botão verde <strong>"Save policy"</strong> no final da página.</p>
+                            <p class="mt-2">Clique no botão verde <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</p>
                         </div>
                          <!-- Step 6 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.6: Repita para TODAS as Tabelas</h4>
-                            <p class="mt-1">Você precisa repetir os Passos 1.4 e 1.5 para <b class="text-yellow-400">CADA UMA</b> das seguintes tabelas:</p>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.5: Repita para TODAS as Tabelas</h4>
+                            <p class="mt-1">Você precisa repetir os Passos 1.3 e 1.4 para <b class="text-yellow-400">CADA UMA</b> das seguintes tabelas:</p>
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-sm">
                                 <code class="bg-gray-700 p-2 rounded text-center">addon_categories</code>
                                 <code class="bg-gray-700 p-2 rounded text-center">categories</code>
@@ -1019,9 +1013,9 @@
                     </div>
                 </div>
 
-                 <!-- Part 2: Storage (CORRIGIDO) -->
+                 <!-- Part 2: Storage -->
                 <div class="p-4 rounded-lg bg-gray-800">
-                    <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Parte 2: Permissões de Upload de Imagens (Corrigido)</h3>
+                    <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Parte 2: Permissões de Upload de Imagens</h3>
                     <div class="space-y-6 pl-4 border-l-2 border-purple-500">
                         <!-- Step 1 -->
                         <div>
@@ -1041,21 +1035,23 @@
                         </div>
                         <!-- Step 3 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Upload, Update e Delete</h4>
-                            <p class="mt-1">Como o bucket é público, uma política de `SELECT` (visualização) já existe ou não é necessária. Agora, precisamos criar as outras três (`INSERT`, `UPDATE`, `DELETE`).</p>
-                            <p class="mt-2 font-bold">Para CADA uma das operações (`INSERT`, `UPDATE`, `DELETE`), faça o seguinte:</p>
-                             <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
-                                <li>Clique em <strong>"+ New policy"</strong> ao lado da operação correspondente (comece com `INSERT`).</li>
-                                <li>Na janela que aparece (como a que você enviou), clique na primeira opção: <b class="text-yellow-400">"Get started quickly"</b>.</li>
-                                <li>Uma lista de templates vai aparecer. Role a lista e clique no template correto:
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Acesso (INSERT, UPDATE, DELETE)</h4>
+                            <p class="mt-1">Para permitir que o aplicativo envie, atualize e delete imagens, precisamos criar 3 políticas.</p>
+                            <p class="mt-2 font-bold">Para CADA uma das operações (`INSERT`, `UPDATE`, `DELETE`), siga estes passos:</p>
+                             <ul class="list-disc pl-5 mt-1 space-y-2 text-sm">
+                                <li>Encontre a operação (ex: <strong>INSERT</strong>) e clique no botão <strong>"+ New policy"</strong>.</li>
+                                <li>Na janela que aparece, clique na segunda opção: <b class="text-yellow-400">"For full customization"</b> (ou "Create a policy from scratch").</li>
+                                <li>Um formulário de criação de política aparecerá. Preencha-o exatamente assim:
                                     <ul class="list-disc pl-5 mt-1 space-y-1">
-                                        <li>Para <strong>INSERT</strong>: Clique em <b class="text-yellow-400">"Enable insert for all users"</b>.</li>
-                                        <li>Para <strong>UPDATE</strong>: Clique em <b class="text-yellow-400">"Enable update for all users"</b>.</li>
-                                        <li>Para <strong>DELETE</strong>: Clique em <b class="text-yellow-400">"Enable delete for all users"</b>.</li>
+                                        <li><strong>Policy Name:</strong> Digite um nome, por exemplo <code>Public Inserts</code> (use <code>Public Updates</code> para a de update, e <code>Public Deletes</code> para a de delete).</li>
+                                        <li><strong>Allowed operation:</strong> Certifique-se de que a operação correta (`INSERT` neste caso) está marcada.</li>
+                                        <li><strong>Target roles:</strong> Deixe como está, com `public` selecionado.</li>
+                                        <li>Na seção <b class="text-yellow-400">USING expression</b>, apague o que estiver lá e digite apenas a palavra <code>true</code>.</li>
+                                        <li>Na seção <b class="text-yellow-400">WITH CHECK expression</b>, faça o mesmo: digite <code>true</code>.</li>
                                     </ul>
                                 </li>
-                                <li>O Supabase vai preencher tudo para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
-                                <li><b class="text-yellow-400">REPITA</b> este processo para `UPDATE` e `DELETE`. No final, você terá as políticas que precisa.</li>
+                                <li>Clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
+                                <li><b class="text-yellow-400">REPITA</b> este processo para `UPDATE` e `DELETE`.</li>
                              </ul>
                         </div>
                         <!-- Step 4 -->
@@ -1066,8 +1062,8 @@
                                <li>Volte para a seção de <strong>Authentication (ícone 👥) -> Policies</strong>.</li>
                                <li>Na barra de busca "Filter tables and policies", digite <code>storage</code>.</li>
                                <li>Você verá as tabelas <code>storage.objects</code> e <code>storage.buckets</code>.</li>
-                               <li>Clique em cada uma delas e <b class="text-yellow-400">DELETE TODAS AS POLÍTICAS</b> que aparecem listadas (ex: "Public Updates", "Public Deletes"). Para deletar, clique nos três pontinhos ao lado da política e escolha "Delete".</li>
-                               <li>Faça isso para <code>storage.objects</code> e para <code>storage.buckets</code> até que não reste nenhuma política para elas. As únicas políticas de Storage devem ser as que você criou diretamente no bucket `IMAGENS`, como instruído no Passo 2.3.</li>
+                               <li>Clique em cada uma delas e <b class="text-yellow-400">DELETE TODAS AS POLÍTICAS</b> que aparecem listadas. Para deletar, clique nos três pontinhos ao lado da política e escolha "Delete".</li>
+                               <li>Faça isso para <code>storage.objects</code> e para <code>storage.buckets</code> até que não reste nenhuma política para elas. As únicas políticas de Storage devem ser as que você criou diretamente no bucket `IMAGENS`.</li>
                             </ul>
                         </div>
                     </div>
@@ -1076,7 +1072,7 @@
                 <!-- Conclusion -->
                 <div class="p-4 rounded-lg border border-green-500/50 bg-green-500/10">
                     <h3 class="text-xl font-semibold text-green-400 mb-2">Conclusão</h3>
-                    <p>Após seguir todos esses passos, especialmente a limpeza do Passo 2.4, seu sistema de upload de imagens estará 100% funcional. Recarregue a página do seu painel administrativo e teste novamente.</p>
+                    <p>Após seguir todos esses passos, seu sistema de upload de imagens estará 100% funcional. Recarregue a página do seu painel administrativo e teste novamente.</p>
                 </div>
             </div>
           </div>
