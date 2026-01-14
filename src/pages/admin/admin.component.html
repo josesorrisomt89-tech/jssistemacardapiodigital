@@ -942,11 +942,17 @@
                 <h2 class="text-3xl font-bold text-purple-400">Guia de Solução de Problemas: Supabase</h2>
                 <button (click)="printHelpGuide()" class="no-print bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v3h6v-3z" clip-rule="evenodd" /></svg>
-                    Imprimir Guia (Salvar como PDF)
+                    Imprimir / Salvar Guia em PDF
                 </button>
             </div>
 
             <div class="space-y-8">
+                <!-- Printing Note -->
+                <div class="p-4 rounded-lg bg-gray-800 text-sm">
+                    <h3 class="text-lg font-semibold text-purple-400 mb-2">Como Salvar este Guia em PDF</h3>
+                    <p>O botão "Imprimir / Salvar Guia em PDF" abrirá a janela de impressão do seu navegador. Para salvar o arquivo, na opção <b class="text-yellow-400">"Destino"</b> ou <b class="text-yellow-400">"Impressora"</b>, selecione <b class="text-yellow-400">"Salvar como PDF"</b> em vez de uma impressora física.</p>
+                </div>
+
                 <!-- Introduction -->
                 <div class="p-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10">
                     <h3 class="text-xl font-semibold text-yellow-400 mb-2">Por que este guia é importante?</h3>
@@ -978,7 +984,7 @@
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 1.4: Crie uma Nova Política</h4>
                             <p class="mt-1">Para cada tabela, você precisa criar uma regra. Comece com a tabela <strong><code>categories</code></strong>. Clique nela e depois clique no botão <strong>"+ New Policy"</strong>.</p>
-                            <p class="mt-1">Na tela seguinte, clique em <strong>"For full customization"</strong> para criar uma regra do zero.</p>
+                            <p class="mt-1">Um painel lateral irá aparecer com o título "Create a new policy". Clique na primeira opção: <b class="text-yellow-400">"Get started from scratch"</b>.</p>
                         </div>
                         <!-- Step 5 -->
                         <div>
@@ -1034,7 +1040,7 @@
                             <p class="mt-2 font-bold">1. Política de Upload (INSERT):</p>
                             <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
                                <li>Ao lado de <strong>INSERT</strong>, clique em <strong>"+ New Policy"</strong>.</li>
-                               <li>Clique em <strong>"For full customization"</strong>.</li>
+                               <li>Um painel lateral irá aparecer. Clique na opção <b class="text-yellow-400">"Get started from scratch"</b>.</li>
                                <li><strong>Policy Name:</strong> Digite <code>Permitir Uploads Públicos</code></li>
                                <li><strong>Allowed operation:</strong> Marque apenas <strong>INSERT</strong>.</li>
                                <li><strong>Target roles:</strong> Marque a opção <code>public</code>.</li>
@@ -1048,7 +1054,7 @@
                                <li>Confirme e salve a política.</li>
                             </ul>
                              <p class="mt-2 font-bold">3. Repita para UPDATE e DELETE:</p>
-                             <p class="text-sm mt-1">Crie políticas para <strong>UPDATE</strong> e <strong>DELETE</strong> seguindo os mesmos passos da política de <strong>INSERT</strong> (usando a opção "For full customization"), mas dando nomes apropriados (ex: `Permitir Updates Públicos`) e marcando a operação correspondente.</p>
+                             <p class="text-sm mt-1">Crie políticas para <strong>UPDATE</strong> e <strong>DELETE</strong> seguindo os mesmos passos da política de <strong>INSERT</strong> (usando a opção "Get started from scratch"), mas dando nomes apropriados (ex: `Permitir Updates Públicos`) e marcando a operação correspondente.</p>
                         </div>
                     </div>
                 </div>
