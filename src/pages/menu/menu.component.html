@@ -124,7 +124,7 @@
   <!-- Cart Sidebar -->
   @if(isCartSidebarOpen()) {
     <div class="fixed inset-0 bg-black bg-opacity-50 z-40" (click)="isCartSidebarOpen.set(false)"></div>
-    <div class="fixed top-0 right-0 w-full max-w-sm h-full flex flex-col shadow-lg transition-transform transform" [style.backgroundColor]="settings().layout.background_color" [class.translate-x-0]="isCartSidebarOpen()" [class.translate-x-full]="!isCartSidebarOpen()">
+    <div class="fixed top-0 right-0 z-50 w-full max-w-sm h-full flex flex-col shadow-lg transition-transform transform" [style.backgroundColor]="settings().layout.background_color" [class.translate-x-0]="isCartSidebarOpen()" [class.translate-x-full]="!isCartSidebarOpen()">
       <div class="p-4 border-b flex justify-between items-center" [style.borderColor]="settings().layout.card_color">
         <h2 class="text-xl font-bold">Meu Carrinho</h2>
         <button (click)="isCartSidebarOpen.set(false)" class="text-gray-400 hover:text-white">&times;</button>
@@ -204,8 +204,8 @@
 
   <!-- Product Modal -->
   @if (isProductModalOpen() && selectedProduct(); as product) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40 p-4">
-      <div class="rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide flex flex-col" [style.backgroundColor]="settings().layout.background_color">
+    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40 p-4" (click)="closeProductModal()">
+      <div class="rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide flex flex-col z-50" [style.backgroundColor]="settings().layout.background_color" (click)="$event.stopPropagation()">
         <div class="sticky top-0 p-4 border-b flex justify-between items-center z-10" [style.backgroundColor]="settings().layout.background_color" [style.borderColor]="settings().layout.card_color">
           <h2 class="text-2xl font-bold">{{ product.name }}</h2>
           <button (click)="closeProductModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
@@ -218,7 +218,7 @@
             <h3 class="font-semibold mb-2">Tamanho</h3>
             <div class="grid grid-cols-2 gap-2 mb-4">
               @for (size of product.sizes; track size.name) {
-                <button (click)="selectedSize.set(size)" [disabled]="!size.is_available" class="p-3 border rounded-md text-left relative" [class.opacity-50]="!size.is_available" [class.cursor-not-allowed]="!size.is_available" [class.border-purple-500]="selectedSize()?.name === size.name" [class.bg-purple-500/20]="selectedSize()?.name === size.name" [class.border-gray-600]="selectedSize()?.name !== size.name">
+                <button (click)="selectedSize.set(size)" [disabled]="!size.is_available" class="p-3 border rounded-md text-left relative" [class.opacity-50]="!size.is_available" [class.cursor-not-allowed]="!size.is_available" [class.border-purple-500]="selectedSize() === size" [class.bg-purple-500/20]="selectedSize() === size" [class.border-gray-600]="selectedSize() !== size">
                   <span class="font-medium">{{ size.name }}</span>
                   <span class="block text-sm" [style.color]="settings().layout.accent_color">{{ size.price | currency:'BRL' }}</span>
                    @if (!size.is_available) {

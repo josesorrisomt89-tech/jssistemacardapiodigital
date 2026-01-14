@@ -1189,7 +1189,7 @@
             <h3 class="font-semibold mb-2">Tamanho</h3>
             <div class="grid grid-cols-2 gap-2 mb-4">
               @for (size of product.sizes; track size.name) {
-                <button (click)="pdvSelectedSize.set(size)" [disabled]="!size.is_available" class="p-3 border rounded-md text-left relative" [class.opacity-50]="!size.is_available" [class.cursor-not-allowed]="!size.is_available" [class.border-purple-500]="pdvSelectedSize()?.name === size.name" [class.bg-purple-500/20]="pdvSelectedSize()?.name === size.name" [class.border-gray-600]="pdvSelectedSize()?.name !== size.name">
+                <button (click)="pdvSelectedSize.set(size)" [disabled]="!size.is_available" class="p-3 border rounded-md text-left relative" [class.opacity-50]="!size.is_available" [class.cursor-not-allowed]="!size.is_available" [class.border-purple-500]="pdvSelectedSize() === size" [class.bg-purple-500/20]="pdvSelectedSize() === size" [class.border-gray-600]="pdvSelectedSize() !== size">
                   <span class="font-medium">{{ size.name }}</span>
                   <span class="block text-sm text-purple-400">{{ size.price | currency:'BRL' }}</span>
                    @if (!size.is_available) { <span class="absolute top-1 right-1 text-xs bg-red-600 text-white px-1.5 py-0.5 rounded">Indisponível</span> }

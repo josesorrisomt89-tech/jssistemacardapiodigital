@@ -31,29 +31,37 @@ export class CartService {
   }
   
   incrementItem(index: number) {
-      this.items.update(items => {
-          const item = items[index];
-          if(item) {
-              const newQuantity = item.quantity + 1;
-              const unitPrice = item.total_price / item.quantity;
-              item.quantity = newQuantity;
-              item.total_price = unitPrice * newQuantity;
-          }
-          return [...items];
-      });
+    this.items.update(items =>
+      items.map((item, i) => {
+        if (i !== index) {
+          return item;
+        }
+        const unitPrice = item.quantity > 0 ? item.total_price / item.quantity : 0;
+        const newQuantity = item.quantity + 1;
+        return {
+          ...item,
+          quantity: newQuantity,
+          total_price: unitPrice * newQuantity,
+        };
+      })
+    );
   }
 
   decrementItem(index: number) {
-       this.items.update(items => {
-          const item = items[index];
-          if(item && item.quantity > 1) {
-              const newQuantity = item.quantity - 1;
-              const unitPrice = item.total_price / item.quantity;
-              item.quantity = newQuantity;
-              item.total_price = unitPrice * newQuantity;
-          }
-          return [...items];
-      });
+    this.items.update(items =>
+      items.map((item, i) => {
+        if (i !== index || item.quantity <= 1) {
+          return item;
+        }
+        const unitPrice = item.quantity > 0 ? item.total_price / item.quantity : 0;
+        const newQuantity = item.quantity - 1;
+        return {
+          ...item,
+          quantity: newQuantity,
+          total_price: unitPrice * newQuantity,
+        };
+      })
+    );
   }
 
   clearCart() {
