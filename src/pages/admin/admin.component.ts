@@ -28,6 +28,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   isNewOrderNotificationActive = signal(false);
   private knownReceivedOrderIds = new Set<string>();
   private orderPollingInterval: any;
+  private tempIdCounter = 0;
 
   isLoggedIn = this.authService.isAdminLoggedIn;
   loginForm = this.fb.group({
@@ -370,6 +371,12 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.stopNewOrderSound();
   }
 
+  private generateTempId(prefix: string = 'temp'): string {
+    // Simple unique ID for form state management before saving
+    this.tempIdCounter++;
+    return `${prefix}_${Date.now()}_${this.tempIdCounter}`;
+  }
+
   playNewOrderSound() {
     this.newOrderSound?.nativeElement.play().catch(e => console.error("Audio playback failed:", e));
   }
@@ -611,7 +618,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       if (formData.price_type === 'fixed') (formData as any).sizes = []; else (formData as any).price = 0;
       
       if (!formData.id) {
-        (formData as any).id = Date.now().toString();
+        (formData as any).id = this.generateTempId('prod');
         (formData as any).order = this.dataService.products().length;
       }
       
@@ -641,9 +648,9 @@ export class AdminComponent implements OnInit, OnDestroy {
   async saveCategory() {
       if (this.categoryForm.invalid) { alert('O nome da categoria é obrigatório.'); return; }
       try {
-        const formData = this.categoryForm.value;
+        const formData = this.categoryForm.getRawValue();
         if (!formData.id) {
-          (formData as any).id = Date.now().toString();
+          (formData as any).id = this.generateTempId('cat');
           (formData as any).order = this.dataService.categories().length;
         }
         await this.dataService.saveCategory(formData as Category);
@@ -669,17 +676,25 @@ export class AdminComponent implements OnInit, OnDestroy {
       }
   }
   
-  addAddonToAddonCategory(addon?: Addon) { this.addonCategoryAddons.push(this.fb.group({ id: [addon?.id || Date.now().toString()], name: [addon?.name || '', Validators.required], price: [addon?.price || 0], order: [addon?.order || 0], is_available: [addon?.is_available ?? true] })); }
+  addAddonToAddonCategory(addon?: Addon) {
+    this.addonCategoryAddons.push(this.fb.group({
+      id: [addon?.id || this.generateTempId('addon')],
+      name: [addon?.name || '', Validators.required],
+      price: [addon?.price || 0],
+      order: [addon?.order || 0],
+      is_available: [addon?.is_available ?? true]
+    }));
+  }
   removeAddonFromAddonCategory(index: number) { this.addonCategoryAddons.removeAt(index); }
   
   async saveAddonCategory() {
       if (this.addonCategoryForm.invalid) { alert('Preencha todos os campos da categoria de adicionais.'); return; }
       try {
-        const formData = this.addonCategoryForm.value;
+        const formData = this.addonCategoryForm.getRawValue();
         (formData.addons as any[])?.forEach((addon: any, index: number) => addon.order = index);
 
         if (!formData.id) {
-            (formData as any).id = Date.now().toString();
+            (formData as any).id = this.generateTempId('group');
             (formData as any).order = this.dataService.addonCategories().length;
         }
         await this.dataService.saveAddonCategory(formData as AddonCategory);
@@ -707,7 +722,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (this.couponForm.invalid) { alert('Preencha os campos do cupom.'); return; }
     try {
       const formData = this.couponForm.getRawValue();
-      if (!formData.id) (formData as any).id = Date.now().toString();
+      if (!formData.id) (formData as any).id = this.generateTempId('coupon');
       
       await this.dataService.saveCoupon(formData as Coupon);
       this.editingCoupon.set(null);
