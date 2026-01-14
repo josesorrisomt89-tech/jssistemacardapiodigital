@@ -182,6 +182,16 @@ export class AdminComponent implements OnInit, OnDestroy {
   pdvSelectedAddons = signal<{[key: string]: Addon}>({});
   pdvProductQuantity = signal(1);
 
+  isPdvAddToCartDisabled = computed(() => {
+    const product = this.pdvSelectedProduct();
+    if (!product) return true;
+    const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
+    if (priceType === 'sized') {
+      return !this.pdvSelectedSize();
+    }
+    return false;
+  });
+
   expenseForm: FormGroup;
   editingExpense = signal<Expense | null>(null);
   sortedReceivables = computed(() => this.dataService.receivables().sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
@@ -853,12 +863,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   openPdvProductModal(product: Product) {
     if (!product.is_available) return;
     this.pdvSelectedProduct.set(product);
-    const priceType = product.price_type || 'sized';
-    if (priceType === 'sized' && product.sizes.length > 0) {
-      this.pdvSelectedSize.set(product.sizes.find(s => s.is_available) ?? null);
-    } else {
-      this.pdvSelectedSize.set(null);
-    }
+    this.pdvSelectedSize.set(null);
     this.pdvProductQuantity.set(1);
     this.pdvSelectedAddons.set({});
     this.isPdvProductModalOpen.set(true);
@@ -879,7 +884,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   addProductToPdvCartFromModal() {
     const product = this.pdvSelectedProduct(); if (!product) return;
     let size: ProductSize;
-    const priceType = product.price_type || 'sized';
+    const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
     if (priceType === 'fixed') { size = { name: 'Único', price: product.price ?? 0, is_available: true }; }
     else { const selected = this.pdvSelectedSize(); if (!selected) { alert('Selecione um tamanho.'); return; } size = selected; }
     const addons: Addon[] = Object.values(this.pdvSelectedAddons());

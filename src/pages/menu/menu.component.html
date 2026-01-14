@@ -261,7 +261,7 @@
             <span>{{ productQuantity() }}</span>
             <button (click)="incrementProductQuantity()" class="w-8 h-8 rounded-md" [style.backgroundColor]="settings().layout.card_color">+</button>
           </div>
-          <button (click)="addToCart()" class="text-white font-bold py-3 px-6 rounded-lg" [style.backgroundColor]="settings().layout.primary_color">Adicionar</button>
+          <button (click)="addToCart()" [disabled]="isAddToCartDisabled()" class="text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" [style.backgroundColor]="settings().layout.primary_color">Adicionar</button>
         </div>
       </div>
     </div>

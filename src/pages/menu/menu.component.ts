@@ -55,6 +55,16 @@ export class MenuComponent implements OnInit {
   selectedAddons = signal<{[key: string]: Addon}>({});
   productQuantity = signal(1);
 
+  isAddToCartDisabled = computed(() => {
+    const product = this.selectedProduct();
+    if (!product) return true;
+    const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
+    if (priceType === 'sized') {
+      return !this.selectedSize();
+    }
+    return false;
+  });
+
   isCartSidebarOpen = signal(false);
 
   isCheckoutModalOpen = signal(false);
@@ -204,12 +214,7 @@ export class MenuComponent implements OnInit {
   openProductModal(product: Product) {
     if (!product.is_available) return;
     this.selectedProduct.set(product);
-    const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
-    if (priceType === 'sized' && product.sizes.length > 0) {
-      this.selectedSize.set(product.sizes.find(s => s.is_available) ?? null);
-    } else {
-      this.selectedSize.set(null);
-    }
+    this.selectedSize.set(null);
     this.productQuantity.set(1);
     this.selectedAddons.set({});
     this.isProductModalOpen.set(true);

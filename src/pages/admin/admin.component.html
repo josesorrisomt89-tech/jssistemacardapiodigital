@@ -1223,7 +1223,7 @@
             <span>{{ pdvProductQuantity() }}</span>
             <button (click)="incrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">+</button>
           </div>
-          <button (click)="addProductToPdvCartFromModal()" class="text-white font-bold py-3 px-6 rounded-lg bg-purple-600">Adicionar</button>
+          <button (click)="addProductToPdvCartFromModal()" [disabled]="isPdvAddToCartDisabled()" class="text-white font-bold py-3 px-6 rounded-lg bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed">Adicionar</button>
         </div>
       </div>
     </div>
