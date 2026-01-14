@@ -39,10 +39,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   startSlider(): void {
     this.intervalId = window.setInterval(() => {
-      const images = this.sliderImages();
-      if (images.length > 0) {
-        this.currentIndex.update(prev => (prev + 1) % images.length);
-      }
+      this.nextSlide(false); // Do not reset timer when auto-sliding
     }, 5000); // Change slide every 5 seconds
   }
 
@@ -56,6 +53,26 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.currentIndex.set(index);
     this.stopSlider();
     this.startSlider();
+  }
+  
+  nextSlide(resetTimer = true): void {
+    const images = this.sliderImages();
+    if (images.length > 0) {
+      this.currentIndex.update(prev => (prev + 1) % images.length);
+      if (resetTimer) {
+        this.stopSlider();
+        this.startSlider();
+      }
+    }
+  }
+
+  prevSlide(): void {
+    const images = this.sliderImages();
+    if (images.length > 0) {
+      this.currentIndex.update(prev => (prev - 1 + images.length) % images.length);
+      this.stopSlider();
+      this.startSlider();
+    }
   }
 
   login(): void {
