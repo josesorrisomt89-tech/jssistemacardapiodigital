@@ -30,9 +30,9 @@ export class ApiService {
 
   post<T>(tableName: string, body: any, prefer?: string): Observable<T[]> {
     const url = `${this.apiUrl}/rest/v1/${tableName}`;
-    // A API do Supabase para inserir linhas espera um array de objetos, mesmo para uma única linha.
-    const requestBody = Array.isArray(body) ? body : [body];
-    return this.http.post<T[]>(url, requestBody, { headers: this.getHeaders(prefer).set('Content-Type', 'application/json') });
+    // O chamador agora é responsável por formatar o corpo da requisição corretamente.
+    // Inserções padrão precisam de um array `[{...}]`, enquanto upserts de registro único precisam de um objeto `{...}`.
+    return this.http.post<T[]>(url, body, { headers: this.getHeaders(prefer).set('Content-Type', 'application/json') });
   }
   
   patch<T>(tableName: string, query: string, body: any): Observable<T[]> {
@@ -46,7 +46,8 @@ export class ApiService {
   }
   
   upsert<T>(tableName: string, body: any): Observable<T[]> {
-      return this.post<T>(tableName, body, 'resolution=merge-duplicates');
+      // Adiciona `return=representation` para garantir que o registro salvo (seja inserido ou atualizado) seja retornado.
+      return this.post<T>(tableName, body, 'resolution=merge-duplicates,return=representation');
   }
 
   // Storage Methods

@@ -640,13 +640,18 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   async saveCategory() {
       if (this.categoryForm.invalid) { alert('O nome da categoria é obrigatório.'); return; }
-      const formData = this.categoryForm.value;
-      if (!formData.id) {
-        (formData as any).id = Date.now().toString();
-        (formData as any).order = this.dataService.categories().length;
+      try {
+        const formData = this.categoryForm.value;
+        if (!formData.id) {
+          (formData as any).id = Date.now().toString();
+          (formData as any).order = this.dataService.categories().length;
+        }
+        await this.dataService.saveCategory(formData as Category);
+        this.editingCategory.set(null);
+      } catch(e) {
+        console.error("Error saving category:", e);
+        alert("Falha ao salvar categoria. Verifique o console para mais detalhes.");
       }
-      await this.dataService.saveCategory(formData as Category);
-      this.editingCategory.set(null);
   }
 
   async deleteCategory(id: string) { if(confirm('Tem certeza?')) { await this.dataService.deleteCategory(id); } }
@@ -669,15 +674,20 @@ export class AdminComponent implements OnInit, OnDestroy {
   
   async saveAddonCategory() {
       if (this.addonCategoryForm.invalid) { alert('Preencha todos os campos da categoria de adicionais.'); return; }
-      const formData = this.addonCategoryForm.value;
-      (formData.addons as any[])?.forEach((addon: any, index: number) => addon.order = index);
+      try {
+        const formData = this.addonCategoryForm.value;
+        (formData.addons as any[])?.forEach((addon: any, index: number) => addon.order = index);
 
-      if (!formData.id) {
-          (formData as any).id = Date.now().toString();
-          (formData as any).order = this.dataService.addonCategories().length;
+        if (!formData.id) {
+            (formData as any).id = Date.now().toString();
+            (formData as any).order = this.dataService.addonCategories().length;
+        }
+        await this.dataService.saveAddonCategory(formData as AddonCategory);
+        this.editingAddonCategory.set(null);
+      } catch (e) {
+        console.error("Error saving addon category:", e);
+        alert("Falha ao salvar o grupo de adicionais. Verifique o console para mais detalhes.");
       }
-      await this.dataService.saveAddonCategory(formData as AddonCategory);
-      this.editingAddonCategory.set(null);
   }
 
   async deleteAddonCategory(id: string) { if(confirm('Tem certeza?')) { await this.dataService.deleteAddonCategory(id); } }
@@ -695,12 +705,16 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   async saveCoupon() {
     if (this.couponForm.invalid) { alert('Preencha os campos do cupom.'); return; }
-    
-    const formData = this.couponForm.getRawValue();
-    if (!formData.id) (formData as any).id = Date.now().toString();
-    
-    await this.dataService.saveCoupon(formData as Coupon);
-    this.editingCoupon.set(null);
+    try {
+      const formData = this.couponForm.getRawValue();
+      if (!formData.id) (formData as any).id = Date.now().toString();
+      
+      await this.dataService.saveCoupon(formData as Coupon);
+      this.editingCoupon.set(null);
+    } catch(e) {
+      console.error("Error saving coupon:", e);
+      alert("Falha ao salvar o cupom.");
+    }
   }
 
   async deleteCoupon(id: string) { if (confirm('Tem certeza?')) { await this.dataService.deleteCoupon(id); } }

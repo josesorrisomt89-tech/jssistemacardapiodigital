@@ -134,9 +134,9 @@ export class DataService {
     if (order.payment_method === 'credit' && creditDetails) {
         const newReceivable: Receivable = { ...creditDetails, id: `rec_${newOrderId}`, order_id: newOrderId, amount: order.total, status: 'pending', created_at: new Date().toISOString() };
         newOrder.receivable_id = newReceivable.id;
-        await firstValueFrom(this.apiService.post('receivables', newReceivable));
+        await firstValueFrom(this.apiService.post('receivables', [newReceivable]));
     }
-    const data = await firstValueFrom(this.apiService.post<Order>('orders', newOrder, 'return=representation'));
+    const data = await firstValueFrom(this.apiService.post<Order>('orders', [newOrder], 'return=representation'));
     this.orders.update(orders => [...orders, data[0]]);
     return data[0];
   }
@@ -149,7 +149,12 @@ export class DataService {
   
   async saveProduct(product: Product) {
      const data = await firstValueFrom(this.apiService.upsert<Product>('products', product));
-     await this.fetchTable('products'); return data[0];
+     this.products.update(items => {
+        const index = items.findIndex(i => i.id === data[0].id);
+        if(index > -1) { items[index] = data[0]; return [...items]; }
+        return [...items, data[0]];
+    });
+     return data[0];
   }
   
   async deleteProduct(id: string) {
@@ -158,29 +163,53 @@ export class DataService {
         await this.imageUploadService.deleteImage(productToDelete.image_url);
     }
     await firstValueFrom(this.apiService.delete('products', `id=eq.${id}`)); 
-    await this.fetchTable('products'); 
+    this.products.update(items => items.filter(i => i.id !== id));
   }
   
    async saveCategory(category: Category) {
      const data = await firstValueFrom(this.apiService.upsert<Category>('categories', category));
-     await this.fetchTable('categories'); return data[0];
+     this.categories.update(items => {
+        const index = items.findIndex(i => i.id === data[0].id);
+        if(index > -1) { items[index] = data[0]; return [...items]; }
+        return [...items, data[0]];
+    });
+     return data[0];
   }
   
-  async deleteCategory(id: string) { await firstValueFrom(this.apiService.delete('categories', `id=eq.${id}`)); await this.fetchTable('categories'); }
+  async deleteCategory(id: string) { 
+    await firstValueFrom(this.apiService.delete('categories', `id=eq.${id}`));
+    this.categories.update(items => items.filter(i => i.id !== id));
+  }
 
   async saveAddonCategory(addonCategory: AddonCategory) {
      const data = await firstValueFrom(this.apiService.upsert<AddonCategory>('addon_categories', addonCategory));
-     await this.fetchTable('addon_categories'); return data[0];
+     this.addonCategories.update(items => {
+        const index = items.findIndex(i => i.id === data[0].id);
+        if(index > -1) { items[index] = data[0]; return [...items]; }
+        return [...items, data[0]];
+    });
+     return data[0];
   }
   
-  async deleteAddonCategory(id: string) { await firstValueFrom(this.apiService.delete('addon_categories', `id=eq.${id}`)); await this.fetchTable('addon_categories'); }
+  async deleteAddonCategory(id: string) { 
+    await firstValueFrom(this.apiService.delete('addon_categories', `id=eq.${id}`));
+    this.addonCategories.update(items => items.filter(i => i.id !== id));
+  }
   
   async saveCoupon(coupon: Coupon) {
      const data = await firstValueFrom(this.apiService.upsert<Coupon>('coupons', coupon));
-     await this.fetchTable('coupons'); return data[0];
+     this.coupons.update(items => {
+        const index = items.findIndex(i => i.id === data[0].id);
+        if(index > -1) { items[index] = data[0]; return [...items]; }
+        return [...items, data[0]];
+    });
+     return data[0];
   }
   
-  async deleteCoupon(id: string) { await firstValueFrom(this.apiService.delete('coupons', `id=eq.${id}`)); await this.fetchTable('coupons'); }
+  async deleteCoupon(id: string) { 
+    await firstValueFrom(this.apiService.delete('coupons', `id=eq.${id}`));
+    this.coupons.update(items => items.filter(i => i.id !== id));
+  }
 
   async updateOrderStatus(orderId: string, status: OrderStatus, assignment?: { driverId: string | null, driverName: string | null, isBroadcast: boolean }) {
      let updateObject: Partial<Order> = { status };
@@ -191,7 +220,7 @@ export class DataService {
 
   async addExpense(expense: Omit<Expense, 'id'>): Promise<Expense> {
     const newExpense = { ...expense, id: Date.now().toString() };
-    const data = await firstValueFrom(this.apiService.post<Expense>('expenses', newExpense, 'return=representation'));
+    const data = await firstValueFrom(this.apiService.post<Expense>('expenses', [newExpense], 'return=representation'));
     await this.fetchTable('expenses'); return data[0];
   }
 
@@ -214,7 +243,7 @@ export class DataService {
     const existing = await firstValueFrom(this.apiService.get<DeliveryDriver>('delivery_drivers', `name=eq.${driverData.name}&limit=1`));
     if(existing.length > 0) return { error: 'Um entregador com este nome já existe.' };
     
-    await firstValueFrom(this.apiService.post('delivery_drivers', { ...driverData, id: Date.now().toString(), status: 'pending' }));
+    await firstValueFrom(this.apiService.post('delivery_drivers', [{ ...driverData, id: Date.now().toString(), status: 'pending' }]));
     await this.fetchTable('delivery_drivers');
     return { success: 'Cadastro enviado para análise.' };
   }
@@ -242,7 +271,7 @@ export class DataService {
   
   async addDriverPayment(payment: Omit<DriverPayment, 'id'>) {
     const newPayment = { ...payment, id: Date.now().toString() };
-    const data = await firstValueFrom(this.apiService.post<DriverPayment>('driver_payments', newPayment, 'return=representation'));
+    const data = await firstValueFrom(this.apiService.post<DriverPayment>('driver_payments', [newPayment], 'return=representation'));
     await this.fetchTable('driver_payments');
     return data[0];
   }
