@@ -1,8 +1,57 @@
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    .printable-guide, .printable-guide * {
+      visibility: visible;
+    }
+    .printable-guide {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: auto;
+      margin: 0;
+      padding: 20px;
+      border: none;
+      color: #000 !important;
+      background-color: #fff !important;
+    }
+    .printable-guide .bg-gray-800, 
+    .printable-guide .bg-gray-700,
+    .printable-guide .bg-gray-900 {
+        background-color: #f3f4f6 !important;
+        border-color: #d1d5db !important;
+    }
+    .printable-guide .text-purple-400,
+    .printable-guide .text-yellow-400,
+    .printable-guide .text-red-500,
+    .printable-guide .text-gray-300 {
+        color: #000 !important;
+    }
+    .printable-guide a {
+        text-decoration: none !important;
+        color: #1d4ed8 !important;
+    }
+    .printable-guide code {
+        background-color: #e5e7eb;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-family: monospace;
+        color: #111827 !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+</style>
+
 <div class="min-h-screen bg-gray-800 text-white p-4 sm:p-6 lg:p-8">
   <audio #newOrderSound src="https://cdn.jsdelivr.net/gh/scottschiller/SoundManager2@master/demo/audio/bell.mp3" loop></audio>
   
   @if (isNewOrderNotificationActive()) {
-    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-green-500 text-white text-center font-bold p-3 rounded-lg shadow-lg animate-pulse">
+    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-green-500 text-white text-center font-bold p-3 rounded-lg shadow-lg animate-pulse no-print">
       <p>🔔 NOVO PEDIDO RECEBIDO! 🔔</p>
       <p class="text-xs font-normal">Altere o status do pedido para silenciar o alarme.</p>
     </div>
@@ -28,13 +77,13 @@
     </div>
   } @else {
     <div class="max-w-7xl mx-auto">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center mb-6 no-print">
         <h1 class="text-3xl font-bold text-purple-400">Painel Administrativo</h1>
         <button (click)="logout()" class="text-sm text-gray-400 hover:text-white">Sair</button>
       </div>
 
       <!-- Tabs -->
-      <div class="border-b border-gray-700 mb-6 overflow-x-auto scrollbar-hide">
+      <div class="border-b border-gray-700 mb-6 overflow-x-auto scrollbar-hide no-print">
         <nav class="-mb-px flex space-x-6" aria-label="Tabs">
           <button (click)="activeTab.set('orders')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap relative" [class.border-purple-500]="activeTab() === 'orders'" [class.text-purple-400]="activeTab() === 'orders'" [class.border-transparent]="activeTab() !== 'orders'" [class.text-gray-400]="activeTab() !== 'orders'">
             Pedidos Ativos
@@ -47,1080 +96,1104 @@
           </button>
           <button (click)="activeTab.set('pdv')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'pdv'" [class.text-purple-400]="activeTab() === 'pdv'" [class.border-transparent]="activeTab() !== 'pdv'" [class.text-gray-400]="activeTab() !== 'pdv'">PDV</button>
           <button (click)="activeTab.set('sales')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'sales'" [class.text-purple-400]="activeTab() === 'sales'" [class.border-transparent]="activeTab() !== 'sales'" [class.text-gray-400]="activeTab() !== 'sales'">Vendas</button>
-          <button (click)="activeTab.set('accounts')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'accounts'" [class.text-purple-400]="activeTab() === 'accounts'" [class.border-transparent]="activeTab() !== 'accounts'" [class.text-gray-400]="activeTab() !== 'accounts'">Contas</button>
+          <button (click)="activeTab.set('accounts')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'accounts'" [class.text-purple-400]="activeTab() === 'accounts'" [class.border-transparent]="activeTab() !== 'accounts'" [class.text-gray-400]="activeTab() !== 'accounts'">Financeiro</button>
           <button (click)="activeTab.set('products')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'products'" [class.text-purple-400]="activeTab() === 'products'" [class.border-transparent]="activeTab() !== 'products'" [class.text-gray-400]="activeTab() !== 'products'">Produtos</button>
-          <button (click)="activeTab.set('drivers')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'drivers'" [class.text-purple-400]="activeTab() === 'drivers'" [class.border-transparent]="activeTab() !== 'drivers'" [class.text-gray-400]="activeTab() !== 'drivers'">Entregadores</button>
-          <button (click)="activeTab.set('loyalty')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'loyalty'" [class.text-purple-400]="activeTab() === 'loyalty'" [class.border-transparent]="activeTab() !== 'loyalty'" [class.text-gray-400]="activeTab() !== 'loyalty'">Fidelidade</button>
           <button (click)="activeTab.set('coupons')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'coupons'" [class.text-purple-400]="activeTab() === 'coupons'" [class.border-transparent]="activeTab() !== 'coupons'" [class.text-gray-400]="activeTab() !== 'coupons'">Cupons</button>
-          <button (click)="activeTab.set('settings')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'settings'" [class.text-purple-400]="activeTab() === 'settings'" [class.border-transparent]="activeTab() !== 'settings'" [class.text-gray-400]="activeTab() !== 'settings'">Configurações</button>
+          <button (click)="activeTab.set('drivers')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'drivers'" [class.text-purple-400]="activeTab() === 'drivers'" [class.border-transparent]="activeTab() !== 'drivers'" [class.text-gray-400]="activeTab() !== 'drivers'">Entregadores</button>
           <button (click)="activeTab.set('layout')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'layout'" [class.text-purple-400]="activeTab() === 'layout'" [class.border-transparent]="activeTab() !== 'layout'" [class.text-gray-400]="activeTab() !== 'layout'">Layout</button>
+          <button (click)="activeTab.set('loyalty')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'loyalty'" [class.text-purple-400]="activeTab() === 'loyalty'" [class.border-transparent]="activeTab() !== 'loyalty'" [class.text-gray-400]="activeTab() !== 'loyalty'">Fidelidade</button>
+          <button (click)="activeTab.set('settings')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'settings'" [class.text-purple-400]="activeTab() === 'settings'" [class.border-transparent]="activeTab() !== 'settings'" [class.text-gray-400]="activeTab() !== 'settings'">Configurações</button>
+          <button (click)="activeTab.set('help')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'help'" [class.text-purple-400]="activeTab() === 'help'" [class.border-transparent]="activeTab() !== 'help'" [class.text-gray-400]="activeTab() !== 'help'">Ajuda</button>
         </nav>
       </div>
 
       <!-- Content -->
       <div>
-        @switch (activeTab()) {
-          @case ('orders') {
-            <div class="bg-gray-900 p-6 rounded-lg h-[85vh] flex flex-col">
-              <h2 class="text-2xl font-semibold mb-4 flex-shrink-0">Pedidos Ativos</h2>
-          
-              <!-- Scheduled Orders Section -->
-              <div class="mb-6 flex-shrink-0">
-                <h3 class="text-xl font-semibold text-yellow-400 mb-2">Agendados ({{ scheduledOrders().length }})</h3>
-                @if (scheduledOrders().length > 0) {
-                  <div class="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide">
-                    @for (order of scheduledOrders(); track order.id) {
-                      <div class="w-72 flex-shrink-0 bg-gray-800 rounded-lg p-3">
-                        <p class="font-bold">{{order.customer_name}} - <span class="text-purple-400">{{order.total | currency:'BRL'}}</span></p>
-                        <p class="text-sm font-semibold text-yellow-400">PARA: {{ order.scheduled_time }}</p>
-                        <p class="text-xs text-gray-400 mt-1">{{ order.delivery_option === 'pickup' ? 'Retirada na Loja' : order.delivery_address + ', ' + order.neighborhood }}</p>
-                        <select [value]="order.status" (change)="updateOrderStatus(order.id, $event)" class="w-full bg-gray-700 p-2 rounded text-sm mt-2">
-                          @for(status of orderStatuses; track status) { <option [value]="status">{{status}}</option> }
+        <!-- Tab: Pedidos -->
+        <div [class.hidden]="activeTab() !== 'orders'">
+          <!-- Scheduled Orders -->
+          @if (scheduledOrders().length > 0) {
+            <div class="mb-8 p-4 bg-gray-900 rounded-lg">
+              <h2 class="text-xl font-bold mb-4 text-yellow-400">Pedidos Agendados</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @for(order of scheduledOrders(); track order.id){
+                  <div class="bg-gray-800 p-4 rounded-lg shadow-md border-l-4 border-yellow-400">
+                     <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold text-lg">#{{ order.id.slice(-4) }}</h3>
+                        <span class="text-sm font-semibold bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">Agendado para {{order.scheduled_time}}</span>
+                      </div>
+                      <p class="text-sm">{{ order.customer_name }}</p>
+                      <p class="text-xs text-gray-400">{{ order.delivery_option === 'delivery' ? order.delivery_address + ', ' + order.neighborhood : 'Retirada na loja' }}</p>
+                      <p class="text-lg font-bold my-2">{{ order.total | currency:'BRL' }}</p>
+                      <div class="flex items-center space-x-2">
+                        <label class="text-sm">Status:</label>
+                        <select (change)="updateOrderStatus(order.id, $event)" class="bg-gray-700 rounded p-1 text-sm flex-grow">
+                          @for(status of orderStatuses; track status){
+                            <option [value]="status" [selected]="order.status === status">{{ status }}</option>
+                          }
                         </select>
                       </div>
-                    }
-                  </div>
-                } @else {
-                  <p class="text-gray-500 text-sm">Nenhum pedido agendado.</p>
-                }
-              </div>
-          
-              <!-- Kanban Board -->
-              <div class="flex-grow flex space-x-4 overflow-x-auto pb-2">
-                @for (column of kanbanColumns; track column.title) {
-                  <div class="w-80 flex-shrink-0 bg-gray-800 rounded-lg flex flex-col">
-                    <!-- Column Header -->
-                    <h3 class="text-lg font-semibold p-3 border-b border-gray-700 flex-shrink-0">{{ column.title }} ({{ column.orders().length }})</h3>
-                    <!-- Column Cards -->
-                    <div class="p-2 space-y-3 overflow-y-auto flex-grow">
-                      @for (order of column.orders(); track order.id) {
-                        <div class="bg-gray-900 rounded-lg p-3 space-y-2">
-                          <p class="font-bold">{{order.customer_name}} - <span class="text-purple-400">{{order.total | currency:'BRL'}}</span></p>
-                          <p class="text-sm text-gray-400">{{ order.delivery_option === 'pickup' ? 'Retirada na Loja' : order.delivery_address + ', ' + order.neighborhood }}</p>
-                          <p class="text-xs text-gray-500">{{order.date | date:'dd/MM/yyyy HH:mm'}}</p>
-                          
-                           @if(order.delivery_option === 'delivery') {
-                            @if(order.assigned_driver_name) {
-                              <div class="text-sm">
-                                  @if(order.status === 'Saiu para Entrega') {
-                                      <p class="font-semibold text-blue-400">A caminho com {{order.assigned_driver_name}}</p>
-                                  } @else if(order.status === 'Em Preparo' || order.status === 'Aguardando Retirada') {
-                                      <p class="font-semibold text-yellow-400">Aguardando saída de {{order.assigned_driver_name}}</p>
-                                  }
-                              </div>
-                            } @else if (order.is_delivery_broadcasted) {
-                              <p class="text-sm font-semibold text-yellow-400">Aguardando aceite do entregador.</p>
-                            } @else {
-                              <p class="text-sm font-semibold text-gray-400">Aguardando chamar entregador.</p>
-                            }
-                          }
-
-                          <div class="border-t border-gray-700 pt-2 text-sm">
-                            @for (item of order.items; track $index) {
-                                <div class="flex justify-between">
-                                    <span>{{item.quantity}}x {{item.product_name}} @if(item.size.name !== 'Único') { ({{item.size.name}}) }</span>
-                                    <span>{{item.size.price | currency:'BRL'}}</span>
-                                </div>
-                                @if(item.addons.length > 0) {
-                                    <div class="pl-2 text-xs text-gray-400">
-                                        @for(addon of item.addons; track addon.id) {
-                                            <div class="flex justify-between">
-                                                <span class="truncate pr-2">- {{addon.name}}</span>
-                                                <span>{{ addon.price > 0 ? '+' + (addon.price | currency:'BRL') : '' }}</span>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                            }
-                          </div>
-                          
-                          <select [value]="order.status" (change)="updateOrderStatus(order.id, $event)" class="w-full bg-gray-700 p-2 rounded text-sm">
-                            @for(status of orderStatuses; track status) { <option [value]="status">{{status}}</option> }
-                          </select>
-                          
-                          <div class="space-y-2">
-                            @if(order.delivery_option === 'delivery' && (order.status === 'Em Preparo' || order.status === 'Aguardando Retirada' || order.status === 'Recebido')) {
-                              <button (click)="openDriverAssignmentModal(order)" class="w-full text-sm bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg">
-                                {{ order.is_delivery_broadcasted || order.assigned_driver_id ? 'Trocar Entregador' : 'Chamar Entregador' }}
-                              </button>
-                              @if(order.is_delivery_broadcasted || order.assigned_driver_id) {
-                                <button (click)="cancelDelivery(order.id)" class="w-full text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg">
-                                  Cancelar Entrega
-                                </button>
-                              }
-                            }
-                            @if(order.delivery_option === 'delivery') {
-                               <button (click)="openReceiptModal(order, 'delivery')" class="w-full text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg">Enviar via WhatsApp</button>
-                            }
-                            <button (click)="openReceiptModal(order, 'print')" class="w-full text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg">
-                              Imprimir Cupom
-                            </button>
-                          </div>
-                        </div>
-                      }
-                      @if (column.orders().length === 0) {
-                        <div class="flex items-center justify-center h-full">
-                          <p class="text-gray-500 text-sm">Nenhum pedido aqui.</p>
-                        </div>
-                      }
-                    </div>
                   </div>
                 }
               </div>
             </div>
           }
-          @case('pdv') {
-            @if (pdvState() === 'selecting') {
-              <div class="bg-gray-900 p-6 rounded-lg text-center h-[80vh] flex flex-col items-center justify-center">
-                <h2 class="text-2xl font-semibold mb-8">Qual o tipo do pedido?</h2>
-                <div class="flex flex-col sm:flex-row gap-6 w-full max-w-md">
-                  <button (click)="startPdvOrder('delivery')" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-8 rounded-lg text-xl transition-transform transform hover:scale-105">
-                    Delivery
-                  </button>
-                  <button (click)="startPdvOrder('balcao')" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-6 px-8 rounded-lg text-xl transition-transform transform hover:scale-105">
-                    Balcão
-                  </button>
-                </div>
-              </div>
-            } @else {
-              <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Product Selection -->
-                <div class="lg:col-span-2 bg-gray-900 p-6 rounded-lg max-h-[80vh] overflow-y-auto relative">
-                  @if(dataService.settings().pdv_background_image_url) {
-                      <div class="absolute inset-0 bg-cover bg-center opacity-10 rounded-lg" [style.backgroundImage]="'url(' + dataService.settings().pdv_background_image_url + ')'"></div>
-                  }
-                  <div class="relative z-10">
-                      <h2 class="text-2xl font-semibold mb-4">Ponto de Venda ({{ pdvState() === 'delivery' ? 'Delivery' : 'Balcão' }})</h2>
-                      @for(category of sortedCategories(); track category.id) {
-                          <div class="mb-6">
-                              <h3 class="text-xl font-bold text-purple-400 mb-3">{{category.name}}</h3>
-                              <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                                  @for(product of sortedProducts(); track product.id) {
-                                      @if(product.category_id === category.id) {
-                                          <div (click)="openPdvProductModal(product)" 
-                                            class="bg-gray-800 p-3 rounded-lg flex flex-col justify-between hover:ring-2 ring-purple-500 transition-all relative"
-                                            [class.cursor-pointer]="product.is_available"
-                                            [class.cursor-not-allowed]="!product.is_available"
-                                            [class.opacity-50]="!product.is_available">
-                                              @if (!product.is_available) {
-                                                <div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10 rounded-lg">
-                                                  <span class="text-white font-semibold bg-red-600 px-2 py-0.5 rounded-md text-xs">Indisponível</span>
-                                                </div>
-                                              }
-                                              <div class="flex items-start space-x-3">
-                                                  <img [src]="product.image_url || 'https://via.placeholder.com/100'" alt="{{product.name}}" class="w-16 h-16 rounded-md object-cover">
-                                                  <div>
-                                                      <p class="font-semibold">{{product.name}}</p>
-                                                      <p class="text-xs text-gray-400">
-                                                        @if (product.price_type === 'fixed') {
-                                                          {{ product.price | currency:'BRL' }}
-                                                        } @else {
-                                                          A partir de {{ product.sizes[0]?.price | currency:'BRL' }}
-                                                        }
-                                                      </p>
-                                                  </div>
-                                              </div>
-                                          </div>
-                                      }
-                                  }
-                              </div>
-                          </div>
-                      }
-                  </div>
-                </div>
-                <!-- Cart & Checkout -->
-                <div class="bg-gray-900 p-4 rounded-lg">
-                  <h3 class="text-xl font-semibold mb-4">Pedido Atual</h3>
-                  <div class="space-y-2 max-h-60 overflow-y-auto mb-4 pr-2">
-                    @for(item of pdvCart(); track $index) {
-                      <div class="bg-gray-800 p-2 rounded flex justify-between items-center">
-                          <div>
-                            <p class="text-sm font-medium">{{item.product_name}} @if(item.size.name !== 'Único'){ ({{item.size.name}}) } </p>
-                              @if(item.addons.length > 0) {
-                                  <p class="text-xs text-gray-400">{{ getAddonNames(item.addons) }}</p>
-                              }
-                            <div class="flex items-center space-x-2 mt-1">
-                              <button (click)="decrementPdvCartItem($index)" class="w-5 h-5 rounded bg-gray-700">-</button>
-                              <span class="text-sm">{{item.quantity}}</span>
-                              <button (click)="incrementPdvCartItem($index)" class="w-5 h-5 rounded bg-gray-700">+</button>
-                              <button (click)="removePdvCartItem($index)" class="text-xs text-red-400 ml-2">x</button>
+          <!-- Kanban Board -->
+          <div class="flex flex-col lg:flex-row gap-4 overflow-x-auto pb-4">
+            @for(column of kanbanColumns; track column.title) {
+              <div class="lg:w-1/4 flex-shrink-0 min-w-[300px]">
+                <h2 class="text-xl font-bold mb-4">{{ column.title }} ({{ column.orders().length }})</h2>
+                <div class="space-y-4 h-[60vh] overflow-y-auto pr-2">
+                    @for(order of column.orders(); track order.id) {
+                      <div class="bg-gray-900 p-4 rounded-lg shadow-md">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold text-lg">#{{ order.id.slice(-4) }}</h3>
+                                <p class="text-sm">{{ order.customer_name }}</p>
+                                <p class="text-xs text-gray-400">{{ order.delivery_option === 'delivery' ? 'Delivery' : 'Retirada' }}</p>
                             </div>
-                          </div>
-                          <p class="text-sm font-semibold">{{item.total_price | currency:'BRL'}}</p>
-                      </div>
-                    }
-                    @if (pdvCart().length === 0) { <p class="text-center text-gray-500 text-sm">O carrinho está vazio</p> }
-                  </div>
-                  <div class="border-t border-gray-700 pt-4">
-                    <div class="space-y-1 mb-4 text-sm">
-                      <p class="flex justify-between"><span>Subtotal:</span> <span>{{pdvSubtotal() | currency:'BRL'}}</span></p>
-                      @if (pdvState() === 'delivery') {
-                        <p class="flex justify-between"><span>Taxa de Entrega:</span> <span>{{pdvDeliveryFee() | currency:'BRL'}}</span></p>
-                      }
-                      <p class="flex justify-between font-bold text-lg"><span>Total:</span> <span class="text-purple-400">{{pdvTotal() | currency:'BRL'}}</span></p>
-                    </div>
+                           <button (click)="openReceiptModal(order, 'print')" class="text-gray-400 hover:text-white" title="Imprimir cupom">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v3h6v-3z" clip-rule="evenodd" /></svg>
+                           </button>
+                        </div>
 
-                    <form [formGroup]="pdvCheckoutForm" (ngSubmit)="finalizePdvOrder()" class="space-y-3">
-                      <input formControlName="customer_name" placeholder="Nome do Cliente" class="w-full bg-gray-700 p-2 rounded text-sm">
-                      <input formControlName="phone" placeholder="Telefone do Cliente (WhatsApp)" class="w-full bg-gray-700 p-2 rounded text-sm">
-
-                      @if (pdvState() === 'delivery') {
-                        <div class="border border-gray-700 p-3 rounded-lg space-y-3">
-                          <p class="text-xs text-yellow-400">Dados para Entrega</p>
-                           <div class="grid grid-cols-3 gap-2">
-                              <div class="col-span-2"><input formControlName="street" placeholder="Rua / Avenida" class="w-full bg-gray-600 p-2 rounded text-sm"></div>
-                              <div><input formControlName="number" placeholder="Nº" class="w-full bg-gray-600 p-2 rounded text-sm"></div>
-                          </div>
-                           @if (dataService.settings().delivery.type === 'neighborhood') {
-                              <select formControlName="neighborhood" class="w-full bg-gray-600 p-2 rounded text-sm">
-                                  <option value="">Selecione o bairro</option>
-                                  @for (hood of dataService.settings().delivery.neighborhoods; track hood.name) { <option [value]="hood.name">{{ hood.name }}</option> }
-                              </select>
-                           } @else {
-                              <input formControlName="neighborhood" placeholder="Bairro" class="w-full bg-gray-600 p-2 rounded text-sm">
-                           }
-                        </div>
-                      }
-                      
-                      <select formControlName="payment_method" class="w-full bg-gray-700 p-2 rounded text-sm">
-                          <option value="cash">Dinheiro</option>
-                          <option value="card">Cartão</option>
-                          <option value="pix-machine">PIX (Maquininha)</option>
-                          <option value="credit">A Receber (Fiado)</option>
-                      </select>
-                      @if(pdvCheckoutForm.get('payment_method')?.value === 'cash') {
-                          <input type="number" formControlName="change_for" placeholder="Troco para quanto?" class="w-full bg-gray-600 p-2 rounded text-sm">
-                      }
-
-                      @if(pdvCheckoutForm.get('payment_method')?.value === 'credit') {
-                          <div class="border border-gray-700 p-3 rounded-lg space-y-3">
-                              <p class="text-xs text-yellow-400">Para "Fiado", todos os campos são obrigatórios.</p>
-                              <input formControlName="address" placeholder="Endereço Completo" class="w-full bg-gray-600 p-2 rounded text-sm">
-                              <div>
-                                  <label class="block text-xs text-gray-400 mb-1">Data para Pagamento</label>
-                                  <input type="date" formControlName="payment_due_date" class="w-full bg-gray-600 p-2 rounded text-sm">
-                              </div>
-                          </div>
-                      }
-                      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg">
-                        {{ pdvState() === 'delivery' ? 'Criar Pedido de Entrega' : 'Finalizar Venda' }}
-                      </button>
-                       <button type="button" (click)="cancelPdvOrder()" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 rounded-lg text-sm">Cancelar Pedido</button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            }
-          }
-           @case('sales') {
-            <div class="bg-gray-900 p-6 rounded-lg">
-              <h2 class="text-2xl font-semibold mb-6">Histórico de Vendas</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="bg-gray-800 p-4 rounded-lg text-center">
-                  <p class="text-sm text-gray-400">Faturamento Total</p>
-                  <p class="text-2xl font-bold text-green-400">{{ totalSales() | currency:'BRL' }}</p>
-                </div>
-                <div class="bg-gray-800 p-4 rounded-lg text-center">
-                  <p class="text-sm text-gray-400">Total de Pedidos</p>
-                  <p class="text-2xl font-bold text-purple-400">{{ dataService.orders().length }}</p>
-                </div>
-              </div>
-              <div class="space-y-2">
-                @for(order of dataService.orders(); track order.id) {
-                  <div class="bg-gray-800 p-3 rounded-lg text-sm">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-                      <p><b>#{{order.id.slice(-4)}}</b> - {{order.customer_name}}</p>
-                      <p><span class="text-gray-400">Total:</span> {{order.total | currency:'BRL'}}</p>
-                      <p><span class="text-gray-400">Data:</span> {{order.date | date:'dd/MM/yy HH:mm'}}</p>
-                      <p><span class="text-gray-400">Status:</span> <span class="font-semibold" [class.text-green-400]="order.status === 'Entregue'" [class.text-red-400]="order.status === 'Cancelado'">{{order.status}}</span></p>
-                    </div>
-                  </div>
-                }
-                 @if (dataService.orders().length === 0) { <p class="text-center text-gray-500">Nenhuma venda registrada.</p> }
-              </div>
-            </div>
-          }
-          @case('accounts') {
-             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Accounts Receivable -->
-                <div class="bg-gray-900 p-6 rounded-lg">
-                    <h2 class="text-2xl font-semibold mb-4">Contas a Receber</h2>
-                    <div class="space-y-3 max-h-[70vh] overflow-y-auto">
-                      @for(receivable of sortedReceivables(); track receivable.id) {
-                        <div class="bg-gray-800 p-3 rounded-lg border-l-4" [class.border-yellow-400]="receivable.status === 'pending'" [class.border-green-400]="receivable.status === 'paid'">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="font-bold">{{receivable.customer_name}} - <span class="text-purple-400">{{receivable.amount | currency:'BRL'}}</span></p>
-                                    <p class="text-xs text-gray-400">Pedido: #{{receivable.order_id.slice(-4)}}</p>
-                                    <p class="text-xs text-gray-400">Vencimento: {{receivable.payment_due_date | date:'dd/MM/yyyy'}}</p>
-                                </div>
-                                @if(receivable.status === 'pending') {
-                                    <button (click)="markReceivableAsPaid(receivable.id)" class="text-xs bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 rounded">Marcar como Pago</button>
-                                } @else {
-                                    <p class="text-xs font-bold text-green-400">PAGO</p>
-                                }
-                            </div>
-                        </div>
-                      }
-                      @if (sortedReceivables().length === 0) { <p class="text-center text-gray-500 py-4">Nenhuma conta a receber.</p> }
-                    </div>
-                </div>
-                <!-- Expenses -->
-                <div class="bg-gray-900 p-6 rounded-lg">
-                    <h2 class="text-2xl font-semibold mb-4">Despesas e Saídas</h2>
-                    <form [formGroup]="expenseForm" (ngSubmit)="saveExpense()" class="space-y-3 bg-gray-800 p-4 rounded-lg mb-6">
-                        <input type="text" formControlName="description" placeholder="Descrição da despesa" class="w-full bg-gray-700 p-2 rounded text-sm">
-                        <div class="grid grid-cols-2 gap-3">
-                            <input type="number" formControlName="amount" placeholder="Valor (R$)" class="w-full bg-gray-700 p-2 rounded text-sm">
-                            <input type="date" formControlName="date" class="w-full bg-gray-700 p-2 rounded text-sm">
-                        </div>
-                        <div class="flex justify-end space-x-2">
-                           @if(editingExpense()) {
-                             <button type="button" (click)="cancelEditExpense()" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-3 rounded-lg text-sm">Cancelar</button>
-                           }
-                           <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg text-sm">{{ editingExpense() ? 'Salvar Alteração' : 'Adicionar Despesa' }}</button>
-                        </div>
-                    </form>
-                     <div class="space-y-3 max-h-[45vh] overflow-y-auto">
-                        @for(expense of sortedExpenses(); track expense.id) {
-                           <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center">
-                               <div>
-                                   <p>{{expense.description}} - <span class="font-semibold text-red-400">{{expense.amount | currency:'BRL'}}</span></p>
-                                   <p class="text-xs text-gray-400">{{expense.date | date:'dd/MM/yyyy'}}</p>
-                               </div>
-                               <div class="space-x-2">
-                                   <button (click)="editExpense(expense)" class="text-xs text-blue-400">Editar</button>
-                                   <button (click)="deleteExpense(expense.id)" class="text-xs text-red-400">Excluir</button>
-                               </div>
-                           </div>
-                        }
-                        @if(sortedExpenses().length === 0) { <p class="text-center text-gray-500 py-4">Nenhuma despesa registrada.</p> }
-                     </div>
-                </div>
-             </div>
-          }
-          @case ('products') {
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div class="lg:col-span-2 bg-gray-900 p-6 rounded-lg">
-                <div class="flex justify-between items-center mb-4">
-                  <h2 class="text-2xl font-semibold">Produtos</h2>
-                  <button (click)="editProduct(null)" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">Novo Produto</button>
-                </div>
-
-                @if(!editingProduct()) {
-                  <div class="space-y-3">
-                  @for(product of sortedProducts(); track product.id; let i = $index) {
-                    <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center">
-                      <div class="flex items-center space-x-4">
-                        <div class="flex flex-col">
-                           <button (click)="moveItem('products', i, 'up')" class="disabled:opacity-25" [disabled]="i === 0">&#9650;</button>
-                           <button (click)="moveItem('products', i, 'down')" class="disabled:opacity-25" [disabled]="i === sortedProducts().length - 1">&#9660;</button>
-                        </div>
-                        <img [src]="product.image_url || 'https://via.placeholder.com/50'" class="w-12 h-12 rounded object-cover">
-                        <div>
-                           <p class="font-semibold">{{product.name}}</p>
-                           <p class="text-xs text-gray-400">{{getCategoryName(product.category_id)}}</p>
-                        </div>
-                      </div>
-                      <div class="space-x-2"><button (click)="editProduct(product)" class="text-sm text-blue-400">Editar</button><button (click)="deleteProduct(product.id)" class="text-sm text-red-400">Excluir</button></div>
-                    </div>
-                  }
-                  </div>
-                } @else {
-                  <form [formGroup]="productForm" (ngSubmit)="saveProduct()" class="space-y-4">
-                    <input type="hidden" formControlName="id">
-                     <div class="flex items-center justify-between bg-gray-800 p-3 rounded-lg">
-                      <label for="productAvailable" class="text-sm font-medium">Produto Disponível</label>
-                      <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" formControlName="is_available" id="productAvailable" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                      </label>
-                    </div>
-                    <div><label class="block text-sm">Nome</label><input formControlName="name" class="w-full bg-gray-700 p-2 rounded"></div>
-                    <div>
-                      <div class="flex justify-between items-center mb-1">
-                        <label class="block text-sm">Descrição</label>
-                        <button type="button" (click)="generateDescription()" [disabled]="isGeneratingDescription()" class="text-xs bg-purple-600 hover:bg-purple-700 disabled:bg-purple-900 disabled:cursor-wait text-white font-bold py-1 px-2 rounded-lg flex items-center space-x-1">
-                          @if (isGeneratingDescription()) {
-                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span>Gerando...</span>
-                          } @else {
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                            <span>Gerar com IA</span>
+                         <div class="text-xs space-y-1 mb-3">
+                          @for(item of order.items; track $index) {
+                            <p>{{ item.quantity }}x {{ item.product_name }} ({{item.size.name}})</p>
                           }
-                        </button>
-                      </div>
-                      <textarea formControlName="description" class="w-full bg-gray-700 p-2 rounded" rows="3"></textarea>
-                    </div>
-                    <div>
-                      <div class="flex justify-between items-center mb-1">
-                        <label class="block text-sm">Imagem</label>
-                         <button type="button" (click)="generateImage()" [disabled]="isGeneratingImage()" class="text-xs bg-purple-600 hover:bg-purple-700 disabled:bg-purple-900 disabled:cursor-wait text-white font-bold py-1 px-2 rounded-lg flex items-center space-x-1">
-                          @if (isGeneratingImage()) {
-                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span>Gerando...</span>
-                          } @else {
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                            <span>Gerar com IA</span>
-                          }
-                        </button>
-                      </div>
-                       @if (productForm.get('image_url')?.value) {
-                        <img [src]="productForm.get('image_url')?.value" alt="Preview da imagem" class="w-full h-40 object-cover rounded-lg my-2 bg-gray-800">
-                      }
-                      <input type="file" (change)="onProductFileChange($event)" class="w-full text-sm text-gray-400 file:bg-gray-600 file:border-0 file:px-4 file:py-2 file:rounded-lg file:mr-4">
-                    </div>
-                    <div><label class="block text-sm">Categoria</label><select formControlName="category_id" class="w-full bg-gray-700 p-2 rounded"> @for(cat of sortedCategories(); track cat.id) { <option [value]="cat.id">{{cat.name}}</option> } </select></div>
-                    
-                    <div>
-                      <label class="block text-sm mb-1">Tipo de Preço</label>
-                      <div class="flex space-x-4 p-2 bg-gray-800 rounded-md">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" formControlName="price_type" value="sized" class="form-radio h-4 w-4 bg-gray-700 text-purple-600">
-                            <span class="ml-2 text-sm">Por Tamanho</span>
-                        </label>
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" formControlName="price_type" value="fixed" class="form-radio h-4 w-4 bg-gray-700 text-purple-600">
-                            <span class="ml-2 text-sm">Preço Fixo</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    @if (productForm.get('price_type')?.value === 'fixed') {
-                      <div>
-                        <label class="block text-sm">Preço Fixo (R$)</label>
-                        <input type="number" formControlName="price" class="w-full bg-gray-700 p-2 rounded">
-                      </div>
-                    } @else {
-                      <div formArrayName="sizes" class="space-y-2"><label class="block text-sm">Tamanhos</label>
-                        @for(size of productSizes.controls; track $index) {
-                          <div [formGroupName]="$index" class="flex items-center space-x-2 bg-gray-800 p-2 rounded">
-                            <input formControlName="name" placeholder="Nome (Ex: 500ml)" class="flex-grow bg-gray-700 p-1 rounded"><input type="number" formControlName="price" placeholder="Preço" class="w-24 bg-gray-700 p-1 rounded">
-                            <label class="flex items-center cursor-pointer space-x-1">
-                              <input type="checkbox" formControlName="is_available" class="form-checkbox h-4 w-4 bg-gray-700 border-gray-600 text-purple-600 focus:ring-purple-500 rounded">
-                              <span class="text-xs text-gray-400">Disp.</span>
-                            </label>
-                            <button type="button" (click)="removeProductSize($index)" class="text-red-500">X</button>
-                          </div>
-                        }
-                        <button type="button" (click)="addProductSize()" class="text-sm text-purple-400">+ Adicionar Tamanho</button>
-                      </div>
-                    }
-
-                    <div>
-                      <label class="block text-sm mb-1">Categorias de Adicionais</label>
-                      <div class="space-y-2 p-3 rounded bg-gray-800 border border-gray-700 max-h-48 overflow-y-auto">
-                        @for(ac of sortedAddonCategories(); track ac.id) {
-                          <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" 
-                                   [checked]="isAddonCategorySelected(ac.id)"
-                                   (change)="onAddonCategoryChange($event, ac.id)"
-                                   class="form-checkbox h-4 w-4 bg-gray-700 border-gray-600 text-purple-600 focus:ring-purple-500 rounded">
-                            <span class="ml-2 text-sm">{{ac.name}}</span>
-                          </label>
-                        }
-                        @if (sortedAddonCategories().length === 0) {
-                          <p class="text-xs text-gray-500">Nenhuma categoria de adicional cadastrada.</p>
-                        }
-                      </div>
-                    </div>
-
-                    <div class="flex space-x-2"><button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Salvar</button><button type="button" (click)="editingProduct.set(null)" class="bg-gray-600 hover:bg-gray-500 py-2 px-4 rounded-lg">Cancelar</button></div>
-                  </form>
-                }
-              </div>
-
-              <div class="space-y-6">
-                <div class="bg-gray-900 p-6 rounded-lg">
-                  <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-semibold">Categorias</h3><button (click)="editCategory(null)" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded-lg text-sm">Nova</button></div>
-                   @if(!editingCategory()) {
-                    <div class="space-y-2">
-                      @for(cat of sortedCategories(); track cat.id; let i = $index) {
-                        <div class="bg-gray-800 p-2 rounded-lg flex justify-between items-center">
-                           <div class="flex items-center space-x-2">
-                             <div class="flex flex-col"><button (click)="moveItem('categories', i, 'up')" [disabled]="i === 0">&#9650;</button><button (click)="moveItem('categories', i, 'down')" [disabled]="i === sortedCategories().length - 1">&#9660;</button></div>
-                             <p>{{cat.name}}</p>
-                           </div>
-                          <div class="space-x-2"><button (click)="editCategory(cat)" class="text-xs text-blue-400">Editar</button><button (click)="deleteCategory(cat.id)" class="text-xs text-red-400">Excluir</button></div>
                         </div>
-                      }
-                    </div>
-                   } @else {
-                     <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="space-y-2"><input formControlName="name" class="w-full bg-gray-700 p-2 rounded"><div class="flex space-x-2"><button type="submit" class="bg-green-600 text-sm py-1 px-2 rounded">Salvar</button><button type="button" (click)="editCategory(null)" class="bg-gray-600 text-sm py-1 px-2 rounded">Cancelar</button></div></form>
-                   }
-                </div>
-                <div class="bg-gray-900 p-6 rounded-lg">
-                  <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-semibold">Grupos de Adicionais</h3><button (click)="editAddonCategory(null)" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded-lg text-sm">Novo</button></div>
-                  @if(!editingAddonCategory()) {
-                    <div class="space-y-2">
-                      @for(ac of sortedAddonCategories(); track ac.id; let i = $index) {
-                        <div class="bg-gray-800 p-2 rounded-lg">
-                          <div class="flex justify-between items-center">
-                            <div class="flex items-center space-x-2">
-                              <div class="flex flex-col"><button (click)="moveItem('addonCategories', i, 'up')" [disabled]="i === 0">&#9650;</button><button (click)="moveItem('addonCategories', i, 'down')" [disabled]="i === sortedAddonCategories().length - 1">&#9660;</button></div>
-                              <p>{{ac.name}}</p>
-                            </div>
-                            <div class="space-x-2"><button (click)="editAddonCategory(ac)" class="text-xs text-blue-400">Editar</button><button (click)="deleteAddonCategory(ac.id)" class="text-xs text-red-400">Excluir</button></div>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                     <form [formGroup]="addonCategoryForm" (ngSubmit)="saveAddonCategory()" class="space-y-4">
-                        <div><label class="block text-sm">Nome do Grupo</label><input formControlName="name" class="w-full bg-gray-700 p-2 rounded"></div>
-                        <div class="flex items-center"><input type="checkbox" formControlName="required" id="addonRequired" class="form-checkbox h-4 w-4 bg-gray-800 text-purple-600"><label for="addonRequired" class="ml-2 text-sm">Obrigatório</label></div>
-                        <div formArrayName="addons" class="space-y-2"><label class="block text-sm">Itens Adicionais</label>
-                           @for(addon of addonCategoryAddons.controls; track $index) {
-                             <div [formGroupName]="$index" class="flex items-center space-x-2 bg-gray-800 p-1 rounded">
-                                <input formControlName="name" placeholder="Nome" class="w-full bg-gray-700 p-1 rounded"><input type="number" formControlName="price" placeholder="Preço" class="w-24 bg-gray-700 p-1 rounded">
-                                <label class="flex items-center cursor-pointer space-x-1">
-                                  <input type="checkbox" formControlName="is_available" class="form-checkbox h-4 w-4 bg-gray-700 border-gray-600 text-purple-600 focus:ring-purple-500 rounded">
-                                  <span class="text-xs text-gray-400">Disp.</span>
-                                </label>
-                                <button type="button" (click)="removeAddonFromAddonCategory($index)" class="text-red-500 text-xs">X</button>
-                             </div>
-                           }
-                           <button type="button" (click)="addAddonToAddonCategory()" class="text-sm text-purple-400">+ Adicionar Item</button>
-                        </div>
-                        <div class="flex space-x-2"><button type="submit" class="bg-green-600 text-sm py-1 px-2 rounded">Salvar</button><button type="button" (click)="editAddonCategory(null)" class="bg-gray-600 text-sm py-1 px-2 rounded">Cancelar</button></div>
-                     </form>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-          @case ('drivers') {
-            <div class="bg-gray-900 p-6 rounded-lg">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-semibold">Entregadores</h2>
-                    <div class="flex space-x-1 rounded-lg p-1 bg-gray-800">
-                        <button (click)="driverView.set('management')" class="px-3 py-1 text-sm font-medium rounded-md" [class.bg-purple-600]="driverView() === 'management'" [class.text-gray-300]="driverView() !== 'management'">Gerenciar Cadastros</button>
-                        <button (click)="driverView.set('reports')" class="px-3 py-1 text-sm font-medium rounded-md" [class.bg-purple-600]="driverView() === 'reports'" [class.text-gray-300]="driverView() !== 'reports'">Relatórios de Entregas</button>
-                    </div>
-                </div>
 
-                @if (driverView() === 'management') {
-                  <div class="space-y-8">
-                      <!-- Pending Registrations -->
-                      <div>
-                          <h3 class="text-xl font-semibold mb-4 text-yellow-400">Cadastros Pendentes</h3>
-                          @if (pendingDrivers().length > 0) {
-                              <div class="space-y-4">
-                                  @for (driver of pendingDrivers(); track driver.id) {
-                                      <div class="bg-gray-800 p-4 rounded-lg">
-                                          <p class="font-bold text-lg">{{ driver.name }}</p>
-                                          <div class="text-sm text-gray-300 mt-2 space-y-1">
-                                              <p><span class="font-semibold text-gray-400">WhatsApp:</span> {{ driver.whatsapp }}</p>
-                                              <p><span class="font-semibold text-gray-400">Endereço:</span> {{ driver.address }}</p>
-                                              <p><span class="font-semibold text-gray-400">CNH:</span> {{ driver.cnh }}</p>
-                                          </div>
-                                          <div class="mt-4 flex space-x-2">
-                                              <button (click)="approveDriver(driver.id)" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Aprovar</button>
-                                              <button (click)="declineDriver(driver.id)" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Recusar</button>
-                                          </div>
-                                      </div>
-                                  }
-                              </div>
-                          } @else {
-                              <p class="text-gray-500">Nenhum cadastro pendente no momento.</p>
-                          }
-                      </div>
-
-                      <!-- Approved Drivers -->
-                      <div>
-                          <h3 class="text-xl font-semibold mb-4 text-green-400">Entregadores Aprovados</h3>
-                          @if(approvedDrivers().length > 0) {
-                            <div class="space-y-3">
-                              @for (driver of approvedDrivers(); track driver.id) {
-                                  <div class="bg-gray-800 p-3 rounded-lg">
-                                      <p class="font-semibold">{{ driver.name }}</p>
-                                      <p class="text-xs text-gray-400">WhatsApp: {{ driver.whatsapp }}</p>
-                                      <div class="mt-4 flex space-x-2">
-                                          <button (click)="blockDriver(driver.id)" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Bloquear</button>
-                                          <button (click)="banDriver(driver.id)" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Banir</button>
-                                      </div>
-                                  </div>
-                              }
-                            </div>
-                          } @else {
-                            <p class="text-gray-500">Nenhum entregador aprovado.</p>
-                          }
-                      </div>
-
-                      <!-- Blocked Drivers -->
-                      <div>
-                          <h3 class="text-xl font-semibold mb-4 text-orange-400">Entregadores Bloqueados</h3>
-                          @if(blockedDrivers().length > 0) {
-                            <div class="space-y-3">
-                              @for (driver of blockedDrivers(); track driver.id) {
-                                  <div class="bg-gray-800 p-3 rounded-lg opacity-80">
-                                      <p class="font-semibold">{{ driver.name }}</p>
-                                      <p class="text-xs text-gray-400">WhatsApp: {{ driver.whatsapp }}</p>
-                                      <div class="mt-4 flex space-x-2">
-                                          <button (click)="unblockDriver(driver.id)" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Desbloquear</button>
-                                          <button (click)="banDriver(driver.id)" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Banir</button>
-                                      </div>
-                                  </div>
-                              }
-                            </div>
-                          } @else {
-                            <p class="text-gray-500">Nenhum entregador bloqueado.</p>
-                          }
-                      </div>
-
-                       <!-- Declined Drivers -->
-                      <div>
-                          <h3 class="text-xl font-semibold mb-4 text-red-400">Entregadores Recusados</h3>
-                           @if(declinedDrivers().length > 0) {
-                            <div class="space-y-3">
-                              @for (driver of declinedDrivers(); track driver.id) {
-                                  <div class="bg-gray-800 p-3 rounded-lg opacity-60">
-                                      <p class="font-semibold">{{ driver.name }}</p>
-                                       <p class="text-xs text-gray-400">WhatsApp: {{ driver.whatsapp }}</p>
-                                       <div class="mt-4 flex space-x-2">
-                                          <button (click)="approveDriver(driver.id)" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Aprovar</button>
-                                          <button (click)="banDriver(driver.id)" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Banir</button>
-                                      </div>
-                                  </div>
-                              }
-                            </div>
-                          } @else {
-                             <p class="text-gray-500">Nenhum entregador recusado.</p>
-                          }
-                      </div>
-                  </div>
-                } @else if (driverView() === 'reports') {
-                    <div>
-                        <div class="mb-6">
-                            <label for="driver-select" class="block text-sm font-medium text-gray-300 mb-1">Selecione um Entregador</label>
-                            <select id="driver-select" (change)="selectDriverForReport($event)" class="w-full max-w-xs bg-gray-700 border-gray-600 rounded-md p-2 focus:ring-purple-500 focus:border-purple-500">
-                                <option value="">-- Escolha um entregador --</option>
-                                @for(driver of approvedDrivers(); track driver.id) {
-                                    <option [value]="driver.id">{{ driver.name }}</option>
+                        <p class="text-lg font-bold my-2">{{ order.total | currency:'BRL' }}</p>
+                        
+                        <div class="flex items-center space-x-2 mb-2">
+                            <label class="text-sm">Status:</label>
+                            <select (change)="updateOrderStatus(order.id, $event)" class="bg-gray-700 rounded p-1 text-sm flex-grow">
+                                @for(status of orderStatuses; track status){
+                                    <option [value]="status" [selected]="order.status === status">{{ status }}</option>
                                 }
                             </select>
                         </div>
-
-                        @if (selectedDriverForReport(); as driver) {
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                <!-- Left Column: Summary and Payments -->
-                                <div class="lg:col-span-1 space-y-6">
-                                    <div class="bg-gray-800 p-4 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3">Resumo Financeiro de {{ driver.name }}</h3>
-                                        <div class="space-y-2 text-sm">
-                                            <div class="flex justify-between"><span>Total de Entregas:</span> <span class="font-semibold">{{ reportDeliveries().length }}</span></div>
-                                            <div class="flex justify-between"><span>Total em Taxas:</span> <span class="font-semibold text-green-400">{{ reportTotals().totalFees | currency:'BRL' }}</span></div>
-                                            <div class="flex justify-between"><span>Total Pago:</span> <span class="font-semibold text-red-400">-{{ reportTotals().totalPaid | currency:'BRL' }}</span></div>
-                                            <div class="flex justify-between text-base font-bold border-t border-gray-700 mt-2 pt-2"><span>SALDO A PAGAR:</span> <span class="text-yellow-400">{{ reportTotals().balance | currency:'BRL' }}</span></div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="bg-gray-800 p-4 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3">Registrar Pagamento</h3>
-                                        <form [formGroup]="driverPaymentForm" (ngSubmit)="saveDriverPayment()" class="space-y-3">
-                                            <input type="number" formControlName="amount" placeholder="Valor Pago (R$)" class="w-full bg-gray-700 p-2 rounded text-sm">
-                                            <input type="date" formControlName="payment_date" class="w-full bg-gray-700 p-2 rounded text-sm">
-                                            <input type="text" formControlName="notes" placeholder="Notas (Ex: Pag. semana 1)" class="w-full bg-gray-700 p-2 rounded text-sm">
-                                            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg text-sm">Registrar</button>
-                                        </form>
-                                    </div>
-
-                                    <div class="bg-gray-800 p-4 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3">Pagamentos Realizados</h3>
-                                        <div class="space-y-2 max-h-60 overflow-y-auto">
-                                            @for(payment of reportPayments(); track payment.id) {
-                                                <div class="text-sm p-2 bg-gray-700 rounded-md">
-                                                    <div class="flex justify-between">
-                                                        <span class="font-bold text-green-400">{{ payment.amount | currency:'BRL' }}</span>
-                                                        <span class="text-xs text-gray-400">{{ payment.payment_date | date:'dd/MM/yy' }}</span>
-                                                    </div>
-                                                    @if(payment.notes) {
-                                                        <p class="text-xs text-gray-300 mt-1">{{ payment.notes }}</p>
-                                                    }
-                                                </div>
-                                            }
-                                            @if (reportPayments().length === 0) {
-                                                <p class="text-sm text-gray-500">Nenhum pagamento registrado.</p>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Right Column: Deliveries List -->
-                                <div class="lg:col-span-2 bg-gray-800 p-4 rounded-lg">
-                                    <h3 class="text-lg font-semibold mb-3">Entregas Realizadas</h3>
-                                    <div class="space-y-2 max-h-[80vh] overflow-y-auto">
-                                        @for(delivery of reportDeliveries(); track delivery.id) {
-                                            <div class="text-sm p-2 bg-gray-700 rounded-md flex justify-between">
-                                                <div>
-                                                    <p>Pedido <span class="font-mono">#{{ delivery.id.slice(-4) }}</span></p>
-                                                    <p class="text-xs text-gray-400">{{ delivery.date | date:'dd/MM/yy HH:mm' }}</p>
-                                                </div>
-                                                <div class="font-semibold text-green-400">
-                                                    +{{ delivery.delivery_fee | currency:'BRL' }}
-                                                </div>
-                                            </div>
-                                        }
-                                        @if (reportDeliveries().length === 0) {
-                                            <p class="text-sm text-gray-500">Nenhuma entrega finalizada encontrada para este entregador.</p>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        } @else {
-                            <p class="text-center text-gray-500 py-10">Selecione um entregador para ver seu relatório.</p>
+                        @if(order.delivery_option === 'delivery') {
+                          <div class="text-sm">
+                            @if(order.assigned_driver_name) {
+                              <div class="flex items-center justify-between bg-green-500/20 text-green-300 p-2 rounded">
+                                <span>🛵 {{ order.assigned_driver_name }}</span>
+                                <button (click)="cancelDelivery(order.id)" class="text-xs text-red-400 hover:text-red-300" title="Cancelar entrega">x</button>
+                              </div>
+                            } @else {
+                              <div class="grid grid-cols-2 gap-2">
+                                <button (click)="openReceiptModal(order, 'delivery')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded text-xs">
+                                  Enviar Grupo
+                                </button>
+                                 <button (click)="openDriverAssignmentModal(order)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-3 rounded text-xs">
+                                  Atribuir
+                                </button>
+                              </div>
+                            }
+                          </div>
                         }
-                    </div>
-                }
-            </div>
-          }
-          @case ('settings') {
-            <div class="bg-gray-900 p-6 rounded-lg">
-              <h2 class="text-2xl font-semibold mb-4">Configurações da Loja</h2>
-              <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="space-y-6 max-w-2xl">
-                
-                <div class="space-y-4 bg-gray-800 p-4 rounded-lg">
-                    <h3 class="font-semibold">Credenciais de Administrador</h3>
-                    <p class="text-sm text-gray-400">Use isso para alterar o acesso ao painel administrativo.</p>
-                    <div>
-                        <label class="block text-sm mb-1">Nome de Usuário</label>
-                        <input formControlName="admin_username" class="w-full bg-gray-700 p-2 rounded">
-                    </div>
-                    <div>
-                        <label class="block text-sm mb-1">Nova Senha (deixe em branco para não alterar)</label>
-                        <input type="password" formControlName="admin_password" class="w-full bg-gray-700 p-2 rounded" placeholder="••••••••">
-                    </div>
+                      </div>
+                    }
                 </div>
+              </div>
+            }
+          </div>
+        </div>
 
-                <div><label class="block text-sm mb-1">Nome da Loja</label><input formControlName="name" class="w-full bg-gray-700 p-2 rounded"></div>
-                <div><label class="block text-sm mb-1">Endereço</label><input formControlName="address" class="w-full bg-gray-700 p-2 rounded"></div>
-                 <div>
-                    <label class="block text-sm mb-1">Mensagem de Boas-vindas</label>
-                    <textarea formControlName="welcome_message" class="w-full bg-gray-700 p-2 rounded" rows="3" placeholder="Uma mensagem que aparecerá no topo do cardápio"></textarea>
+        <!-- Tab: PDV -->
+        <div [class.hidden]="activeTab() !== 'pdv'">
+           @if (pdvState() === 'selecting') {
+             <div class="flex flex-col items-center justify-center h-96">
+                <h2 class="text-2xl font-bold mb-6">Selecione o tipo de venda</h2>
+                <div class="flex gap-8">
+                    <button (click)="startPdvOrder('balcao')" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-12 rounded-lg text-xl">
+                        Venda Balcão
+                    </button>
+                    <button (click)="startPdvOrder('delivery')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-6 px-12 rounded-lg text-xl">
+                        Delivery
+                    </button>
                 </div>
-                 <div>
-                    <label class="block text-sm mb-1">Tempo de Espera Estimado</label>
-                    <input formControlName="wait_time" class="w-full bg-gray-700 p-2 rounded" placeholder="Ex: 30-50 min">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label class="block text-sm mb-1">WhatsApp da Loja</label><input formControlName="whatsapp" class="w-full bg-gray-700 p-2 rounded"></div>
-                  <div><label class="block text-sm mb-1">WhatsApp do Entregador</label><input formControlName="delivery_whatsapp" class="w-full bg-gray-700 p-2 rounded"></div>
-                  <div><label class="block text-sm mb-1">Instagram URL</label><input formControlName="instagram" class="w-full bg-gray-700 p-2 rounded"></div>
-                </div>
-                 <div class="space-y-4 bg-gray-800 p-4 rounded-lg" formGroupName="opening_hours">
-                    <h3 class="font-semibold">Horário de Funcionamento</h3>
-                    @for(day of weekDays; track day) {
-                       <div [formGroupName]="day" class="grid grid-cols-1 sm:grid-cols-3 gap-y-2 sm:gap-x-4 items-center">
-                           <label class="flex items-center"><input type="checkbox" formControlName="is_open" class="form-checkbox h-4 w-4 bg-gray-700 text-purple-600 mr-2">{{ weekDayNames[day] }}</label>
-                           <input type="time" formControlName="start" class="bg-gray-700 p-1 rounded" [disabled]="!openingHoursControls[day].value.is_open">
-                           <input type="time" formControlName="end" class="bg-gray-700 p-1 rounded" [disabled]="!openingHoursControls[day].value.is_open">
+            </div>
+           } @else {
+             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Product Selection -->
+                <div class="bg-gray-900 rounded-lg p-4 h-[75vh] flex flex-col">
+                  <h3 class="text-xl font-bold mb-4">Produtos</h3>
+                   <div class="overflow-y-auto space-y-2">
+                    @for(category of sortedCategories(); track category.id) {
+                       <div class="mb-4">
+                          <h4 class="font-bold text-purple-400 mb-2">{{ category.name }}</h4>
+                          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            @for(product of sortedProducts(); track product.id) {
+                                @if(product.category_id === category.id) {
+                                   <button (click)="openPdvProductModal(product)" [disabled]="!product.is_available" class="p-2 rounded-lg text-left h-24 flex flex-col justify-between disabled:opacity-50 disabled:cursor-not-allowed" [style.backgroundColor]="product.is_available ? '#2d3748' : '#4a5568'">
+                                        <span class="text-sm font-semibold">{{ product.name }}</span>
+                                        <span class="text-xs font-bold text-green-400">
+                                            @if (product.price_type === 'fixed') { {{ product.price | currency:'BRL' }} }
+                                            @else { A partir de {{ (product.sizes.length > 0 ? product.sizes[0].price : 0) | currency:'BRL' }} }
+                                        </span>
+                                    </button>
+                                }
+                            }
+                          </div>
                        </div>
                     }
-                 </div>
-                <div class="space-y-4 bg-gray-800 p-4 rounded-lg">
-                  <h3 class="font-semibold">Fechamento Temporário</h3>
-                  <p class="text-sm text-gray-400">Use para fechar a loja imediatamente, independente do horário de funcionamento. A mensagem será exibida para os clientes no cardápio.</p>
-                  <div class="flex items-center space-x-4">
-                      <button type="button" (click)="toggleTemporaryClosure()" 
-                              class="font-bold py-2 px-4 rounded-lg"
-                              [class.bg-red-600]="!mainSettingsForm.get('is_temporarily_closed')?.value"
-                              [class.hover:bg-red-700]="!mainSettingsForm.get('is_temporarily_closed')?.value"
-                              [class.bg-green-600]="mainSettingsForm.get('is_temporarily_closed')?.value"
-                              [class.hover:bg-green-700]="mainSettingsForm.get('is_temporarily_closed')?.value">
-                          {{ mainSettingsForm.get('is_temporarily_closed')?.value ? 'ABRIR LOJA' : 'FECHAR LOJA' }}
-                      </button>
-                      @if(mainSettingsForm.get('is_temporarily_closed')?.value) {
-                          <span class="text-red-400 font-bold">LOJA FECHADA</span>
-                      }
-                  </div>
-                  <div>
-                      <label class="block text-sm mb-1">Mensagem de Fechamento</label>
-                      <input formControlName="temporary_closure_message" class="w-full bg-gray-700 p-2 rounded">
-                  </div>
-                </div>
-                <div formGroupName="delivery" class="space-y-4 bg-gray-800 p-4 rounded-lg">
-                  <h3 class="font-semibold">Taxa de Entrega</h3>
-                  <div class="flex space-x-4">
-                      <label class="flex items-center"><input type="radio" formControlName="type" value="fixed" class="form-radio h-4 w-4 text-purple-600"><span class="ml-2">Taxa Fixa</span></label>
-                      <label class="flex items-center"><input type="radio" formControlName="type" value="neighborhood" class="form-radio h-4 w-4 text-purple-600"><span class="ml-2">Por Bairro</span></label>
-                  </div>
-                  @if (mainSettingsForm.get('delivery.type')?.value === 'fixed') {
-                    <div><label class="block text-sm mb-1">Valor da Taxa Fixa</label><input type="number" formControlName="fixed_fee" class="w-full bg-gray-700 p-2 rounded"></div>
-                  } @else {
-                    <div formArrayName="neighborhoods" class="space-y-2"><label class="block text-sm">Bairros e Taxas</label>
-                      @for(hood of deliveryNeighborhoods.controls; track $index) {
-                        <div [formGroupName]="$index" class="flex items-center space-x-2 bg-gray-700 p-2 rounded">
-                          <input formControlName="name" placeholder="Nome do Bairro" class="w-full bg-gray-600 p-1 rounded"><input type="number" formControlName="fee" placeholder="Taxa" class="w-32 bg-gray-600 p-1 rounded">
-                          <button type="button" (click)="removeNeighborhood($index)" class="text-red-500 font-bold">X</button>
-                        </div>
-                      }
-                      <button type="button" (click)="addNeighborhood()" class="text-sm text-purple-400 hover:text-purple-300">+ Adicionar Bairro</button>
-                    </div>
-                  }
+                   </div>
                 </div>
 
-                <div><label class="block text-sm mb-1">Chave PIX</label><input formControlName="pix_key" class="w-full bg-gray-700 p-2 rounded"></div>
-                <div><button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Configurações</button></div>
-              </form>
-            </div>
-          }
-          @case('layout') {
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <!-- Controls -->
-              <div class="bg-gray-900 p-6 rounded-lg">
-                <h2 class="text-2xl font-semibold mb-4">Aparência da Loja</h2>
-                <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="space-y-6">
-                  <div formGroupName="layout" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      @for(color of ['primary_color', 'accent_color', 'background_color', 'text_color', 'card_color']; track color) {
-                        <div class="flex items-center space-x-3">
-                          <input type="color" [formControlName]="color" class="w-10 h-10 p-0.5 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
-                          <label class="text-sm">{{ colorNames[color] }}</label>
-                        </div>
-                      }
+                <!-- Cart & Checkout -->
+                <div class="bg-gray-900 rounded-lg p-4 h-[75vh] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Pedido Atual ({{ pdvState() === 'balcao' ? 'Balcão' : 'Delivery' }})</h3>
+                        <button (click)="cancelPdvOrder()" class="text-sm text-red-400 hover:text-red-300">Cancelar Pedido</button>
                     </div>
-                  </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-700">
-                    <div>
-                      <label class="block text-sm mb-1">Logo da Loja</label>
-                      <input type="file" (change)="onFileChange($event, 'logo_url')" class="w-full text-sm text-gray-400 file:bg-gray-700 file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-4">
-                    </div>
-                    <div>
-                      <label class="block text-sm mb-1">Banner da Loja</label>
-                      <input type="file" (change)="onFileChange($event, 'banner_url')" class="w-full text-sm text-gray-400 file:bg-gray-700 file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-4">
-                    </div>
-                     <div>
-                        <label class="block text-sm mb-1">Imagem de Fundo do PDV</label>
-                        <input type="file" (change)="onFileChange($event, 'pdv_background_image_url')" class="w-full text-sm text-gray-400 file:bg-gray-700 file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-4">
-                    </div>
-                  </div>
-                  <div class="pt-4 border-t border-gray-700">
-                      <h3 class="text-lg font-semibold mb-2">Carrossel de Imagens da Tela Inicial</h3>
-                      <div formArrayName="slider_images" class="space-y-4">
-                          @for(imageControl of sliderImages.controls; track $index) {
-                            <div class="flex items-center space-x-4 bg-gray-800 p-2 rounded-lg">
-                                <img [src]="imageControl.value || 'https://via.placeholder.com/100x56'" class="w-24 h-14 object-cover rounded">
-                                <div class="flex-grow">
-                                    <input type="file" (change)="onSliderFileChange($event, $index)" class="w-full text-sm text-gray-400 file:bg-gray-700 file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-4">
-                                </div>
-                                <button type="button" (click)="removeSliderImage($index)" class="text-red-500 font-bold p-2 rounded-full hover:bg-red-500/20">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                                </button>
+                    <!-- Cart -->
+                    <div class="flex-grow overflow-y-auto bg-gray-800 rounded p-2 mb-4 space-y-2">
+                       @for(item of pdvCart(); track $index) {
+                          <div class="bg-gray-700 p-2 rounded text-sm">
+                            <div class="flex justify-between">
+                                <span class="font-semibold">{{item.product_name}} ({{item.size.name}})</span>
+                                <span>{{item.total_price | currency:'BRL'}}</span>
                             </div>
-                          }
-                          <button type="button" (click)="addSliderImage()" class="text-sm text-purple-400 hover:text-purple-300">+ Adicionar Nova Imagem</button>
+                             @if(item.addons.length > 0) {
+                                <p class="text-xs text-gray-400">+ {{ getAddonNames(item.addons) }}</p>
+                             }
+                             <div class="flex items-center justify-between mt-1">
+                                <div class="flex items-center space-x-2">
+                                  <button (click)="decrementPdvCartItem($index)" class="w-5 h-5 rounded bg-gray-600">-</button>
+                                  <span>{{item.quantity}}</span>
+                                  <button (click)="incrementPdvCartItem($index)" class="w-5 h-5 rounded bg-gray-600">+</button>
+                                </div>
+                                <button (click)="removePdvCartItem($index)" class="text-xs text-red-400">Remover</button>
+                             </div>
+                          </div>
+                       }
+                        @if (pdvCart().length === 0) { <p class="text-center text-gray-500 py-4">Carrinho vazio</p> }
+                    </div>
+                    <!-- Checkout Form -->
+                    <form [formGroup]="pdvCheckoutForm" (ngSubmit)="finalizePdvOrder()" class="space-y-3">
+                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <input formControlName="customer_name" placeholder="Nome do Cliente" class="w-full p-2 bg-gray-700 rounded">
+                            <input formControlName="phone" placeholder="Telefone (opcional)" class="w-full p-2 bg-gray-700 rounded">
+                         </div>
+                         @if (pdvState() === 'delivery') {
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input formControlName="street" placeholder="Rua" class="sm:col-span-2 w-full p-2 bg-gray-700 rounded">
+                                <input formControlName="number" placeholder="Nº" class="w-full p-2 bg-gray-700 rounded">
+                            </div>
+                             <select formControlName="neighborhood" class="w-full p-2 bg-gray-700 rounded">
+                                <option value="">Selecione o Bairro</option>
+                                 @for(hood of dataService.settings().delivery.neighborhoods; track hood.name) {
+                                    <option [value]="hood.name">{{hood.name}} - {{hood.fee | currency:'BRL'}}</option>
+                                 }
+                             </select>
+                         }
+                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <select formControlName="payment_method" class="w-full p-2 bg-gray-700 rounded">
+                                <option value="cash">Dinheiro</option>
+                                <option value="card">Cartão</option>
+                                <option value="pix-machine">PIX</option>
+                                <option value="credit">Fiado</option>
+                            </select>
+                            <input type="number" formControlName="change_for" placeholder="Troco para?" class="w-full p-2 bg-gray-700 rounded">
+                         </div>
+                         @if (pdvCheckoutForm.get('payment_method')?.value === 'credit') {
+                            <div class="grid grid-cols-2 gap-3">
+                                <input formControlName="address" placeholder="Endereço para cobrança" class="w-full p-2 bg-gray-700 rounded">
+                                <input type="date" formControlName="payment_due_date" class="w-full p-2 bg-gray-700 rounded">
+                            </div>
+                         }
+                         <div class="border-t border-gray-700 pt-3 space-y-1 text-sm">
+                            <div class="flex justify-between"><span>Subtotal:</span><span>{{pdvSubtotal() | currency:'BRL'}}</span></div>
+                            <div class="flex justify-between"><span>Entrega:</span><span>{{pdvDeliveryFee() | currency:'BRL'}}</span></div>
+                            <div class="flex justify-between font-bold text-lg"><span>Total:</span><span>{{pdvTotal() | currency:'BRL'}}</span></div>
+                         </div>
+                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg">Finalizar Venda</button>
+                    </form>
+                </div>
+            </div>
+           }
+        </div>
+
+        <!-- Tab: Vendas -->
+        <div [class.hidden]="activeTab() !== 'sales'">
+          <h2 class="text-2xl font-bold mb-4">Histórico de Vendas</h2>
+           <div class="bg-gray-900 p-4 rounded-lg">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-700">
+                            <tr>
+                                <th class="p-3">Data</th><th class="p-3">Cliente</th><th class="p-3">Tipo</th>
+                                <th class="p-3">Status</th><th class="p-3">Pagamento</th><th class="p-3 text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for(order of dataService.orders(); track order.id) {
+                                <tr class="border-b border-gray-700">
+                                    <td class="p-3">{{ order.date | date:'dd/MM HH:mm' }}</td>
+                                    <td class="p-3">{{ order.customer_name }}</td>
+                                    <td class="p-3">{{ order.delivery_option }}</td>
+                                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs" [class.bg-green-500]="order.status === 'Entregue'" [class.bg-red-500]="order.status === 'Cancelado'" [class.bg-blue-500]="order.status !== 'Entregue' && order.status !== 'Cancelado'">{{ order.status }}</span></td>
+                                    <td class="p-3">{{ order.payment_method }}</td>
+                                    <td class="p-3 text-right font-semibold">{{ order.total | currency:'BRL' }}</td>
+                                </tr>
+                            }
+                        </tbody>
+                         <tfoot>
+                            <tr class="font-semibold text-white">
+                                <td colspan="5" class="p-3 text-right text-lg">TOTAL DE VENDAS:</td>
+                                <td class="p-3 text-right text-lg">{{ totalSales() | currency:'BRL' }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+           </div>
+        </div>
+
+        <!-- Tab: Financeiro -->
+        <div [class.hidden]="activeTab() !== 'accounts'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Contas a Receber -->
+            <div class="bg-gray-900 p-4 rounded-lg">
+                <h2 class="text-xl font-bold mb-4">Contas a Receber (Fiado)</h2>
+                <div class="space-y-2">
+                    @for (item of sortedReceivables(); track item.id) {
+                      <div class="p-3 rounded-md" [class.bg-gray-800]="item.status === 'pending'" [class.bg-green-800/50]="item.status === 'paid'">
+                         <div class="flex justify-between">
+                            <div>
+                                <p class="font-bold">{{item.customer_name}}</p>
+                                <p class="text-xs text-gray-400">Venc: {{item.payment_due_date | date:'dd/MM/yy'}}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg" [class.text-yellow-400]="item.status === 'pending'" [class.text-green-400]="item.status === 'paid'">{{item.amount | currency:'BRL'}}</p>
+                                @if (item.status === 'pending') {
+                                    <button (click)="markReceivableAsPaid(item.id)" class="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded">Marcar como Pago</button>
+                                }
+                            </div>
+                         </div>
                       </div>
-                  </div>
-                  <div>
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Aparência</button>
-                  </div>
+                    }
+                    @if(sortedReceivables().length === 0) { <p class="text-center text-gray-500 py-4">Nenhuma conta a receber.</p> }
+                </div>
+            </div>
+            <!-- Despesas -->
+            <div class="bg-gray-900 p-4 rounded-lg">
+                <h2 class="text-xl font-bold mb-4">Despesas</h2>
+                <form [formGroup]="expenseForm" (ngSubmit)="saveExpense()" class="flex gap-2 mb-4">
+                    <input formControlName="description" placeholder="Descrição" class="flex-grow p-2 bg-gray-700 rounded">
+                    <input type="number" formControlName="amount" placeholder="Valor" class="w-24 p-2 bg-gray-700 rounded">
+                    <input type="date" formControlName="date" class="p-2 bg-gray-700 rounded">
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 rounded">{{ editingExpense() ? 'Salvar' : 'Adicionar' }}</button>
+                    @if(editingExpense()) { <button type="button" (click)="cancelEditExpense()" class="bg-gray-600 hover:bg-gray-500 text-white font-bold px-4 rounded">Cancelar</button> }
                 </form>
-              </div>
+                 <div class="space-y-2">
+                    @for (item of sortedExpenses(); track item.id) {
+                      <div class="p-2 rounded-md bg-gray-800 flex justify-between items-center">
+                         <div>
+                            <p class="font-semibold">{{item.description}}</p>
+                            <p class="text-xs text-gray-400">{{item.date | date:'dd/MM/yy'}}</p>
+                         </div>
+                         <div class="flex items-center gap-4">
+                            <p class="font-bold text-red-400">{{item.amount | currency:'BRL'}}</p>
+                            <div class="space-x-2">
+                                <button (click)="editExpense(item)" class="text-xs text-yellow-400">Editar</button>
+                                <button (click)="deleteExpense(item.id)" class="text-xs text-red-400">Excluir</button>
+                            </div>
+                         </div>
+                      </div>
+                    }
+                 </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Produtos -->
+        <div [class.hidden]="activeTab() !== 'products'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Categorias -->
+          <div class="bg-gray-900 p-4 rounded-lg">
+            <h2 class="text-xl font-bold mb-4">Categorias</h2>
+            <div class="space-y-2 mb-4">
+              @for (category of sortedCategories(); track category.id; let i = $index) {
+                <div class="bg-gray-800 p-2 rounded-md flex items-center justify-between">
+                   <div class="flex items-center gap-2">
+                      <div class="flex flex-col gap-1">
+                          <button (click)="moveItem('categories', i, 'up')" [disabled]="i === 0" class="disabled:opacity-25">▲</button>
+                          <button (click)="moveItem('categories', i, 'down')" [disabled]="i === sortedCategories().length - 1" class="disabled:opacity-25">▼</button>
+                      </div>
+                      <span>{{ category.name }}</span>
+                   </div>
+                  <div class="space-x-2">
+                    <button (click)="editCategory(category)" class="text-xs text-yellow-400">Editar</button>
+                    <button (click)="deleteCategory(category.id)" class="text-xs text-red-400">Excluir</button>
+                  </div>
+                </div>
+              }
+            </div>
+            <button (click)="editCategory(null)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg">Nova Categoria</button>
+             @if (editingCategory()) {
+              <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="mt-4 p-3 bg-gray-800 rounded-lg space-y-2">
+                <h3 class="font-semibold">{{ editingCategory()?.id ? 'Editando' : 'Nova' }} Categoria</h3>
+                <input formControlName="name" placeholder="Nome da Categoria" class="w-full bg-gray-700 p-2 rounded">
+                <div class="flex justify-end space-x-2">
+                  <button type="button" (click)="editingCategory.set(null)" class="bg-gray-600 px-3 py-1 rounded text-sm">Cancelar</button>
+                  <button type="submit" class="bg-green-600 px-3 py-1 rounded text-sm">Salvar</button>
+                </div>
+              </form>
+            }
+          </div>
+          <!-- Grupos de Adicionais -->
+           <div class="bg-gray-900 p-4 rounded-lg">
+            <h2 class="text-xl font-bold mb-4">Grupos de Adicionais</h2>
+             <div class="space-y-2 mb-4">
+                @for (ac of sortedAddonCategories(); track ac.id; let i = $index) {
+                <div class="bg-gray-800 p-2 rounded-md">
+                   <div class="flex items-center justify-between">
+                     <div class="flex items-center gap-2">
+                        <div class="flex flex-col gap-1">
+                            <button (click)="moveItem('addonCategories', i, 'up')" [disabled]="i === 0" class="disabled:opacity-25">▲</button>
+                            <button (click)="moveItem('addonCategories', i, 'down')" [disabled]="i === sortedAddonCategories().length - 1" class="disabled:opacity-25">▼</button>
+                        </div>
+                        <span>{{ ac.name }}</span>
+                     </div>
+                    <div class="space-x-2">
+                      <button (click)="editAddonCategory(ac)" class="text-xs text-yellow-400">Editar</button>
+                      <button (click)="deleteAddonCategory(ac.id)" class="text-xs text-red-400">Excluir</button>
+                    </div>
+                  </div>
+                  <p class="text-xs text-gray-400 pl-6">{{ ac.addons.length }} adicionais</p>
+                </div>
+              }
+             </div>
+            <button (click)="editAddonCategory(null)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg">Novo Grupo</button>
+            @if(editingAddonCategory()) {
+               <form [formGroup]="addonCategoryForm" (ngSubmit)="saveAddonCategory()" class="mt-4 p-3 bg-gray-800 rounded-lg space-y-3">
+                  <h3 class="font-semibold">{{ editingAddonCategory()?.id ? 'Editando' : 'Novo' }} Grupo</h3>
+                  <div class="flex justify-between items-center">
+                    <input formControlName="name" placeholder="Nome do Grupo" class="w-full bg-gray-700 p-2 rounded">
+                    <label class="flex items-center ml-4 text-sm"><input type="checkbox" formControlName="required" class="mr-2">Obrigatório</label>
+                  </div>
+                  <h4 class="text-sm font-semibold pt-2 border-t border-gray-700">Adicionais:</h4>
+                  <div formArrayName="addons" class="space-y-2">
+                    @for(addon of addonCategoryAddons.controls; track $index) {
+                      <div [formGroupName]="$index" class="flex items-center gap-2">
+                        <input formControlName="name" placeholder="Nome" class="flex-grow bg-gray-700 p-1 rounded text-sm">
+                        <input type="number" formControlName="price" placeholder="Preço" class="w-20 bg-gray-700 p-1 rounded text-sm">
+                        <label class="flex items-center text-sm"><input type="checkbox" formControlName="is_available" class="mr-1">Disp.</label>
+                        <button type="button" (click)="removeAddonFromAddonCategory($index)" class="text-red-400">x</button>
+                      </div>
+                    }
+                  </div>
+                  <button type="button" (click)="addAddonToAddonCategory()" class="text-xs text-purple-400">+ Adicionar Opção</button>
+                   <div class="flex justify-end space-x-2">
+                    <button type="button" (click)="editingAddonCategory.set(null)" class="bg-gray-600 px-3 py-1 rounded text-sm">Cancelar</button>
+                    <button type="submit" class="bg-green-600 px-3 py-1 rounded text-sm">Salvar Grupo</button>
+                  </div>
+               </form>
+            }
+          </div>
+          <!-- Produtos -->
+          <div class="bg-gray-900 p-4 rounded-lg lg:col-span-3">
+             <h2 class="text-xl font-bold mb-4">Produtos</h2>
+             <div class="space-y-2 mb-4">
+                @for (product of sortedProducts(); track product.id; let i = $index) {
+                    <div class="bg-gray-800 p-2 rounded-md flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="flex flex-col gap-1">
+                                <button (click)="moveItem('products', i, 'up')" [disabled]="i === 0" class="disabled:opacity-25">▲</button>
+                                <button (click)="moveItem('products', i, 'down')" [disabled]="i === sortedProducts().length - 1" class="disabled:opacity-25">▼</button>
+                            </div>
+                            <img [src]="product.image_url || 'https://picsum.photos/50/50'" class="w-10 h-10 rounded-md object-cover">
+                            <div>
+                                <p class="font-semibold">{{ product.name }}</p>
+                                <p class="text-xs text-gray-400">{{ getCategoryName(product.category_id) }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                           <span class="text-sm px-2 py-1 rounded-full" [class.bg-green-500]="product.is_available" [class.bg-red-500]="!product.is_available">{{ product.is_available ? 'Disponível' : 'Indisponível' }}</span>
+                           <div class="space-x-2">
+                            <button (click)="editProduct(product)" class="text-xs text-yellow-400">Editar</button>
+                            <button (click)="deleteProduct(product.id)" class="text-xs text-red-400">Excluir</button>
+                          </div>
+                        </div>
+                    </div>
+                }
+             </div>
+             <button (click)="editProduct(null)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg">Novo Produto</button>
+          </div>
+        </div>
 
-              <!-- Preview -->
-              <div class="bg-gray-900 p-2 rounded-lg">
-                <h3 class="text-lg font-semibold mb-2 text-center text-gray-400">Pré-visualização Interativa</h3>
-                <div class="w-full h-[500px] rounded-md overflow-hidden scale-100 border-4 border-gray-700">
-                  @if (mainSettingsForm.get('layout')?.value) {
-                    <app-layout-preview [layout]="mainSettingsForm.get('layout')!.value"></app-layout-preview>
+        <!-- Tab: Cupons -->
+        <div [class.hidden]="activeTab() !== 'coupons'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-gray-900 p-4 rounded-lg">
+                <h2 class="text-xl font-bold mb-4">Cupons de Desconto</h2>
+                <div class="space-y-2 mb-4">
+                  @for(coupon of sortedCoupons(); track coupon.id) {
+                    <div class="bg-gray-800 p-3 rounded-lg">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <p class="font-bold text-purple-400 text-lg">{{ coupon.code }}</p>
+                          <p class="text-sm">{{coupon.description}}</p>
+                          <p class="text-xs text-gray-400">Pedido Mínimo: {{coupon.minimum_order_value | currency:'BRL'}}</p>
+                        </div>
+                        <div class="space-x-2">
+                          <button (click)="editCoupon(coupon)" class="text-xs text-yellow-400">Editar</button>
+                          <button (click)="deleteCoupon(coupon.id)" class="text-xs text-red-400">Excluir</button>
+                        </div>
+                      </div>
+                    </div>
                   }
                 </div>
-              </div>
+                <button (click)="editCoupon(null)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg">Novo Cupom</button>
             </div>
-          }
-          @case('coupons') {
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div class="bg-gray-900 p-6 rounded-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-semibold">Cupons de Desconto</h2>
-                    <button (click)="editCoupon(null)" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">Novo Cupom</button>
-                </div>
-                
-                @if(!editingCoupon()) {
-                    <div class="space-y-3">
-                        @for(coupon of sortedCoupons(); track coupon.id) {
-                            <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center">
-                                <div>
-                                    <p class="font-bold text-purple-400">{{coupon.code}}</p>
-                                    <p class="text-sm">{{coupon.description}}</p>
-                                    <p class="text-xs text-gray-400">{{ coupon.discount_type === 'free_shipping' ? 'Frete Grátis' : coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : (coupon.discount_value | currency:'BRL') }} de desconto</p>
-                                </div>
-                                <div class="space-x-2">
-                                    <button (click)="editCoupon(coupon)" class="text-sm text-blue-400">Editar</button>
-                                    <button (click)="deleteCoupon(coupon.id)" class="text-sm text-red-400">Excluir</button>
-                                </div>
-                            </div>
-                        }
-                        @if (sortedCoupons().length === 0) {
-                            <p class="text-gray-500">Nenhum cupom cadastrado.</p>
-                        }
-                    </div>
-                } @else {
-                    <form [formGroup]="couponForm" (ngSubmit)="saveCoupon()" class="space-y-4">
-                        <div><label class="block text-sm">Código do Cupom (sem espaços)</label><input formControlName="code" class="w-full bg-gray-700 p-2 rounded uppercase"></div>
-                        <div><label class="block text-sm">Descrição</label><textarea formControlName="description" class="w-full bg-gray-700 p-2 rounded" rows="2"></textarea></div>
-                        <div>
-                            <label class="block text-sm">Tipo de Desconto</label>
+             @if(editingCoupon()) {
+                <div class="bg-gray-900 p-4 rounded-lg">
+                    <h2 class="text-xl font-bold mb-4">{{ editingCoupon()?.id ? 'Editar' : 'Novo' }} Cupom</h2>
+                    <form [formGroup]="couponForm" (ngSubmit)="saveCoupon()" class="space-y-3">
+                        <input formControlName="code" placeholder="Código do Cupom (ex: ACAI10)" class="w-full bg-gray-700 p-2 rounded uppercase">
+                        <input formControlName="description" placeholder="Descrição (ex: 10% OFF em todo o site)" class="w-full bg-gray-700 p-2 rounded">
+                        <div class="grid grid-cols-2 gap-3">
                             <select formControlName="discount_type" class="w-full bg-gray-700 p-2 rounded">
                                 <option value="fixed">Valor Fixo (R$)</option>
                                 <option value="percentage">Porcentagem (%)</option>
                                 <option value="free_shipping">Frete Grátis</option>
                             </select>
+                            <input formControlName="discount_value" type="number" placeholder="Valor do Desconto" class="w-full bg-gray-700 p-2 rounded">
                         </div>
-                        @if (couponForm.get('discount_type')?.value !== 'free_shipping') {
-                           <div><label class="block text-sm">Valor do Desconto</label><input type="number" formControlName="discount_value" class="w-full bg-gray-700 p-2 rounded"></div>
-                        }
-                        <div><label class="block text-sm">Valor Mínimo do Pedido (Opcional)</label><input type="number" formControlName="minimum_order_value" placeholder="Deixe 0 para não aplicar" class="w-full bg-gray-700 p-2 rounded"></div>
-                        <div class="flex space-x-2">
-                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Salvar</button>
-                            <button type="button" (click)="editingCoupon.set(null)" class="bg-gray-600 hover:bg-gray-500 py-2 px-4 rounded-lg">Cancelar</button>
+                        <input formControlName="minimum_order_value" type="number" placeholder="Valor Mínimo do Pedido (opcional)" class="w-full bg-gray-700 p-2 rounded">
+                        <div class="flex justify-end space-x-2">
+                           <button type="button" (click)="editingCoupon.set(null)" class="bg-gray-600 px-4 py-2 rounded">Cancelar</button>
+                           <button type="submit" class="bg-green-600 px-4 py-2 rounded">Salvar</button>
                         </div>
                     </form>
-                }
-              </div>
-            </div>
-          }
-          @case('loyalty') {
-            <div class="bg-gray-900 p-6 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-8">
-              <!-- Loyalty Program Rules -->
-              <div>
-                <h2 class="text-2xl font-semibold mb-4">Regras do Programa de Fidelidade</h2>
-                <form [formGroup]="loyaltyForm" (ngSubmit)="saveLoyaltySettings()" class="space-y-4 bg-gray-800 p-4 rounded-lg">
-                  <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" formControlName="enabled" class="form-checkbox h-4 w-4 bg-gray-700 text-purple-600 mr-2">
-                    <span>Ativar Programa de Fidelidade</span>
-                  </label>
-                  @if(loyaltyForm.get('enabled')?.value) {
-                    <div class="pt-4 border-t border-gray-700 space-y-4">
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label class="block text-sm mb-1">Pontos por R$ 1 gasto</label>
-                          <input type="number" formControlName="points_per_real" class="w-full bg-gray-700 p-2 rounded">
-                        </div>
-                        <div>
-                          <label class="block text-sm mb-1">Pontos para Recompensa</label>
-                          <input type="number" formControlName="points_for_reward" class="w-full bg-gray-700 p-2 rounded">
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label class="block text-sm mb-1">Tipo de Recompensa</label>
-                        <div class="flex space-x-4 p-2 bg-gray-700 rounded-md">
-                            <label class="flex items-center cursor-pointer">
-                              <input type="radio" formControlName="reward_type" value="fixed" class="form-radio h-4 w-4 bg-gray-800 border-gray-600 text-purple-600 focus:ring-purple-500">
-                              <span class="ml-2">Valor Fixo (R$)</span>
-                            </label>
-                            <label class="flex items-center cursor-pointer">
-                              <input type="radio" formControlName="reward_type" value="free_shipping" class="form-radio h-4 w-4 bg-gray-800 border-gray-600 text-purple-600 focus:ring-purple-500">
-                              <span class="ml-2">Frete Grátis</span>
-                            </label>
-                        </div>
-                      </div>
-  
-                      @if (loyaltyForm.get('reward_type')?.value === 'fixed') {
-                        <div>
-                          <label class="block text-sm mb-1">Valor da Recompensa (R$)</label>
-                          <input type="number" formControlName="reward_value" class="w-full bg-gray-700 p-2 rounded">
-                        </div>
-                      }
-                    </div>
-                  }
-                  <div>
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Salvar Regras</button>
-                  </div>
-                </form>
-              </div>
+                </div>
+             }
+        </div>
 
-              <!-- Customer Points -->
-              <div>
-                <h2 class="text-2xl font-semibold mb-4">Pontos dos Clientes</h2>
-                <div class="bg-gray-800 p-4 rounded-lg">
-                  <p class="text-xs text-gray-400 mb-4">Esta é uma visualização de exemplo para demonstrar como os pontos dos clientes seriam exibidos. O sistema atual não possui um banco de dados de usuários.</p>
-                  <div class="max-h-96 overflow-y-auto">
-                    <table class="w-full text-sm text-left">
-                      <thead class="text-xs text-gray-400 uppercase bg-gray-700">
-                        <tr>
-                          <th scope="col" class="px-4 py-2">Cliente</th>
-                          <th scope="col" class="px-4 py-2 text-right">Pontos</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for(user of mockUsers(); track user.email) {
-                          <tr class="border-b border-gray-700">
-                            <td class="px-4 py-2 font-medium">{{ user.name }}<br><span class="text-xs text-gray-500">{{ user.email }}</span></td>
-                            <td class="px-4 py-2 text-right font-bold text-purple-400">{{ user.loyalty_points }}</td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
+        <!-- Tab: Entregadores -->
+        <div [class.hidden]="activeTab() !== 'drivers'" class="bg-gray-900 p-4 rounded-lg">
+            <div class="flex items-center space-x-4 mb-4 border-b border-gray-700">
+                <button (click)="driverView.set('management')" class="py-2 px-1 font-medium" [class.border-b-2]="driverView() === 'management'" [class.border-purple-500]="driverView() === 'management'" [class.text-purple-400]="driverView() === 'management'">Gerenciamento</button>
+                <button (click)="driverView.set('reports')" class="py-2 px-1 font-medium" [class.border-b-2]="driverView() === 'reports'" [class.border-purple-500]="driverView() === 'reports'" [class.text-purple-400]="driverView() === 'reports'">Relatórios e Pagamentos</button>
+            </div>
+
+            @if(driverView() === 'management') {
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Pendentes -->
+                <div>
+                  <h3 class="font-bold text-yellow-400 mb-2">Pendentes de Aprovação</h3>
+                  <div class="space-y-2">
+                    @for(driver of pendingDrivers(); track driver.id) {
+                      <div class="bg-gray-800 p-3 rounded">
+                        <p class="font-semibold">{{driver.name}}</p>
+                        <p class="text-xs text-gray-400">{{driver.whatsapp}}</p>
+                        <div class="mt-2 space-x-2">
+                          <button (click)="openConfirmModal('approve', driver.id, 'Aprovar o cadastro de ' + driver.name + '?')" class="text-xs bg-green-600 px-2 py-1 rounded">Aprovar</button>
+                          <button (click)="openConfirmModal('decline', driver.id, 'Recusar o cadastro de ' + driver.name + '?')" class="text-xs bg-red-600 px-2 py-1 rounded">Recusar</button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+                 <!-- Aprovados -->
+                <div>
+                  <h3 class="font-bold text-green-400 mb-2">Aprovados</h3>
+                   <div class="space-y-2">
+                    @for(driver of approvedDrivers(); track driver.id) {
+                      <div class="bg-gray-800 p-3 rounded">
+                        <p class="font-semibold">{{driver.name}}</p>
+                        <p class="text-xs text-gray-400">{{driver.whatsapp}}</p>
+                        <div class="mt-2 space-x-2">
+                          <button (click)="openConfirmModal('block', driver.id, 'Bloquear o acesso de ' + driver.name + '?')" class="text-xs bg-yellow-600 px-2 py-1 rounded">Bloquear</button>
+                          <button (click)="openConfirmModal('ban', driver.id, 'BANIR PERMANENTEMENTE ' + driver.name + '? Esta ação não pode ser desfeita.')" class="text-xs bg-red-600 px-2 py-1 rounded">Banir</button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+                 <!-- Bloqueados -->
+                <div>
+                  <h3 class="font-bold text-orange-400 mb-2">Bloqueados</h3>
+                   <div class="space-y-2">
+                    @for(driver of blockedDrivers(); track driver.id) {
+                      <div class="bg-gray-800 p-3 rounded">
+                        <p class="font-semibold">{{driver.name}}</p>
+                        <p class="text-xs text-gray-400">{{driver.whatsapp}}</p>
+                        <div class="mt-2 space-x-2">
+                          <button (click)="unblockDriver(driver.id)" class="text-xs bg-green-600 px-2 py-1 rounded">Desbloquear</button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+                 <!-- Recusados -->
+                <div>
+                  <h3 class="font-bold text-red-400 mb-2">Recusados</h3>
+                   <div class="space-y-2">
+                    @for(driver of declinedDrivers(); track driver.id) {
+                      <div class="bg-gray-800 p-3 rounded">
+                        <p class="font-semibold">{{driver.name}}</p>
+                        <p class="text-xs text-gray-400">{{driver.whatsapp}}</p>
+                      </div>
+                    }
                   </div>
                 </div>
               </div>
+            } @else {
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Driver Selection & Payment -->
+                <div class="lg:col-span-1">
+                  <h3 class="font-bold mb-2">Selecione o Entregador</h3>
+                   <select (change)="selectDriverForReport($event)" class="w-full p-2 bg-gray-700 rounded mb-4">
+                      <option value="">Selecione...</option>
+                      @for(driver of approvedDrivers(); track driver.id) {
+                        <option [value]="driver.id">{{ driver.name }}</option>
+                      }
+                   </select>
+
+                   @if(selectedDriverForReport(); as driver) {
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                       <h3 class="text-lg font-bold mb-2">Registrar Pagamento para {{driver.name}}</h3>
+                       <div class="text-center my-4 p-3 rounded-lg bg-gray-700">
+                          <p class="text-sm text-gray-400">Saldo a Pagar</p>
+                          <p class="text-2xl font-bold" [class.text-red-400]="reportTotals().balance > 0" [class.text-green-400]="reportTotals().balance <= 0">{{ reportTotals().balance | currency:'BRL' }}</p>
+                       </div>
+                       <form [formGroup]="driverPaymentForm" (ngSubmit)="saveDriverPayment()" class="space-y-3">
+                          <input formControlName="amount" type="number" placeholder="Valor Pago" class="w-full p-2 bg-gray-700 rounded">
+                          <input formControlName="payment_date" type="date" class="w-full p-2 bg-gray-700 rounded">
+                          <textarea formControlName="notes" placeholder="Notas (opcional)" class="w-full p-2 bg-gray-700 rounded h-16"></textarea>
+                          <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded">Registrar Pagamento</button>
+                       </form>
+                    </div>
+                   }
+                </div>
+                <!-- Reports -->
+                <div class="lg:col-span-2">
+                   @if(selectedDriverForReport(); as driver) {
+                      <div class="grid grid-cols-2 gap-4">
+                        <!-- Deliveries -->
+                        <div>
+                           <h3 class="font-bold mb-2">Entregas ({{reportDeliveries().length}}) - Total: {{ reportTotals().totalFees | currency:'BRL' }}</h3>
+                           <div class="space-y-2 max-h-96 overflow-y-auto">
+                              @for(delivery of reportDeliveries(); track delivery.id) {
+                                <div class="bg-gray-800 p-2 rounded text-sm flex justify-between">
+                                  <span>#{{delivery.id.slice(-4)}} - {{delivery.date | date:'dd/MM'}}</span>
+                                  <span class="font-semibold">{{delivery.delivery_fee | currency:'BRL'}}</span>
+                                </div>
+                              }
+                           </div>
+                        </div>
+                        <!-- Payments -->
+                        <div>
+                           <h3 class="font-bold mb-2">Pagamentos ({{reportPayments().length}}) - Total: {{ reportTotals().totalPaid | currency:'BRL' }}</h3>
+                             <div class="space-y-2 max-h-96 overflow-y-auto">
+                              @for(payment of reportPayments(); track payment.id) {
+                                <div class="bg-gray-800 p-2 rounded text-sm flex justify-between">
+                                  <span>{{payment.payment_date | date:'dd/MM/yy'}}</span>
+                                  <span class="font-semibold">{{payment.amount | currency:'BRL'}}</span>
+                                </div>
+                              }
+                           </div>
+                        </div>
+                      </div>
+                   } @else {
+                      <p class="text-center text-gray-500 pt-10">Selecione um entregador para ver os relatórios.</p>
+                   }
+                </div>
+              </div>
+            }
+        </div>
+        
+        <!-- Tab: Layout -->
+        <div [class.hidden]="activeTab() !== 'layout'">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <div>
+                    <h2 class="text-2xl font-bold mb-4">Aparência da Loja</h2>
+                    <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="space-y-4">
+                        <div formGroupName="layout" class="grid grid-cols-2 gap-4">
+                            @for (item of colorNames | keyvalue; track item.key) {
+                              <div>
+                                <label class="block text-sm font-medium mb-1">{{ item.value }}</label>
+                                <input type="color" [formControlName]="item.key" class="w-full h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
+                              </div>
+                            }
+                        </div>
+                         <div class="pt-4 border-t border-gray-700">
+                            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg flex items-center justify-center disabled:opacity-50" [disabled]="isUploading()">
+                               @if (isUploading()) {
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                Salvando...
+                              } @else {
+                                Salvar Aparência
+                              }
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="h-[600px] rounded-lg border-4 border-gray-700 overflow-hidden">
+                    <app-layout-preview [layout]="mainSettingsForm.get('layout')!.value" />
+                </div>
             </div>
-          }
-        }
+        </div>
+
+        <!-- Tab: Fidelidade -->
+        <div [class.hidden]="activeTab() !== 'loyalty'">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Settings -->
+            <div>
+              <h2 class="text-2xl font-bold mb-4">Programa de Fidelidade</h2>
+              <form [formGroup]="loyaltyForm" (ngSubmit)="saveLoyaltySettings()" class="bg-gray-900 p-4 rounded-lg space-y-4">
+                <label class="flex items-center space-x-3 cursor-pointer">
+                  <input type="checkbox" formControlName="enabled" class="form-checkbox h-5 w-5 rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-600">
+                  <span class="text-lg font-medium">Ativar Programa de Fidelidade</span>
+                </label>
+                <div class="grid grid-cols-2 gap-4">
+                   <div>
+                      <label class="block text-sm font-medium mb-1">Pontos por Real Gasto</label>
+                      <input type="number" formControlName="points_per_real" class="w-full bg-gray-700 p-2 rounded">
+                   </div>
+                   <div>
+                      <label class="block text-sm font-medium mb-1">Pontos para Recompensa</label>
+                      <input type="number" formControlName="points_for_reward" class="w-full bg-gray-700 p-2 rounded">
+                   </div>
+                </div>
+                <div>
+                   <label class="block text-sm font-medium mb-1">Tipo de Recompensa</label>
+                   <select formControlName="reward_type" class="w-full bg-gray-700 p-2 rounded">
+                      <option value="fixed">Desconto Fixo (R$)</option>
+                      <option value="free_shipping">Frete Grátis</option>
+                   </select>
+                </div>
+                <div>
+                   <label class="block text-sm font-medium mb-1">Valor da Recompensa (R$)</label>
+                   <input type="number" formControlName="reward_value" class="w-full bg-gray-700 p-2 rounded">
+                </div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg">Salvar Configurações</button>
+              </form>
+            </div>
+            <!-- User List -->
+            <div>
+              <h2 class="text-2xl font-bold mb-4">Clientes</h2>
+              <div class="bg-gray-900 p-4 rounded-lg space-y-2">
+                 @for(user of mockUsers(); track user.email) {
+                    <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold">{{ user.name }}</p>
+                            <p class="text-xs text-gray-400">{{ user.email }}</p>
+                        </div>
+                        <p class="font-bold text-lg text-purple-400">{{ user.loyalty_points }} pts</p>
+                    </div>
+                 }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Configurações -->
+        <div [class.hidden]="activeTab() !== 'settings'">
+          <h2 class="text-2xl font-bold mb-4">Configurações Gerais</h2>
+          <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="bg-gray-900 p-6 rounded-lg space-y-6">
+            <!-- Basic Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Nome da Loja</label>
+                    <input formControlName="name" class="w-full bg-gray-700 p-2 rounded">
+                  </div>
+                   <div>
+                    <label class="block text-sm font-medium mb-1">Endereço</label>
+                    <input formControlName="address" class="w-full bg-gray-700 p-2 rounded">
+                  </div>
+              </div>
+              <div class="space-y-4">
+                 <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-sm font-medium mb-1">Logo</label>
+                      <input type="file" (change)="onFileChange($event, 'logo_url')" class="text-xs">
+                    </div>
+                     <div>
+                      <label class="block text-sm font-medium mb-1">Banner Principal</label>
+                      <input type="file" (change)="onFileChange($event, 'banner_url')" class="text-xs">
+                    </div>
+                 </div>
+                 <div>
+                    <label class="block text-sm font-medium mb-1">Imagem de Fundo do PDV</label>
+                    <input type="file" (change)="onFileChange($event, 'pdv_background_image_url')" class="text-xs">
+                 </div>
+              </div>
+            </div>
+            
+            <!-- Slider Images -->
+            <div>
+              <h3 class="font-semibold mb-2 text-lg">Imagens do Slider da Tela Inicial</h3>
+              <div formArrayName="slider_images" class="space-y-2">
+                @for(control of sliderImages.controls; track $index) {
+                  <div class="flex items-center gap-2">
+                    <img [src]="control.value || 'https://picsum.photos/100/50'" class="w-24 h-12 object-cover rounded">
+                    <input type="file" (change)="onSliderFileChange($event, $index)" class="flex-grow text-xs">
+                    <button type="button" (click)="removeSliderImage($index)" class="text-red-400 font-bold">X</button>
+                  </div>
+                }
+              </div>
+              <button type="button" (click)="addSliderImage()" class="mt-2 text-sm text-purple-400">+ Adicionar Imagem</button>
+            </div>
+
+            <!-- Contact & Social -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                 <input formControlName="whatsapp" placeholder="Nº WhatsApp para Pedidos" class="w-full bg-gray-700 p-2 rounded">
+                 <input formControlName="delivery_whatsapp" placeholder="Nº WhatsApp para Entregadores (opcional)" class="w-full bg-gray-700 p-2 rounded">
+                 <input formControlName="pix_key" placeholder="Sua Chave PIX" class="w-full bg-gray-700 p-2 rounded">
+              </div>
+               <div class="space-y-4">
+                 <input formControlName="instagram" placeholder="Link do Instagram" class="w-full bg-gray-700 p-2 rounded">
+                 <input formControlName="facebook" placeholder="Link do Facebook" class="w-full bg-gray-700 p-2 rounded">
+              </div>
+            </div>
+            
+             <!-- Messages & Timing -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <input formControlName="welcome_message" placeholder="Mensagem de Boas-Vindas" class="w-full bg-gray-700 p-2 rounded">
+               <input formControlName="wait_time" placeholder="Tempo de Espera (ex: 30-50 min)" class="w-full bg-gray-700 p-2 rounded">
+            </div>
+
+            <!-- Opening Hours -->
+            <div>
+              <h3 class="font-semibold mb-2 text-lg">Horário de Funcionamento</h3>
+              <div formGroupName="opening_hours" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                @for(day of weekDays; track day) {
+                  <div [formGroupName]="day" class="bg-gray-800 p-3 rounded">
+                    <label class="flex items-center space-x-2 font-semibold">
+                      <input type="checkbox" formControlName="is_open"> <span>{{ weekDayNames[day] }}</span>
+                    </label>
+                    <div class="flex gap-2 mt-2">
+                      <input type="time" formControlName="start" class="w-1/2 bg-gray-700 p-1 rounded text-sm">
+                      <input type="time" formControlName="end" class="w-1/2 bg-gray-700 p-1 rounded text-sm">
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <!-- Delivery -->
+            <div formGroupName="delivery">
+              <h3 class="font-semibold mb-2 text-lg">Entrega</h3>
+              <div class="flex items-center space-x-4 mb-2">
+                 <label><input type="radio" formControlName="type" value="fixed" class="mr-2">Taxa Fixa</label>
+                 <label><input type="radio" formControlName="type" value="neighborhood" class="mr-2">Por Bairro</label>
+              </div>
+               @if(mainSettingsForm.get('delivery.type')?.value === 'fixed') {
+                  <input type="number" formControlName="fixed_fee" placeholder="Valor da Taxa Fixa" class="w-full max-w-xs bg-gray-700 p-2 rounded">
+               } @else {
+                  <div formArrayName="neighborhoods" class="space-y-2">
+                    @for(hood of deliveryNeighborhoods.controls; track $index) {
+                      <div [formGroupName]="$index" class="flex items-center gap-2">
+                        <input formControlName="name" placeholder="Nome do Bairro" class="flex-grow bg-gray-700 p-2 rounded">
+                        <input formControlName="fee" type="number" placeholder="Taxa" class="w-24 bg-gray-700 p-2 rounded">
+                        <button type="button" (click)="removeNeighborhood($index)" class="text-red-400">X</button>
+                      </div>
+                    }
+                  </div>
+                  <button type="button" (click)="addNeighborhood()" class="mt-2 text-sm text-purple-400">+ Adicionar Bairro</button>
+               }
+            </div>
+
+            <!-- Temporary Closure -->
+            <div>
+              <h3 class="font-semibold mb-2 text-lg">Fechamento Temporário</h3>
+              <div class="bg-gray-800 p-4 rounded-lg flex items-center justify-between">
+                <div>
+                  <p class="font-medium">Loja Fechada Temporariamente</p>
+                  <p class="text-xs text-gray-400">Ative para impedir novos pedidos e mostrar uma mensagem.</p>
+                </div>
+                <button type="button" (click)="toggleTemporaryClosure()" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors" [class.bg-green-500]="!dataService.settings().is_temporarily_closed" [class.bg-gray-600]="dataService.settings().is_temporarily_closed">
+                  <span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform" [class.translate-x-6]="!dataService.settings().is_temporarily_closed" [class.translate-x-1]="dataService.settings().is_temporarily_closed"></span>
+                </button>
+              </div>
+               @if(dataService.settings().is_temporarily_closed) {
+                <input formControlName="temporary_closure_message" placeholder="Mensagem de fechamento (ex: Voltamos logo!)" class="w-full mt-2 bg-gray-700 p-2 rounded">
+               }
+            </div>
+            
+             <!-- Admin Credentials -->
+            <div>
+              <h3 class="font-semibold mb-2 text-lg">Credenciais de Acesso</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input formControlName="admin_username" placeholder="Nome de Usuário Admin" class="w-full bg-gray-700 p-2 rounded">
+                <input formControlName="admin_password" type="password" placeholder="Nova Senha (deixe em branco para manter)" class="w-full bg-gray-700 p-2 rounded">
+              </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="pt-4 border-t border-gray-700">
+              <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg flex items-center justify-center disabled:opacity-50" [disabled]="isUploading()">
+                  @if (isUploading()) {
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Salvando...
+                  } @else {
+                    Salvar Configurações
+                  }
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab: Ajuda -->
+        <div [class.hidden]="activeTab() !== 'help'" class="p-6 bg-gray-900 rounded-lg">
+          <div class="printable-guide text-gray-300">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-purple-400">Guia de Solução de Problemas: Supabase</h2>
+                <button (click)="printHelpGuide()" class="no-print bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v3h6v-3z" clip-rule="evenodd" /></svg>
+                    Imprimir Guia (Salvar como PDF)
+                </button>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Introduction -->
+                <div class="p-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10">
+                    <h3 class="text-xl font-semibold text-yellow-400 mb-2">Por que este guia é importante?</h3>
+                    <p>Se você está recebendo erros como "Falha ao salvar", "Falha no upload da imagem" ou "violates row-level security policy", é quase certeza que as permissões no seu banco de dados Supabase não estão configuradas. Por padrão, o Supabase bloqueia todas as tentativas de escrita e upload para proteger seus dados.</p>
+                    <p class="mt-2">Este guia passo a passo vai te ensinar a habilitar as permissões necessárias para que seu painel administrativo funcione perfeitamente.</p>
+                </div>
+
+                <!-- Part 1: Database -->
+                <div class="p-4 rounded-lg bg-gray-800">
+                    <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Parte 1: Permissões do Banco de Dados (Salvar Dados)</h3>
+                    <div class="space-y-6 pl-4 border-l-2 border-purple-500">
+                        <!-- Step 1 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.1: Acesse a área de Autenticação</h4>
+                            <p class="mt-1">No painel do seu projeto no <a href="https://app.supabase.com" target="_blank" class="text-purple-400 underline">site do Supabase</a>, procure na barra lateral esquerda por um ícone de um <b class="text-yellow-400">escudo com uma fechadura (🛡️)</b>. Este é o menu de <strong>"Authentication"</strong>. Clique nele.</p>
+                        </div>
+                        <!-- Step 2 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.2: Encontre as Políticas de Acesso (Policies)</h4>
+                            <p class="mt-1">Dentro da seção de "Authentication", você verá um segundo menu. Procure e clique na opção <strong>"Policies"</strong>.</p>
+                        </div>
+                        <!-- Step 3 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.3: Entendendo a Tela de Políticas</h4>
+                            <p class="mt-1">Você verá uma lista de todas as tabelas do seu banco de dados (`products`, `categories`, etc.). Ao lado de cada uma, provavelmente estará a mensagem em verde <code class="bg-gray-700 px-1 rounded">RLS is enabled</code>, mas com <code class="bg-gray-700 px-1 rounded">0 policies</code>.</p>
+                            <p class="mt-1 text-sm text-gray-400">Isso significa: "A segurança está LIGADA, mas NENHUMA regra foi criada". O resultado é que o Supabase bloqueia TUDO.</p>
+                        </div>
+                        <!-- Step 4 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.4: Crie uma Nova Política</h4>
+                            <p class="mt-1">Para cada tabela, você precisa criar uma regra. Comece com a tabela <strong><code>categories</code></strong>. Clique nela e depois clique no botão <strong>"+ New Policy"</strong>.</p>
+                            <p class="mt-1">Na tela seguinte, clique em <strong>"For full customization"</strong> para criar uma regra do zero.</p>
+                        </div>
+                        <!-- Step 5 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.5: Configure a Política de Acesso Total</h4>
+                            <p class="mt-1">Preencha o formulário exatamente como a seguir:</p>
+                            <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
+                                <li><strong>Policy Name:</strong> Digite <code>Permitir Acesso Total</code></li>
+                                <li><strong>Allowed operation:</strong> Marque a opção <strong>ALL</strong>.</li>
+                                <li><strong>Target roles:</strong> Deixe como está, com <code>public</code> selecionado.</li>
+                                <li><strong>USING expression:</strong> No campo de texto, digite apenas a palavra <code>true</code>.</li>
+                                <li><strong>WITH CHECK expression:</strong> No campo de texto, digite também a palavra <code>true</code>.</li>
+                            </ul>
+                            <p class="mt-2">Clique em <strong>"Review"</strong> e depois em <strong>"Save Policy"</strong>.</p>
+                        </div>
+                         <!-- Step 6 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.6: Repita para TODAS as Tabelas</h4>
+                            <p class="mt-1">Você precisa repetir os Passos 1.4 e 1.5 para <b class="text-yellow-400">CADA UMA</b> das seguintes tabelas:</p>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-sm">
+                                <code class="bg-gray-700 p-2 rounded text-center">addon_categories</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">categories</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">coupons</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">delivery_drivers</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">driver_payments</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">expenses</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">orders</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">products</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">receivables</code>
+                                <code class="bg-gray-700 p-2 rounded text-center">settings</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- Part 2: Storage -->
+                <div class="p-4 rounded-lg bg-gray-800">
+                    <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Parte 2: Permissões de Upload de Imagens</h3>
+                    <div class="space-y-6 pl-4 border-l-2 border-purple-500">
+                        <!-- Step 1 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.1: Acesse a área de Armazenamento (Storage)</h4>
+                            <p class="mt-1">Na barra lateral esquerda do Supabase, procure por um ícone de um <b class="text-yellow-400">cilindro (🛢️)</b>. Este é o menu de <strong>"Storage"</strong>. Clique nele.</p>
+                        </div>
+                        <!-- Step 2 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.2: Acesse as Políticas do Bucket de Imagens</h4>
+                            <p class="mt-1">Você verá uma pasta (chamada de "bucket") com o nome <code>images</code>. Ao lado dela, clique no menu de três pontinhos (<code>...</code>) e selecione a opção <strong>"Policies"</strong>.</p>
+                        </div>
+                        <!-- Step 3 -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Upload e Visualização</h4>
+                            <p class="mt-1">Você verá 4 tipos de operação: `SELECT`, `INSERT`, `UPDATE`, `DELETE`. Você precisa criar uma política para cada uma para que seu app possa fazer upload, visualizar, atualizar e deletar imagens.</p>
+                            <p class="mt-2 font-bold">1. Política de Upload (INSERT):</p>
+                            <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
+                               <li>Ao lado de <strong>INSERT</strong>, clique em <strong>"+ New Policy"</strong>.</li>
+                               <li>Clique em <strong>"For full customization"</strong>.</li>
+                               <li><strong>Policy Name:</strong> Digite <code>Permitir Uploads Públicos</code></li>
+                               <li><strong>Allowed operation:</strong> Marque apenas <strong>INSERT</strong>.</li>
+                               <li><strong>Target roles:</strong> Marque a opção <code>public</code>.</li>
+                               <li><strong>WITH CHECK expression:</strong> Digite <code>true</code>.</li>
+                               <li>Salve a política.</li>
+                            </ul>
+                             <p class="mt-2 font-bold">2. Política de Visualização (SELECT):</p>
+                            <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
+                               <li>Ao lado de <strong>SELECT</strong>, clique em <strong>"+ New Policy"</strong>.</li>
+                               <li>Use um template: clique na opção <strong>"Enable read access to everyone"</strong>. Isso preencherá tudo para você.</li>
+                               <li>Confirme e salve a política.</li>
+                            </ul>
+                             <p class="mt-2 font-bold">3. Repita para UPDATE e DELETE:</p>
+                             <p class="text-sm mt-1">Crie políticas para <strong>UPDATE</strong> e <strong>DELETE</strong> seguindo os mesmos passos da política de <strong>INSERT</strong> (usando a opção "For full customization"), mas dando nomes apropriados (ex: `Permitir Updates Públicos`) e marcando a operação correspondente.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conclusion -->
+                <div class="p-4 rounded-lg border border-green-500/50 bg-green-500/10">
+                    <h3 class="text-xl font-semibold text-green-400 mb-2">Conclusão</h3>
+                    <p>Após seguir todos esses passos para todas as tabelas e para o Storage, seu painel administrativo estará 100% funcional. Recarregue a página do seu painel e todos os erros de salvamento e upload devem desaparecer.</p>
+                </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- Modals -->
+  @if (editingProduct()) {
+    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-30 p-4">
+      <div class="bg-gray-800 rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col">
+        <div class="p-4 border-b border-gray-700">
+          <h2 class="text-2xl font-bold">{{ editingProduct()?.id ? 'Editar' : 'Novo' }} Produto</h2>
+        </div>
+        <div class="flex-grow p-4 overflow-y-auto">
+          <form [formGroup]="productForm" id="productForm" (ngSubmit)="saveProduct()" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div>
+                  <input formControlName="name" placeholder="Nome do Produto" class="w-full bg-gray-700 p-2 rounded">
+                  <div class="flex items-center gap-2 mt-2">
+                    <button type="button" (click)="generateDescription()" [disabled]="isGeneratingDescription()" class="text-xs bg-purple-600 text-white px-2 py-1 rounded disabled:opacity-50">
+                        {{ isGeneratingDescription() ? 'Gerando...' : 'Gerar Descrição com IA' }}
+                    </button>
+                    @if (geminiService.isAvailable()) {
+                        <span class="text-xs text-green-400">✨ IA Disponível</span>
+                    } @else {
+                        <span class="text-xs text-gray-500" title="{{geminiService.error()}}">IA Indisponível</span>
+                    }
+                  </div>
+                  <textarea formControlName="description" placeholder="Descrição" class="w-full h-24 mt-2 bg-gray-700 p-2 rounded"></textarea>
+               </div>
+               <div>
+                  <img [src]="productForm.get('image_url')?.value || 'https://picsum.photos/300/200'" class="w-full h-40 object-cover rounded bg-gray-700">
+                  <div class="flex items-center gap-2 mt-2">
+                    <input type="file" (change)="onProductFileChange($event)" class="text-xs">
+                    <button type="button" (click)="generateImage()" [disabled]="isGeneratingImage()" class="text-xs bg-purple-600 text-white px-2 py-1 rounded disabled:opacity-50">
+                        {{ isGeneratingImage() ? 'Gerando...' : 'Gerar Imagem com IA' }}
+                    </button>
+                  </div>
+               </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <select formControlName="category_id" class="w-full bg-gray-700 p-2 rounded">
+                <option value="" disabled>Selecione uma Categoria</option>
+                @for (category of sortedCategories(); track category.id) { <option [value]="category.id">{{ category.name }}</option> }
+              </select>
+               <label class="flex items-center space-x-2"><input type="checkbox" formControlName="is_available"><span>Disponível</span></label>
+            </div>
+             <div>
+              <h3 class="font-semibold mb-2">Preços</h3>
+              <div class="flex items-center space-x-4 mb-2">
+                 <label><input type="radio" formControlName="price_type" value="sized" class="mr-2">Por Tamanho</label>
+                 <label><input type="radio" formControlName="price_type" value="fixed" class="mr-2">Preço Fixo</label>
+              </div>
+              @if (productForm.get('price_type')?.value === 'fixed') {
+                <input type="number" formControlName="price" placeholder="Preço Fixo" class="w-full max-w-xs bg-gray-700 p-2 rounded">
+              } @else {
+                 <div formArrayName="sizes" class="space-y-2">
+                  @for(size of productSizes.controls; track $index) {
+                    <div [formGroupName]="$index" class="flex items-center gap-2">
+                      <input formControlName="name" placeholder="Nome do Tamanho (ex: 300ml)" class="flex-grow bg-gray-700 p-2 rounded">
+                      <input type="number" formControlName="price" placeholder="Preço" class="w-28 bg-gray-700 p-2 rounded">
+                      <label class="flex items-center text-sm"><input type="checkbox" formControlName="is_available" class="mr-1">Disp.</label>
+                      <button type="button" (click)="removeProductSize($index)" class="text-red-400">X</button>
+                    </div>
+                  }
+                 </div>
+                 <button type="button" (click)="addProductSize()" class="mt-2 text-sm text-purple-400">+ Adicionar Tamanho</button>
+              }
+            </div>
+             <div>
+              <h3 class="font-semibold mb-2">Grupos de Adicionais</h3>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                @for(ac of sortedAddonCategories(); track ac.id) {
+                   <label class="p-2 bg-gray-700 rounded-md text-sm flex items-center">
+                      <input type="checkbox" [checked]="isAddonCategorySelected(ac.id)" (change)="onAddonCategoryChange($event, ac.id)" class="mr-2">
+                      {{ ac.name }}
+                   </label>
+                }
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="p-4 border-t border-gray-700 flex justify-end space-x-2">
+          <button type="button" (click)="editingProduct.set(null)" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
+          <button type="submit" form="productForm" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center disabled:opacity-50" [disabled]="isUploading()">
+            @if(isUploading()){
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              Salvando...
+            } @else {
+              Salvar Produto
+            }
+          </button>
+        </div>
       </div>
     </div>
   }
   
-  <!-- PDV Product Modal -->
-  @if (isPdvProductModalOpen() && pdvSelectedProduct(); as product) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40 p-4">
-      <div class="rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide bg-gray-800 text-white flex flex-col">
-        <div class="sticky top-0 p-4 border-b flex justify-between items-center bg-gray-800 border-gray-700 z-10">
+  @if(isReceiptModalOpen() && orderToPrint(); as order) {
+    <app-receipt [order]="order" [settings]="dataService.settings()" [mode]="receiptMode()" (close)="handleReceiptClose()" (confirm)="handleDeliveryConfirmation()" (sendWhatsApp)="handleSendReceipt(order)" />
+  }
+
+  @if(isPdvProductModalOpen() && pdvSelectedProduct(); as product) {
+     <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40 p-4">
+      <div class="bg-gray-800 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide flex flex-col">
+        <div class="sticky top-0 p-4 border-b border-gray-700 flex justify-between items-center z-10 bg-gray-800">
           <h2 class="text-2xl font-bold">{{ product.name }}</h2>
-          <button (click)="closePdvProductModal()" class="text-gray-400 hover:text-white">&times;</button>
+          <button (click)="closePdvProductModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
         </div>
         <div class="p-4 flex-grow overflow-y-auto">
-          <p class="text-gray-400 mb-4">{{ product.description }}</p>
-          
           @if (product.price_type !== 'fixed') {
             <h3 class="font-semibold mb-2">Tamanho</h3>
             <div class="grid grid-cols-2 gap-2 mb-4">
               @for (size of product.sizes; track size.name) {
-                <button (click)="pdvSelectedSize.set(size)" 
-                  class="p-3 border rounded-md text-left relative" 
-                  [disabled]="!size.is_available"
-                  [class.opacity-50]="!size.is_available"
-                  [class.cursor-not-allowed]="!size.is_available"
-                  [class.border-purple-500]="pdvSelectedSize()?.name === size.name" 
-                  [class.bg-purple-500/20]="pdvSelectedSize()?.name === size.name" 
-                  [class.border-gray-600]="pdvSelectedSize()?.name !== size.name">
+                <button (click)="pdvSelectedSize.set(size)" [disabled]="!size.is_available" class="p-3 border rounded-md text-left relative" [class.opacity-50]="!size.is_available" [class.cursor-not-allowed]="!size.is_available" [class.border-purple-500]="pdvSelectedSize()?.name === size.name" [class.bg-purple-500/20]="pdvSelectedSize()?.name === size.name" [class.border-gray-600]="pdvSelectedSize()?.name !== size.name">
                   <span class="font-medium">{{ size.name }}</span>
                   <span class="block text-sm text-purple-400">{{ size.price | currency:'BRL' }}</span>
-                  @if (!size.is_available) {
-                    <span class="absolute top-1 right-1 text-xs bg-red-600 text-white px-1.5 py-0.5 rounded">Indisponível</span>
-                  }
+                   @if (!size.is_available) { <span class="absolute top-1 right-1 text-xs bg-red-600 text-white px-1.5 py-0.5 rounded">Indisponível</span> }
                 </button>
               }
             </div>
           }
-
           @for (addonCatId of product.addon_categories; track addonCatId) {
             @if (getAddonCategoryById(addonCatId); as addonCat) {
               <div>
                 <h3 class="font-semibold mb-2">{{ addonCat.name }} <span class="text-xs text-gray-500">{{ addonCat.required ? '(Obrigatório)' : '(Opcional)'}}</span></h3>
                 <div class="space-y-2 mb-4">
                   @for (addon of addonCat.addons; track addon.id) {
-                    <label class="flex items-center justify-between p-3 rounded-md bg-gray-700"
-                      [class.cursor-pointer]="addon.is_available"
-                      [class.cursor-not-allowed]="!addon.is_available"
-                      [class.opacity-60]="!addon.is_available">
+                    <label class="flex items-center justify-between p-3 rounded-md bg-gray-700" [class.cursor-pointer]="addon.is_available" [class.cursor-not-allowed]="!addon.is_available" [class.opacity-60]="!addon.is_available">
                       <div>
                         <span>{{ addon.name }}</span>
-                        @if (addon.price > 0) {
-                          <span class="text-xs ml-2 text-purple-400">+{{ addon.price | currency:'BRL' }}</span>
-                        } @else {
-                          <span class="text-xs text-green-400 ml-2">Grátis</span>
-                        }
-                         @if (!addon.is_available) {
-                          <span class="text-xs text-red-400 ml-2 font-semibold"> (Indisponível)</span>
-                        }
+                         @if (addon.price > 0) { <span class="text-xs ml-2 text-purple-400">+{{ addon.price | currency:'BRL' }}</span> }
+                         @if (!addon.is_available) { <span class="text-xs text-red-400 ml-2 font-semibold"> (Indisponível)</span> }
                       </div>
-                      <input type="checkbox" class="form-checkbox h-5 w-5 bg-gray-800 border-gray-600 text-purple-600 focus:ring-purple-500 rounded" 
-                        [checked]="pdvSelectedAddons()[addon.id]" 
-                        [disabled]="!addon.is_available"
-                        (change)="togglePdvAddon(addon)">
+                      <input type="checkbox" class="form-checkbox h-5 w-5 rounded bg-gray-800 border-purple-400 text-purple-500" [checked]="pdvSelectedAddons()[addon.id]" (change)="togglePdvAddon(addon)" [disabled]="!addon.is_available">
                     </label>
                   }
                 </div>
@@ -1128,70 +1201,54 @@
             }
           }
         </div>
-        <div class="sticky bottom-0 p-4 border-t flex items-center justify-between bg-gray-800 border-gray-700">
+        <div class="sticky bottom-0 p-4 border-t border-gray-700 flex items-center justify-between z-10 bg-gray-800">
           <div class="flex items-center space-x-2">
             <button (click)="decrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">-</button>
             <span>{{ pdvProductQuantity() }}</span>
             <button (click)="incrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">+</button>
           </div>
-          <button (click)="addProductToPdvCartFromModal()" class="bg-purple-600 text-white font-bold py-3 px-6 rounded-lg">Adicionar ao Pedido</button>
+          <button (click)="addProductToPdvCartFromModal()" class="text-white font-bold py-3 px-6 rounded-lg bg-purple-600">Adicionar</button>
         </div>
       </div>
     </div>
   }
 
-  @if(isReceiptModalOpen() && orderToPrint(); as order) {
-    <app-receipt 
-      [order]="order" 
-      [settings]="dataService.settings()" 
-      [mode]="receiptMode()"
-      (close)="handleReceiptClose()"
-      (confirm)="handleDeliveryConfirmation()"
-      (sendWhatsApp)="handleSendReceipt(order)">
-    </app-receipt>
-  }
-  
-  <!-- Driver Assignment Modal -->
-  @if (isDriverModalOpen()) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-        <div class="bg-gray-800 rounded-lg w-full max-w-md">
-            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-                <h3 class="text-xl font-bold">Atribuir Entrega</h3>
-                <button (click)="isDriverModalOpen.set(false)" class="text-gray-400 hover:text-white text-2xl">&times;</button>
-            </div>
-            <div class="p-4">
-                <p class="mb-4">Selecione um entregador ou envie para todos.</p>
-                <div class="space-y-2 max-h-64 overflow-y-auto">
-                    @for (driver of approvedDrivers(); track driver.id) {
-                        <button (click)="assignOrder(driver.id)" class="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600">
-                            {{ driver.name }}
-                        </button>
-                    }
-                </div>
-                <div class="mt-4 border-t border-gray-700 pt-4">
-                    <button (click)="assignOrder('all')" class="w-full text-white font-bold py-3 px-4 rounded-lg bg-purple-600 hover:bg-purple-700">
-                        Enviar para Todos
-                    </button>
-                </div>
-            </div>
+  @if(isDriverModalOpen() && orderToAssign(); as order) {
+    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-30 p-4">
+      <div class="bg-gray-800 rounded-lg w-full max-w-md">
+        <div class="p-4 border-b border-gray-700">
+          <h2 class="text-xl font-bold">Atribuir Entrega para #{{order.id.slice(-4)}}</h2>
         </div>
+        <div class="p-4 space-y-2">
+          @for(driver of approvedDrivers(); track driver.id) {
+            <button (click)="assignOrder(driver.id)" class="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded">
+              <p class="font-semibold">{{driver.name}}</p>
+              <p class="text-xs text-gray-400">{{driver.whatsapp}}</p>
+            </button>
+          }
+          <button (click)="assignOrder('all')" class="w-full text-left p-3 bg-yellow-600/20 text-yellow-300 hover:bg-yellow-600/30 rounded">
+            <p class="font-semibold">⚡ Enviar para Todos</p>
+            <p class="text-xs">O primeiro a aceitar fica com a entrega.</p>
+          </button>
+        </div>
+        <div class="p-4 border-t border-gray-700 flex justify-end">
+          <button (click)="isDriverModalOpen.set(false)" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
+        </div>
+      </div>
     </div>
   }
 
-  <!-- Confirmation Modal -->
-  @if (isConfirmModalOpen()) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+  @if(isConfirmModalOpen() && confirmAction(); as action) {
+     <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40 p-4">
       <div class="bg-gray-800 rounded-lg w-full max-w-sm p-6 text-center">
-        <h3 class="text-lg font-semibold mb-4">{{ confirmMessage() }}</h3>
-        <div class="flex justify-center space-x-4">
-          <button (click)="closeConfirmModal()" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg">
-            Cancelar
-          </button>
-          <button (click)="handleConfirm()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg">
-            Confirmar
-          </button>
+        <h2 class="text-xl font-bold mb-4">Confirmar Ação</h2>
+        <p class="text-gray-300 mb-6">{{ confirmMessage() }}</p>
+        <div class="flex justify-center gap-4">
+          <button (click)="closeConfirmModal()" class="bg-gray-600 hover:bg-gray-500 font-bold py-2 px-6 rounded">Cancelar</button>
+          <button (click)="handleConfirm()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded">Confirmar</button>
         </div>
       </div>
-    </div>
+     </div>
   }
+
 </div>

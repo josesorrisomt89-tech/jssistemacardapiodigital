@@ -36,7 +36,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   });
   loginError = signal<string | null>(null);
 
-  activeTab = signal<'orders' | 'pdv' | 'sales' | 'accounts' | 'products' | 'drivers' | 'settings' | 'layout' | 'coupons' | 'loyalty'>('orders');
+  activeTab = signal<'orders' | 'pdv' | 'sales' | 'accounts' | 'products' | 'drivers' | 'settings' | 'layout' | 'coupons' | 'loyalty' | 'help'>('orders');
   
   orderStatuses: OrderStatus[] = ['Agendado', 'Recebido', 'Em Preparo', 'Aguardando Retirada', 'Saiu para Entrega', 'Entregue', 'Cancelado'];
   weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -1023,5 +1023,9 @@ export class AdminComponent implements OnInit, OnDestroy {
     } finally {
       this.isGeneratingImage.set(false);
     }
+  }
+  
+  printHelpGuide(): void {
+    window.print();
   }
 }
