@@ -984,7 +984,7 @@
                         <div>
                             <h4 class="text-lg font-semibold text-purple-400">Passo 1.4: Crie uma Nova Política</h4>
                             <p class="mt-1">Para cada tabela, você precisa criar uma regra. Comece com a tabela <strong><code>addon_categories</code></strong>. Clique no botão <strong>"Create policy"</strong> ao lado dela.</p>
-                            <p class="mt-1">Uma nova tela chamada <b class="text-yellow-400">"Create a new Row Level Security policy"</b> irá aparecer. Ignore os "Templates" à direita e preencha o formulário principal que apareceu.</p>
+                            <p class="mt-1">Uma nova tela chamada <b class="text-yellow-400">"Create a new Row Level Security policy"</b> irá aparecer. Clique em <b class="text-yellow-400">"Create a policy from scratch"</b> para ir para o formulário completo.</p>
                         </div>
                         <!-- Step 5 -->
                         <div>
@@ -1041,14 +1041,22 @@
                         </div>
                         <!-- Step 3 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Upload, Update e Delete</h4>
-                            <p class="mt-1">Como o bucket é público, uma política de `SELECT` (visualização) já existe. Agora, precisamos criar as outras três.</p>
-                            <p class="mt-2 font-bold">Para CADA uma das operações (`INSERT`, `UPDATE`, `DELETE`), faça o seguinte:</p>
-                             <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
-                                <li>Clique em <strong>"+ New policy"</strong> ao lado da operação correspondente (comece com `INSERT`).</li>
-                                <li>Na tela que aparece, no lado direito, clique no template <b class="text-yellow-400">"Enable insert for all users"</b> (ou "update/delete" dependendo da política que está criando).</li>
-                                <li>O Supabase vai preencher tudo para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
-                                <li><b class="text-yellow-400">REPITA</b> este processo simples para `UPDATE` e `DELETE`. No final, você terá 4 políticas no total para o bucket `IMAGENS`.</li>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Acesso (SELECT, INSERT, UPDATE, DELETE)</h4>
+                            <p class="mt-1">Um bucket público permite o acesso direto aos arquivos por URL, mas para listar, enviar, atualizar ou deletar arquivos, precisamos de políticas explícitas. Sua imagem mostra "No policies created yet", então vamos criar todas as 4.</p>
+                            <p class="mt-2 font-bold">Para CADA uma das 4 operações (SELECT, INSERT, UPDATE, DELETE), siga estes passos:</p>
+                             <ul class="list-disc pl-5 mt-1 space-y-2 text-sm">
+                                <li>Encontre a operação (ex: <strong>INSERT</strong>) e clique no botão <strong>"New policy"</strong>.</li>
+                                <li>Na janela que aparece (como a que você enviou na imagem), clique na primeira opção: <b class="text-yellow-400">"Get started quickly"</b>.</li>
+                                <li>Uma lista de templates vai aparecer. Clique no template correto para a operação que você está configurando:
+                                    <ul class="list-disc pl-5 mt-1 space-y-1">
+                                        <li>Para <strong>SELECT</strong>: Clique em "Enable read access for all users".</li>
+                                        <li>Para <strong>INSERT</strong>: Clique em "Enable insert for all users".</li>
+                                        <li>Para <strong>UPDATE</strong>: Clique em "Enable update for all users".</li>
+                                        <li>Para <strong>DELETE</strong>: Clique em "Enable delete for all users".</li>
+                                    </ul>
+                                </li>
+                                <li>O Supabase vai preencher o formulário para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
+                                <li><b class="text-yellow-400">REPITA</b> este processo para as 4 operações até que todas tenham uma política.</li>
                              </ul>
                         </div>
                         <!-- Step 4 -->
