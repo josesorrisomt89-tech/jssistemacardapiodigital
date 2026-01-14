@@ -30,7 +30,9 @@ export class ApiService {
 
   post<T>(tableName: string, body: any, prefer?: string): Observable<T[]> {
     const url = `${this.apiUrl}/rest/v1/${tableName}`;
-    return this.http.post<T[]>(url, body, { headers: this.getHeaders(prefer).set('Content-Type', 'application/json') });
+    // A API do Supabase para inserir linhas espera um array de objetos, mesmo para uma única linha.
+    const requestBody = Array.isArray(body) ? body : [body];
+    return this.http.post<T[]>(url, requestBody, { headers: this.getHeaders(prefer).set('Content-Type', 'application/json') });
   }
   
   patch<T>(tableName: string, query: string, body: any): Observable<T[]> {
