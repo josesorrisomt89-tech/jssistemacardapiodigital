@@ -1041,22 +1041,21 @@
                         </div>
                         <!-- Step 3 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Acesso (SELECT, INSERT, UPDATE, DELETE)</h4>
-                            <p class="mt-1">Um bucket público permite o acesso direto aos arquivos por URL, mas para listar, enviar, atualizar ou deletar arquivos, precisamos de políticas explícitas. Sua imagem mostra "No policies created yet", então vamos criar todas as 4.</p>
-                            <p class="mt-2 font-bold">Para CADA uma das 4 operações (SELECT, INSERT, UPDATE, DELETE), siga estes passos:</p>
-                             <ul class="list-disc pl-5 mt-1 space-y-2 text-sm">
-                                <li>Encontre a operação (ex: <strong>INSERT</strong>) e clique no botão <strong>"New policy"</strong>.</li>
-                                <li>Na janela que aparece (como a que você enviou na imagem), clique na primeira opção: <b class="text-yellow-400">"Get started quickly"</b>.</li>
-                                <li>Uma lista de templates vai aparecer. Clique no template correto para a operação que você está configurando:
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Upload, Update e Delete</h4>
+                            <p class="mt-1">Como o bucket é público, uma política de `SELECT` (visualização) já existe ou não é necessária. Agora, precisamos criar as outras três (`INSERT`, `UPDATE`, `DELETE`).</p>
+                            <p class="mt-2 font-bold">Para CADA uma das operações (`INSERT`, `UPDATE`, `DELETE`), faça o seguinte:</p>
+                             <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
+                                <li>Clique em <strong>"+ New policy"</strong> ao lado da operação correspondente (comece com `INSERT`).</li>
+                                <li>Na janela que aparece (como a que você enviou), clique na primeira opção: <b class="text-yellow-400">"Get started quickly"</b>.</li>
+                                <li>Uma lista de templates vai aparecer. Role a lista e clique no template correto:
                                     <ul class="list-disc pl-5 mt-1 space-y-1">
-                                        <li>Para <strong>SELECT</strong>: Clique em "Enable read access for all users".</li>
-                                        <li>Para <strong>INSERT</strong>: Clique em "Enable insert for all users".</li>
-                                        <li>Para <strong>UPDATE</strong>: Clique em "Enable update for all users".</li>
-                                        <li>Para <strong>DELETE</strong>: Clique em "Enable delete for all users".</li>
+                                        <li>Para <strong>INSERT</strong>: Clique em <b class="text-yellow-400">"Enable insert for all users"</b>.</li>
+                                        <li>Para <strong>UPDATE</strong>: Clique em <b class="text-yellow-400">"Enable update for all users"</b>.</li>
+                                        <li>Para <strong>DELETE</strong>: Clique em <b class="text-yellow-400">"Enable delete for all users"</b>.</li>
                                     </ul>
                                 </li>
-                                <li>O Supabase vai preencher o formulário para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
-                                <li><b class="text-yellow-400">REPITA</b> este processo para as 4 operações até que todas tenham uma política.</li>
+                                <li>O Supabase vai preencher tudo para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
+                                <li><b class="text-yellow-400">REPITA</b> este processo para `UPDATE` e `DELETE`. No final, você terá as políticas que precisa.</li>
                              </ul>
                         </div>
                         <!-- Step 4 -->
@@ -1068,7 +1067,7 @@
                                <li>Na barra de busca "Filter tables and policies", digite <code>storage</code>.</li>
                                <li>Você verá as tabelas <code>storage.objects</code> e <code>storage.buckets</code>.</li>
                                <li>Clique em cada uma delas e <b class="text-yellow-400">DELETE TODAS AS POLÍTICAS</b> que aparecem listadas (ex: "Public Updates", "Public Deletes"). Para deletar, clique nos três pontinhos ao lado da política e escolha "Delete".</li>
-                               <li>Faça isso para <code>storage.objects</code> e para <code>storage.buckets</code> até que não reste nenhuma política para elas. A sua configuração correta deve ser como na primeira imagem que você enviou: apenas políticas no bucket, e nenhuma no schema.</li>
+                               <li>Faça isso para <code>storage.objects</code> e para <code>storage.buckets</code> até que não reste nenhuma política para elas. As únicas políticas de Storage devem ser as que você criou diretamente no bucket `IMAGENS`, como instruído no Passo 2.3.</li>
                             </ul>
                         </div>
                     </div>
