@@ -425,8 +425,9 @@ export class AdminComponent implements OnInit, OnDestroy {
         const newUrl = await this.imageUploadService.uploadImage(file, formControlName, currentUrl);
         this.mainSettingsForm.get(formControlName)?.setValue(newUrl);
     } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
         console.error('Upload failed:', error);
-        alert('Falha no upload da imagem.');
+        alert(`Falha no upload da imagem. ${message}`);
     } finally {
         this.isUploading.set(false);
     }
@@ -474,8 +475,9 @@ export class AdminComponent implements OnInit, OnDestroy {
       alert('Configurações salvas!');
       this.mainSettingsForm.get('admin_password')?.reset('');
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error('Error saving settings:', error);
-      alert('Falha ao salvar configurações.');
+      alert(`Falha ao salvar configurações. ${message}`);
     } finally {
       this.isUploading.set(false);
     }
@@ -522,7 +524,8 @@ export class AdminComponent implements OnInit, OnDestroy {
       const newUrl = await this.imageUploadService.uploadImage(file, `slider/${Date.now()}`, currentUrl);
       this.sliderImages.at(index).setValue(newUrl);
     } catch (e) {
-      alert('Falha no upload da imagem do slider.');
+      const message = e instanceof Error ? e.message : String(e);
+      alert(`Falha no upload da imagem do slider. ${message}`);
     } finally {
       this.isUploading.set(false);
     }
@@ -627,8 +630,9 @@ export class AdminComponent implements OnInit, OnDestroy {
       this.editingProduct.set(null);
       this.productFile.set(null);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error('Failed to save product:', error);
-      alert('Falha ao salvar o produto.');
+      alert(`Falha ao salvar o produto. ${message}`);
     } finally {
       this.isUploading.set(false);
     }
@@ -657,8 +661,9 @@ export class AdminComponent implements OnInit, OnDestroy {
         await this.dataService.saveCategory(formData as Category);
         this.editingCategory.set(null);
       } catch(e) {
+        const message = e instanceof Error ? e.message : String(e);
         console.error("Error saving category:", e);
-        alert("Falha ao salvar categoria. Verifique o console para mais detalhes.");
+        alert(`Falha ao salvar categoria. ${message}`);
       }
   }
 
@@ -701,8 +706,9 @@ export class AdminComponent implements OnInit, OnDestroy {
         await this.dataService.saveAddonCategory(formData as AddonCategory);
         this.editingAddonCategory.set(null);
       } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
         console.error("Error saving addon category:", e);
-        alert("Falha ao salvar o grupo de adicionais. Verifique o console para mais detalhes.");
+        alert(`Falha ao salvar o grupo de adicionais. ${message}`);
       }
   }
 
@@ -728,8 +734,9 @@ export class AdminComponent implements OnInit, OnDestroy {
       await this.dataService.saveCoupon(formData as Coupon);
       this.editingCoupon.set(null);
     } catch(e) {
+      const message = e instanceof Error ? e.message : String(e);
       console.error("Error saving coupon:", e);
-      alert("Falha ao salvar o cupom.");
+      alert(`Falha ao salvar o cupom. ${message}`);
     }
   }
 
