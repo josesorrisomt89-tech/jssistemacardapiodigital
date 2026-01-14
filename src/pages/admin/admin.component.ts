@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef, OnInit, OnDestroy, Signal, WritableSignal } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, KeyValuePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormArray, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DataService } from '../../services/data.service';
@@ -14,7 +14,7 @@ import { GeminiService } from '../../services/gemini.service';
   selector: 'app-admin',
   templateUrl: './admin.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, LayoutPreviewComponent, ReceiptComponent]
+  imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, KeyValuePipe, LayoutPreviewComponent, ReceiptComponent]
 })
 export class AdminComponent implements OnInit, OnDestroy {
   private dataService: DataService = inject(DataService);
