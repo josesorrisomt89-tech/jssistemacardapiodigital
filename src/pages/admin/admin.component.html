@@ -1019,40 +1019,49 @@
                     </div>
                 </div>
 
-                 <!-- Part 2: Storage -->
+                 <!-- Part 2: Storage (CORRIGIDO) -->
                 <div class="p-4 rounded-lg bg-gray-800">
-                    <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Parte 2: Permissões de Upload de Imagens</h3>
+                    <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Parte 2: Permissões de Upload de Imagens (Corrigido)</h3>
                     <div class="space-y-6 pl-4 border-l-2 border-purple-500">
                         <!-- Step 1 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.1: Acesse a área de Armazenamento (Storage)</h4>
-                            <p class="mt-1">Na barra lateral esquerda do Supabase, procure por um ícone de um <b class="text-yellow-400">cilindro (🛢️)</b>. Este é o menu de <strong>"Storage"</strong>. Clique nele.</p>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.1: Crie o "Bucket" de Imagens</h4>
+                            <p class="mt-1">Na barra lateral esquerda do Supabase, clique no ícone de um <b class="text-yellow-400">cilindro (🛢️)</b> para ir para <strong>"Storage"</strong>.</p>
+                            <p class="mt-1">Se um bucket chamado <code>images</code> já existir, pule para o Passo 2.2. Caso contrário, clique em <strong>"+ New bucket"</strong>.</p>
+                            <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
+                                <li>No campo "Name", digite <b class="text-red-500">exatamente</b> <code>images</code>. O nome precisa ser este para o aplicativo funcionar.</li>
+                                <li>Ative a opção <strong>"Public bucket"</strong>. Isso é muito importante!</li>
+                                <li>Clique em <strong>"Save"</strong>.</li>
+                            </ul>
                         </div>
                         <!-- Step 2 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.2: Acesse as Políticas do Bucket de Imagens</h4>
-                            <p class="mt-1">Você verá uma pasta (chamada de "bucket") com o nome <code>images</code>. Ao lado dela, clique no menu de três pontinhos (<code>...</code>) e selecione a opção <strong>"Policies"</strong>.</p>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.2: Acesse as Políticas do Bucket `images`</h4>
+                            <p class="mt-1">Na lista de buckets, encontre o bucket <code>images</code>. Clique no menu de três pontinhos (<code>...</code>) ao lado dele e selecione <strong>"Policies"</strong>.</p>
                         </div>
                         <!-- Step 3 -->
                         <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Upload e Visualização</h4>
-                            <p class="mt-1">Você verá 4 tipos de operação: `SELECT`, `INSERT`, `UPDATE`, `DELETE`. Você precisa criar uma política para cada uma para que seu app possa fazer upload, visualizar, atualizar e deletar imagens.</p>
-                            <p class="mt-2 font-bold">1. Política de Visualização (SELECT):</p>
-                            <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
-                               <li>Ao lado de <strong>SELECT</strong>, clique em <strong>"+ Create a new policy"</strong>.</li>
-                               <li>Na barra lateral de "Templates" que aparece à direita, clique no primeiro template: <b class="text-yellow-400">"Enable read access for all users"</b>.</li>
-                               <li>Isso preencherá o formulário para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
-                            </ul>
-                             <p class="mt-2 font-bold">2. Política de Upload, Update e Delete (INSERT, UPDATE, DELETE):</p>
-                             <p class="text-sm mt-1">Agora, para <strong>INSERT</strong>, <strong>UPDATE</strong> e <strong>DELETE</strong>, você precisa criar uma política manual para cada um.</p>
+                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Upload, Update e Delete</h4>
+                            <p class="mt-1">Como o bucket é público, uma política de `SELECT` (visualização) já existe. Agora, precisamos criar as outras três.</p>
+                            <p class="mt-2 font-bold">Para CADA uma das operações (`INSERT`, `UPDATE`, `DELETE`), faça o seguinte:</p>
                              <ul class="list-disc pl-5 mt-1 space-y-1 text-sm">
-                                <li>Clique em <strong>"+ Create a new policy"</strong> ao lado de <strong>INSERT</strong>.</li>
-                                <li><strong>Policy Name:</strong> Digite <code>Public Uploads</code></li>
-                                <li><strong>Policy Command:</strong> Marque apenas <strong>INSERT</strong>.</li>
-                                <li><strong>WITH CHECK expression:</strong> No editor de código, apague o comentário e digite <code>true</code>.</li>
-                                <li>Salve a política.</li>
-                                <li><b class="text-yellow-400">REPITA</b> este processo para <strong>UPDATE</strong> (dando o nome de <code>Public Updates</code>) e <strong>DELETE</strong> (dando o nome de <code>Public Deletes</code>), marcando a opção correta em "Policy Command" a cada vez.</li>
+                                <li>Clique em <strong>"+ New policy"</strong> ao lado da operação correspondente (comece com `INSERT`).</li>
+                                <li>Na tela que aparece, no lado direito, clique no template <b class="text-yellow-400">"Enable insert for all users"</b> (ou "update/delete" dependendo da política que está criando).</li>
+                                <li>O Supabase vai preencher tudo para você. Apenas clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
+                                <li><b class="text-yellow-400">REPITA</b> este processo simples para `UPDATE` e `DELETE`. No final, você terá 4 políticas no total para o bucket `images`.</li>
                              </ul>
+                        </div>
+                        <!-- Step 4 -->
+                        <div class="p-3 rounded-lg border border-red-500/50 bg-red-500/10">
+                            <h4 class="text-lg font-semibold text-red-500">Passo 2.4 (MUITO IMPORTANTE): Limpeza de Políticas Antigas</h4>
+                            <p class="mt-1">Sua segunda imagem mostra que você criou políticas em um local incorreto. Precisamos removê-las para evitar conflitos.</p>
+                            <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
+                               <li>Volte para a seção de <strong>Authentication (ícone 👥) -> Policies</strong>.</li>
+                               <li>Na barra de busca "Filter tables and policies", digite <code>storage</code>.</li>
+                               <li>Você verá as tabelas <code>storage.objects</code> e <code>storage.buckets</code>.</li>
+                               <li>Clique em cada uma delas e <b class="text-yellow-400">DELETE TODAS AS POLÍTICAS</b> que aparecem listadas (ex: "Public Updates", "Public Deletes"). Para deletar, clique nos três pontinhos ao lado da política e escolha "Delete".</li>
+                               <li>Faça isso para <code>storage.objects</code> e para <code>storage.buckets</code> até que não reste nenhuma política para elas.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -1060,7 +1069,7 @@
                 <!-- Conclusion -->
                 <div class="p-4 rounded-lg border border-green-500/50 bg-green-500/10">
                     <h3 class="text-xl font-semibold text-green-400 mb-2">Conclusão</h3>
-                    <p>Após seguir todos esses passos para todas as tabelas e para o Storage, seu painel administrativo estará 100% funcional. Recarregue a página do seu painel e todos os erros de salvamento e upload devem desaparecer.</p>
+                    <p>Após seguir todos esses passos, especialmente a limpeza do Passo 2.4, seu sistema de upload de imagens estará 100% funcional. Recarregue a página do seu painel administrativo e teste novamente.</p>
                 </div>
             </div>
           </div>
