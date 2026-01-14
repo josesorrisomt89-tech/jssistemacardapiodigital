@@ -54,7 +54,9 @@ export class ApiService {
   // Storage Methods
   uploadFile(bucket: string, path: string, file: File): Observable<{ Key: string }> {
     const url = `${this.apiUrl}/storage/v1/object/${bucket}/${path}`;
-    const headers = this.getHeaders().set('Content-Type', file.type);
+    const headers = this.getHeaders()
+                      .set('Content-Type', file.type)
+                      .set('x-upsert', 'true');
     return this.http.post<{ Key: string }>(url, file, { headers });
   }
   

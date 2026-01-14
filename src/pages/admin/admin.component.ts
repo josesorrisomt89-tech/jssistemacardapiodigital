@@ -28,7 +28,6 @@ export class AdminComponent implements OnInit, OnDestroy {
   isNewOrderNotificationActive = signal(false);
   private knownReceivedOrderIds = new Set<string>();
   private orderPollingInterval: any;
-  private tempIdCounter = 0;
 
   isLoggedIn = this.authService.isAdminLoggedIn;
   loginForm = this.fb.group({
@@ -371,10 +370,12 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.stopNewOrderSound();
   }
 
-  private generateTempId(prefix: string = 'temp'): string {
-    // Simple unique ID for form state management before saving
-    this.tempIdCounter++;
-    return `${prefix}_${Date.now()}_${this.tempIdCounter}`;
+  private generateUUID(): string {
+    // Gerador de UUID v4 para compatibilidade com o banco de dados.
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   }
 
   playNewOrderSound() {
@@ -610,7 +611,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       const currentProduct = this.editingProduct();
 
       if (this.productFile()) {
-        const pathPrefix = `products/${formData.id || Date.now()}`;
+        const pathPrefix = `products/${formData.id || this.generateUUID()}`;
         const newUrl = await this.imageUploadService.uploadImage(this.productFile()!, pathPrefix, currentProduct?.image_url);
         (formData as any).image_url = newUrl;
       }
@@ -618,7 +619,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       if (formData.price_type === 'fixed') (formData as any).sizes = []; else (formData as any).price = 0;
       
       if (!formData.id) {
-        (formData as any).id = this.generateTempId('prod');
+        (formData as any).id = this.generateUUID();
         (formData as any).order = this.dataService.products().length;
       }
       
@@ -650,7 +651,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       try {
         const formData = this.categoryForm.getRawValue();
         if (!formData.id) {
-          (formData as any).id = this.generateTempId('cat');
+          (formData as any).id = this.generateUUID();
           (formData as any).order = this.dataService.categories().length;
         }
         await this.dataService.saveCategory(formData as Category);
@@ -678,7 +679,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   
   addAddonToAddonCategory(addon?: Addon) {
     this.addonCategoryAddons.push(this.fb.group({
-      id: [addon?.id || this.generateTempId('addon')],
+      id: [addon?.id || this.generateUUID()],
       name: [addon?.name || '', Validators.required],
       price: [addon?.price || 0],
       order: [addon?.order || 0],
@@ -694,7 +695,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         (formData.addons as any[])?.forEach((addon: any, index: number) => addon.order = index);
 
         if (!formData.id) {
-            (formData as any).id = this.generateTempId('group');
+            (formData as any).id = this.generateUUID();
             (formData as any).order = this.dataService.addonCategories().length;
         }
         await this.dataService.saveAddonCategory(formData as AddonCategory);
@@ -722,7 +723,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (this.couponForm.invalid) { alert('Preencha os campos do cupom.'); return; }
     try {
       const formData = this.couponForm.getRawValue();
-      if (!formData.id) (formData as any).id = this.generateTempId('coupon');
+      if (!formData.id) (formData as any).id = this.generateUUID();
       
       await this.dataService.saveCoupon(formData as Coupon);
       this.editingCoupon.set(null);

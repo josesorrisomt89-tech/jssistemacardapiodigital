@@ -30,6 +30,14 @@ export class DataService {
     effect(() => this.saveToLocalStorage('acai_current_driver', this.currentDriver()));
   }
 
+  private generateUUID(): string {
+    // Gerador de UUID v4 para compatibilidade com o banco de dados.
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
   public load(): void {
     this.loadingStatus.set('loading');
     this.currentDriver.set(this.loadFromLocalStorage('acai_current_driver', null));
@@ -129,10 +137,10 @@ export class DataService {
 
   async addOrder(order: Omit<Order, 'id' | 'date' | 'status'>, creditDetails?: Omit<Receivable, 'id' | 'order_id' | 'amount' | 'status' | 'created_at'>): Promise<Order> {
     const isScheduled = !!(order as Order).scheduled_time;
-    const newOrderId = new Date().getTime().toString();
+    const newOrderId = this.generateUUID();
     const newOrder: Order = { ...order, id: newOrderId, date: new Date().toISOString(), status: isScheduled ? 'Agendado' : 'Recebido', is_delivery_broadcasted: false };
     if (order.payment_method === 'credit' && creditDetails) {
-        const newReceivable: Receivable = { ...creditDetails, id: `rec_${newOrderId}`, order_id: newOrderId, amount: order.total, status: 'pending', created_at: new Date().toISOString() };
+        const newReceivable: Receivable = { ...creditDetails, id: this.generateUUID(), order_id: newOrderId, amount: order.total, status: 'pending', created_at: new Date().toISOString() };
         newOrder.receivable_id = newReceivable.id;
         await firstValueFrom(this.apiService.post('receivables', [newReceivable]));
     }
@@ -219,7 +227,7 @@ export class DataService {
   }
 
   async addExpense(expense: Omit<Expense, 'id'>): Promise<Expense> {
-    const newExpense = { ...expense, id: Date.now().toString() };
+    const newExpense = { ...expense, id: this.generateUUID() };
     const data = await firstValueFrom(this.apiService.post<Expense>('expenses', [newExpense], 'return=representation'));
     await this.fetchTable('expenses'); return data[0];
   }
@@ -243,7 +251,7 @@ export class DataService {
     const existing = await firstValueFrom(this.apiService.get<DeliveryDriver>('delivery_drivers', `name=eq.${driverData.name}&limit=1`));
     if(existing.length > 0) return { error: 'Um entregador com este nome já existe.' };
     
-    await firstValueFrom(this.apiService.post('delivery_drivers', [{ ...driverData, id: Date.now().toString(), status: 'pending' }]));
+    await firstValueFrom(this.apiService.post('delivery_drivers', [{ ...driverData, id: this.generateUUID(), status: 'pending' }]));
     await this.fetchTable('delivery_drivers');
     return { success: 'Cadastro enviado para análise.' };
   }
@@ -270,7 +278,7 @@ export class DataService {
   }
   
   async addDriverPayment(payment: Omit<DriverPayment, 'id'>) {
-    const newPayment = { ...payment, id: Date.now().toString() };
+    const newPayment = { ...payment, id: this.generateUUID() };
     const data = await firstValueFrom(this.apiService.post<DriverPayment>('driver_payments', [newPayment], 'return=representation'));
     await this.fetchTable('driver_payments');
     return data[0];
