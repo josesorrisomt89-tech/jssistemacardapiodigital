@@ -117,10 +117,15 @@
               <h2 class="text-xl font-bold mb-4 text-yellow-400">Pedidos Agendados</h2>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @for(order of scheduledOrders(); track order.id){
-                  <div class="bg-gray-800 p-4 rounded-lg shadow-md border-l-4 border-yellow-400">
-                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="font-bold text-lg">#{{ order.id.slice(-4) }}</h3>
-                        <span class="text-sm font-semibold bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">Agendado para {{order.scheduled_time}}</span>
+                  <div class="bg-gray-800 p-4 rounded-lg shadow-md border-l-4 border-yellow-400 relative">
+                     <div class="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 class="font-bold text-lg">#{{ order.id.slice(-4) }}</h3>
+                          <span class="text-sm font-semibold bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">Agendado para {{order.scheduled_time}}</span>
+                        </div>
+                        <button (click)="openReceiptModal(order, 'print')" class="text-gray-400 hover:text-white" title="Imprimir cupom">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v3h6v-3z" clip-rule="evenodd" /></svg>
+                        </button>
                       </div>
                       <p class="text-sm">{{ order.customer_name }}</p>
                       <p class="text-xs text-gray-400">{{ order.delivery_option === 'delivery' ? order.delivery_address + ', ' + order.neighborhood : 'Retirada na loja' }}</p>
@@ -141,7 +146,7 @@
           <!-- Kanban Board -->
           <div class="flex flex-col lg:flex-row gap-4 overflow-x-auto pb-4">
             @for(column of kanbanColumns; track column.title) {
-              <div class="lg:w-1/4 flex-shrink-0 min-w-[300px]">
+              <div class="lg:w-1/5 flex-shrink-0 min-w-[300px]">
                 <h2 class="text-xl font-bold mb-4">{{ column.title }} ({{ column.orders().length }})</h2>
                 <div class="space-y-4 h-[60vh] overflow-y-auto pr-2">
                     @for(order of column.orders(); track order.id) {
@@ -183,10 +188,10 @@
                             } @else {
                               <div class="grid grid-cols-2 gap-2">
                                 <button (click)="openReceiptModal(order, 'delivery')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded text-xs">
-                                  Enviar Grupo
+                                  Enviar WhatsApp Entregador Proprio
                                 </button>
                                  <button (click)="openDriverAssignmentModal(order)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-3 rounded text-xs">
-                                  Atribuir
+                                  Enviar Entregador App
                                 </button>
                               </div>
                             }
@@ -333,7 +338,7 @@
                                     <td class="p-3">{{ order.date | date:'dd/MM HH:mm' }}</td>
                                     <td class="p-3">{{ order.customer_name }}</td>
                                     <td class="p-3">{{ paymentMethodNames[order.delivery_option] || order.delivery_option }}</td>
-                                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs" [class.bg-green-500]="order.status === 'Entregue'" [class.bg-red-500]="order.status === 'Cancelado'" [class.bg-blue-500]="order.status !== 'Entregue' && order.status !== 'Cancelado'">{{ order.status }}</span></td>
+                                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs" [class.bg-green-500]="order.status === 'Entregue' || order.status === 'Pago e Entregue'" [class.bg-red-500]="order.status === 'Cancelado'" [class.bg-blue-500]="order.status !== 'Entregue' && order.status !== 'Pago e Entregue' && order.status !== 'Cancelado'">{{ order.status }}</span></td>
                                     <td class="p-3">{{ paymentMethodNames[order.payment_method] || order.payment_method }}</td>
                                     <td class="p-3 text-right font-semibold">{{ order.total | currency:'BRL' }}</td>
                                 </tr>

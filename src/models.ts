@@ -118,7 +118,7 @@ export interface Coupon {
   minimum_order_value?: number;
 }
 
-export type OrderStatus = 'Recebido' | 'Em Preparo' | 'Aguardando Retirada' | 'Saiu para Entrega' | 'Entregue' | 'Cancelado' | 'Agendado';
+export type OrderStatus = 'Recebido' | 'Em Preparo' | 'Aguardando Retirada' | 'Saiu para Entrega' | 'Entregue' | 'Pago e Entregue' | 'Cancelado' | 'Agendado';
 
 export type PaymentMethod = 'pix-machine' | 'card' | 'cash' | 'pix-online' | 'credit';
 

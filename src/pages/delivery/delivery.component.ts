@@ -114,7 +114,7 @@ export class DeliveryComponent {
       default: startDate = new Date(now.setHours(0, 0, 0, 0)); break;
     }
     let endDate = this.statsPeriod() === 'custom' ? new Date(this.customEndDate() + 'T23:59:59') : new Date();
-    const filteredOrders = this.dataService.orders().filter(o => o.assigned_driver_id === driver.id && o.status === 'Entregue' && new Date(o.date) >= startDate && new Date(o.date) <= endDate);
+    const filteredOrders = this.dataService.orders().filter(o => o.assigned_driver_id === driver.id && (o.status === 'Entregue' || o.status === 'Pago e Entregue') && new Date(o.date) >= startDate && new Date(o.date) <= endDate);
     const totalFee = filteredOrders.reduce((sum, order) => sum + order.delivery_fee, 0);
     return { count: filteredOrders.length, totalFee };
   });

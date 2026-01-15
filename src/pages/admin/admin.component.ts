@@ -38,7 +38,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   activeTab = signal<'orders' | 'pdv' | 'sales' | 'accounts' | 'products' | 'drivers' | 'settings' | 'layout' | 'coupons' | 'loyalty' | 'help'>('orders');
   
-  orderStatuses: OrderStatus[] = ['Agendado', 'Recebido', 'Em Preparo', 'Aguardando Retirada', 'Saiu para Entrega', 'Entregue', 'Cancelado'];
+  orderStatuses: OrderStatus[] = ['Agendado', 'Recebido', 'Em Preparo', 'Aguardando Retirada', 'Saiu para Entrega', 'Entregue', 'Pago e Entregue', 'Cancelado'];
   weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   weekDayNames: {[key: string]: string} = {
     monday: 'Segunda-feira', tuesday: 'Terça-feira', wednesday: 'Quarta-feira',
@@ -163,7 +163,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   sortedAddonCategories = computed(() => this.dataService.addonCategories().sort((a, b) => a.order - b.order));
   sortedCoupons = computed(() => this.dataService.coupons());
   
-  activeOrders = computed(() => this.dataService.orders().filter(o => o.status !== 'Entregue' && o.status !== 'Cancelado'));
+  activeOrders = computed(() => this.dataService.orders().filter(o => o.status !== 'Pago e Entregue' && o.status !== 'Cancelado'));
   totalSales = computed(() => this.dataService.orders().reduce((sum, order) => order.status !== 'Cancelado' ? sum + order.total : sum, 0));
 
   scheduledOrders = computed(() => this.dataService.orders().filter(o => o.status === 'Agendado').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
@@ -171,12 +171,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   inPreparationOrders = computed(() => this.dataService.orders().filter(o => o.status === 'Em Preparo').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
   awaitingPickupOrders = computed(() => this.dataService.orders().filter(o => o.status === 'Aguardando Retirada').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
   outForDeliveryOrders = computed(() => this.dataService.orders().filter(o => o.status === 'Saiu para Entrega').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+  deliveredOrders = computed(() => this.dataService.orders().filter(o => o.status === 'Entregue').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
 
   kanbanColumns = [
     { title: 'Recebido', orders: this.receivedOrders },
     { title: 'Em Preparo', orders: this.inPreparationOrders },
     { title: 'Aguardando Retirada', orders: this.awaitingPickupOrders },
     { title: 'Saiu para Entrega', orders: this.outForDeliveryOrders },
+    { title: 'Entregue', orders: this.deliveredOrders },
   ];
 
   pdvState = signal<'selecting' | 'balcao' | 'delivery'>('selecting');
