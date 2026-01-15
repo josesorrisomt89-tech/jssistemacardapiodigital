@@ -274,28 +274,41 @@ export class MenuComponent implements OnInit {
 
   toggleAddon(addon: Addon) {
     if (!addon.is_available) return;
-
+  
     const addonCat = this.getAddonCategoryByAddonId(addon.id);
     if (!addonCat) return;
-
-    const max = addonCat.max_selection || 0; // 0 is unlimited
+  
     const currentAddons = { ...this.selectedAddons() };
-
-    if (currentAddons[addon.id]) {
-      // It's a deselection, always allowed.
+    const isCurrentlySelected = !!currentAddons[addon.id];
+  
+    // Se está desmarcando, simplesmente remove.
+    if (isCurrentlySelected) {
       delete currentAddons[addon.id];
-    } else {
-      // It's a selection, check against max.
-      const categoryAddonIds = new Set(addonCat.addons.map(a => a.id));
-      const selectionsInCatCount = Object.keys(currentAddons).filter(id => categoryAddonIds.has(id)).length;
-
-      if (max > 0 && selectionsInCatCount >= max) {
-        alert(`Você pode selecionar no máximo ${max} ${max === 1 ? 'opção' : 'opções'} para "${addonCat.name}".`);
-        return; // Prevent selection
+      this.selectedAddons.set(currentAddons);
+      return;
+    }
+  
+    // Se está marcando...
+    const max = addonCat.max_selection || 0;
+    const categoryAddonIds = new Set(addonCat.addons.map(a => a.id));
+    // Fix: Explicitly type the parameter 'a' to ensure correct type inference.
+    const selectionsInCat = Object.values(currentAddons).filter((a: Addon) => categoryAddonIds.has(a.id));
+  
+    if (max === 1) {
+      // Comportamento de rádio: remove todos os outros da mesma categoria.
+      for (const existingAddon of selectionsInCat) {
+        delete currentAddons[existingAddon.id];
       }
       currentAddons[addon.id] = addon;
+    } else if (max > 0 && selectionsInCat.length >= max) {
+      // Limite máximo (diferente de 1) atingido.
+      alert(`Você pode selecionar no máximo ${max} ${max === 1 ? 'opção' : 'opções'} para "${addonCat.name}".`);
+      return; // Impede a seleção.
+    } else {
+      // Adição normal (sem limite ou com limite > 1 não atingido).
+      currentAddons[addon.id] = addon;
     }
-    
+  
     this.selectedAddons.set(currentAddons);
   }
 
