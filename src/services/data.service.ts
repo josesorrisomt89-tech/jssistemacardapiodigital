@@ -345,7 +345,19 @@ export class DataService {
       welcome_message: "Bem-vindo ao Açaí Point! O melhor açaí da cidade.", wait_time: "30-50 min",
       opening_hours: { monday: { ...weekTemplate }, tuesday: { ...weekTemplate }, wednesday: { ...weekTemplate }, thursday: { ...weekTemplate }, friday: { ...weekTemplate }, saturday: { ...weekTemplate }, sunday: { is_open: false, start: "14:00", end: "22:00" }, },
       delivery: { type: 'fixed', fixed_fee: 5.00, neighborhoods: [] }, pix_key: "seu-email-pix@dominio.com",
-      layout: { primary_color: '#8B5CF6', accent_color: '#A78BFA', background_color: '#111827', text_color: '#FFFFFF', card_color: '#1F2937' },
+      layout: { 
+        primary_color: '#8B5CF6', 
+        accent_color: '#A78BFA', 
+        background_color: '#111827', 
+        text_color: '#FFFFFF', 
+        card_color: '#1F2937',
+        button_text_color: '#FFFFFF',
+        text_secondary_color: '#9CA3AF',
+        status_open_color: '#34D399',
+        status_closed_color: '#EF4444',
+        header_text_color: '#FFFFFF',
+        category_text_color: '#A78BFA'
+      },
       loyalty_program: { enabled: true, points_per_real: 1, points_for_reward: 100, reward_type: 'fixed', reward_value: 10 },
       is_temporarily_closed: false, temporary_closure_message: 'Estamos fechados para manutenção. Voltamos logo!',
       admin_username: 'admin', admin_password: 'admin'

@@ -9,9 +9,9 @@
           <div class="absolute bottom-0 left-0 p-2 flex items-end space-x-2">
             <div class="w-12 h-12 rounded-full border-2 bg-gray-600" [style.borderColor]="layout().primary_color"></div>
             <div>
-              <h1 class="text-lg font-bold">Nome da Loja</h1>
-              <div class="flex items-center space-x-1 text-xs text-green-400">
-                <span class="w-2 h-2 rounded-full bg-green-400"></span>
+              <h1 class="text-lg font-bold" [style.color]="layout().header_text_color">Nome da Loja</h1>
+              <div class="flex items-center space-x-1 text-xs" [style.color]="layout().status_open_color">
+                <span class="w-2 h-2 rounded-full" [style.backgroundColor]="layout().status_open_color"></span>
                 <span>Aberto</span>
               </div>
             </div>
@@ -20,17 +20,20 @@
         <!-- Category Tabs -->
         <nav class="sticky top-0 z-10 p-1" [style.backgroundColor]="layout().background_color">
           <div class="flex space-x-1">
-            <button class="px-2 py-1 rounded-full text-xs font-semibold" [style.backgroundColor]="layout().primary_color">Açaí</button>
+            <button class="px-2 py-1 rounded-full text-xs font-semibold" [style.backgroundColor]="layout().primary_color" [style.color]="layout().button_text_color">Açaí</button>
             <button class="px-2 py-1 rounded-full text-xs font-semibold" [style.backgroundColor]="layout().card_color" [style.color]="layout().text_color + 'B3'">Cremes</button>
           </div>
         </nav>
         <!-- Product Grid -->
         <main class="p-2 grid grid-cols-1 gap-2">
+           <div class="p-2">
+              <h2 class="font-bold text-lg" [style.color]="layout().category_text_color">Açaí</h2>
+           </div>
           @for (i of [1, 2]; track i) {
             <div class="rounded-md overflow-hidden flex" [style.backgroundColor]="layout().card_color">
               <div class="flex-1 p-2">
                 <h3 class="font-bold text-sm">Produto de Exemplo</h3>
-                <p class="text-xs text-gray-400 mb-1">Descrição do produto.</p>
+                <p class="text-xs mb-1" [style.color]="layout().text_secondary_color">Descrição do produto.</p>
                 <span class="font-semibold" [style.color]="layout().accent_color">R$ 15,00</span>
               </div>
               <div class="w-16 h-full bg-gray-500 object-cover"></div>
@@ -39,7 +42,7 @@
         </main>
         <!-- Floating Cart Button -->
         <div class="absolute bottom-4 right-4 z-20">
-          <button (click)="currentView.set('cart')" class="text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg" [style.backgroundColor]="layout().primary_color">
+          <button (click)="currentView.set('cart')" class="w-10 h-10 rounded-full flex items-center justify-center shadow-lg" [style.backgroundColor]="layout().primary_color" [style.color]="layout().button_text_color">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             <span class="absolute -top-1 -right-1 bg-pink-500 text-xs text-white rounded-full w-4 h-4 flex items-center justify-center">2</span>
           </button>
@@ -57,7 +60,7 @@
               <div class="flex justify-between items-start">
                 <div>
                   <p class="font-semibold text-sm">Produto Exemplo</p>
-                  <p class="text-xs text-gray-400">Adicionais: Banana, Leite Pó</p>
+                  <p class="text-xs" [style.color]="layout().text_secondary_color">Adicionais: Banana, Leite Pó</p>
                 </div>
                 <p class="font-semibold" [style.color]="layout().accent_color">{{ 18.00 | currency:'BRL' }}</p>
               </div>
@@ -66,11 +69,11 @@
         </div>
         <div class="p-2 border-t" [style.borderColor]="layout().background_color">
           <div class="flex justify-between mb-2">
-            <span class="text-gray-400 text-sm">Subtotal</span>
+            <span class="text-sm" [style.color]="layout().text_secondary_color">Subtotal</span>
             <span class="font-semibold">{{ 36.00 | currency:'BRL' }}</span>
           </div>
-          <button (click)="currentView.set('checkout')" class="w-full text-white font-bold py-2 px-3 rounded-md text-sm" [style.backgroundColor]="layout().primary_color">Finalizar Pedido</button>
-          <button (click)="currentView.set('products')" class="w-full mt-1 bg-transparent hover:bg-gray-700 text-gray-400 text-xs py-1 px-3 rounded-md">Ver mais produtos</button>
+          <button (click)="currentView.set('checkout')" class="w-full font-bold py-2 px-3 rounded-md text-sm" [style.backgroundColor]="layout().primary_color" [style.color]="layout().button_text_color">Finalizar Pedido</button>
+          <button (click)="currentView.set('products')" class="w-full mt-1 bg-transparent hover:bg-gray-700 text-xs py-1 px-3 rounded-md" [style.color]="layout().text_secondary_color">Ver mais produtos</button>
         </div>
       </div>
     }
@@ -78,7 +81,7 @@
       <div class="flex flex-col h-full p-2 overflow-y-auto scrollbar-hide">
         <div class="border-b pb-2 mb-2 flex justify-between items-center" [style.borderColor]="layout().card_color">
           <h2 class="text-base font-bold">Finalizar Pedido</h2>
-          <button (click)="currentView.set('cart')" class="text-gray-400 text-xs">Voltar</button>
+          <button (click)="currentView.set('cart')" class="text-xs" [style.color]="layout().text_secondary_color">Voltar</button>
         </div>
         <div class="space-y-3">
           <div>
@@ -107,7 +110,7 @@
           <div class="flex justify-between font-bold text-base border-t pt-2" [style.borderColor]="layout().card_color">
             <span>Total:</span> <span [style.color]="layout().accent_color">{{ 41.00 | currency:'BRL' }}</span>
           </div>
-          <button class="w-full text-white font-bold py-2 px-3 rounded-md text-sm mt-2" [style.backgroundColor]="layout().primary_color">Enviar Pedido</button>
+          <button class="w-full font-bold py-2 px-3 rounded-md text-sm mt-2" [style.backgroundColor]="layout().primary_color" [style.color]="layout().button_text_color">Enviar Pedido</button>
         </div>
       </div>
     }

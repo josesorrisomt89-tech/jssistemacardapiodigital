@@ -48,8 +48,14 @@ export class AdminComponent implements OnInit, OnDestroy {
     primary_color: 'Cor Principal',
     accent_color: 'Cor de Destaque',
     background_color: 'Cor de Fundo',
-    text_color: 'Cor do Texto',
-    card_color: 'Cor do Card'
+    text_color: 'Cor do Texto Principal',
+    card_color: 'Cor do Card',
+    button_text_color: 'Cor do Texto do Botão',
+    text_secondary_color: 'Cor do Texto Secundário',
+    status_open_color: 'Cor Status (Aberto)',
+    status_closed_color: 'Cor Status (Fechado)',
+    header_text_color: 'Cor do Título no Banner',
+    category_text_color: 'Cor do Título da Categoria'
   };
 
   paymentMethodNames: { [key: string]: string } = {
@@ -273,7 +279,17 @@ export class AdminComponent implements OnInit, OnDestroy {
       ),
       delivery: this.fb.group({ type: ['fixed'], fixed_fee: [0], neighborhoods: this.fb.array([]) }),
       layout: this.fb.group({
-        primary_color: [''], accent_color: [''], background_color: [''], text_color: [''], card_color: ['']
+        primary_color: [''], 
+        accent_color: [''], 
+        background_color: [''], 
+        text_color: [''], 
+        card_color: [''],
+        button_text_color: [''],
+        text_secondary_color: [''],
+        status_open_color: [''],
+        status_closed_color: [''],
+        header_text_color: [''],
+        category_text_color: ['']
       }),
       is_temporarily_closed: [false],
       temporary_closure_message: [''],
