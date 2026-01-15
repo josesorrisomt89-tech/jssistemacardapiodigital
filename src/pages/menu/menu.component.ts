@@ -567,8 +567,9 @@ export class MenuComponent implements OnInit {
       this.cartService.clearCart();
       this.closeCheckout();
       
-      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
+      const sanitizedWhatsappNumber = whatsappNumber.replace(/\D/g, '');
+      const whatsappUrl = `https://wa.me/${sanitizedWhatsappNumber}?text=${encodeURIComponent(message)}`;
+      window.location.href = whatsappUrl;
 
     } catch (error) {
       console.error('Failed to save order:', error);

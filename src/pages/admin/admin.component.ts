@@ -905,10 +905,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   
   sendDeliveryMessage(order: Order) {
     let message = `*ENTREGA PENDENTE* - Pedido #${order.id.slice(-4)}\n\n*Cliente:* ${order.customer_name}\n*Endereço:* ${order.delivery_address}\n*Bairro:* ${order.neighborhood}\n\n*Total:* ${new CurrencyPipe('pt-BR').transform(order.total, 'BRL', 'symbol', '1.2-2')}\n*Pagamento:* ${order.payment_method}`;
-    if(order.payment_method === 'cash') { message += ` (Levar troco para ${new CurrencyPipe('pt-BR').transform(order.change_for, 'BRL', 'symbol', '1.2-2')})` }
+    if (order.payment_method === 'cash') {
+      message += ` (Levar troco para ${new CurrencyPipe('pt-BR').transform(order.change_for, 'BRL', 'symbol', '1.2-2')})`;
+    }
     const settings = this.dataService.settings();
     const deliveryWhatsappNumber = settings.delivery_whatsapp || settings.whatsapp;
-    window.open(`https://wa.me/${deliveryWhatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
+    const sanitizedNumber = deliveryWhatsappNumber.replace(/\D/g, '');
+    const whatsappUrl = `https://wa.me/${sanitizedNumber}?text=${encodeURIComponent(message)}`;
+    window.location.href = whatsappUrl;
   }
 
   openReceiptModal(order: Order, mode: 'print' | 'delivery' | 'pdv' = 'print') {
@@ -1041,11 +1045,18 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   handleSendReceipt(order: Order) {
-    const phone = this.tempPdvCustomerPhone(); if (!phone) { alert('Telefone não informado.'); return; }
+    const phone = this.tempPdvCustomerPhone();
+    if (!phone) {
+      alert('Telefone não informado.');
+      return;
+    }
     let message = `Olá ${order.customer_name}, obrigado pela sua compra!\n\n*Resumo do Pedido #${order.id.slice(-4)}*\n\n`;
-    order.items.forEach(item => { message += `*${item.quantity}x ${item.product_name} (${item.size.name})*\n`; });
+    order.items.forEach(item => {
+      message += `*${item.quantity}x ${item.product_name} (${item.size.name})*\n`;
+    });
     message += `\n*TOTAL:* *${new CurrencyPipe('pt-BR').transform(order.total, 'BRL', 'symbol', '1.2-2')}*\n\nAgradecemos a preferência!`;
-    window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+    const whatsappUrl = `https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    window.location.href = whatsappUrl;
   }
 
   handleReceiptClose() {
