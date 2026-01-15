@@ -76,6 +76,15 @@
       </div>
     }
 
+    @if (installButtonVisible()) {
+      <button (click)="promptInstall()" class="w-full bg-teal-500 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105 hover:shadow-xl mb-6 shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Instalar App no Celular
+      </button>
+    }
+
     <div class="flex space-x-8 mb-8">
       <a [href]="'https://wa.me/' + settings().whatsapp" target="_blank" class="transition-transform transform hover:scale-110" [style.color]="settings().layout.text_secondary_color">
         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.996 0-3.942-.524-5.63-1.475l-6.768 2.247zM6.78 18.92c1.462.875 3.134 1.366 4.887 1.367 5.405 0 9.792-4.385 9.793-9.791s-4.387-9.792-9.793-9.792c-5.404 0-9.792 4.387-9.792 9.792 0 1.896.546 3.719 1.58 5.257l.34.5-.24 1.44z"/></svg>
