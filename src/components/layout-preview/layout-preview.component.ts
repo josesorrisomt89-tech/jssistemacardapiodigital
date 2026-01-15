@@ -11,5 +11,5 @@ import { ShopSettings } from '../../models';
 export class LayoutPreviewComponent {
   layout = input.required<ShopSettings['layout']>();
   
-  currentView = signal<'products' | 'cart' | 'checkout'>('products');
+  currentView = signal<'products' | 'cart' | 'checkout' | 'product-detail'>('products');
 }

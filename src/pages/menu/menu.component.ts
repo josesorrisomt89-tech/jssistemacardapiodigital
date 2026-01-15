@@ -84,6 +84,25 @@ export class MenuComponent implements OnInit {
   productQuantity = signal(1);
   productNotes = signal('');
 
+  modalTotalPrice = computed(() => {
+    const product = this.selectedProduct();
+    if (!product) return 0;
+
+    const quantity = this.productQuantity();
+    
+    let sizePrice = 0;
+    const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
+    if (priceType === 'fixed') {
+        sizePrice = product.price ?? 0;
+    } else {
+        sizePrice = this.selectedSize()?.price ?? 0;
+    }
+    
+    const addonsPrice = Object.values(this.selectedAddons()).reduce((sum, addon) => sum + addon.price, 0);
+    
+    return (sizePrice + addonsPrice) * quantity;
+  });
+
   isAddToCartDisabled = computed(() => {
     const product = this.selectedProduct();
     if (!product) return true;

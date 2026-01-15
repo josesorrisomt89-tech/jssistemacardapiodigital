@@ -1,14 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, catchError } from 'rxjs';
 import { supabaseConfig } from '../supabase-config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  private http = inject(HttpClient);
+  // FIX: Explicitly type `http` as HttpClient to resolve a type inference issue where it was being treated as 'unknown'.
+  private http: HttpClient = inject(HttpClient);
   private apiUrl = supabaseConfig.url;
   private apiKey = supabaseConfig.anonKey;
 

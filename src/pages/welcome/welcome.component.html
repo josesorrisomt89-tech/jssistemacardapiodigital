@@ -1,3 +1,18 @@
+<style>
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fade-in-down {
+    animation: fadeInDown 0.8s ease-out forwards;
+  }
+</style>
 <div class="min-h-screen w-full flex flex-col"
   [style.backgroundColor]="settings().layout.background_color"
   [style.color]="settings().layout.text_color">
@@ -5,8 +20,8 @@
   <!-- Slider Section -->
   <div class="relative w-full aspect-video shadow-lg overflow-hidden group">
     <!-- Background Gradient Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-br from-purple-900 via-gray-900 to-pink-900 opacity-50 z-10"
-      [style.background]="'linear-gradient(to bottom right, ' + settings().layout.primary_color + '90, ' + settings().layout.background_color + 'BF, ' + settings().layout.accent_color + '90)'"></div>
+    <div class="absolute inset-0 z-10"
+      [style.background]="'linear-gradient(to bottom, ' + settings().layout.primary_color + '50, transparent 70%)'"></div>
       
     <!-- Sliding image container -->
     <div class="flex h-full transition-transform duration-700 ease-in-out" [style.transform]="'translateX(-' + currentIndex() * 100 + '%)'">
@@ -36,43 +51,44 @@
   </div>
 
   <!-- Content Section -->
-  <div class="flex flex-col items-center text-center w-full max-w-md mx-auto p-4 flex-grow z-10">
+  <div class="flex flex-col items-center text-center w-full max-w-md mx-auto p-4 flex-grow z-10 animate-fade-in-down">
     <img [src]="settings().logo_url || 'https://picsum.photos/id/1060/200/200'" alt="Logo" class="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 shadow-lg -mt-16 sm:-mt-20 mb-6" [style.borderColor]="settings().layout.primary_color">
     
     <h1 class="text-3xl sm:text-4xl font-bold mb-2">{{ settings().name }}</h1>
     <p class="text-base sm:text-lg mb-8" [style.color]="settings().layout.accent_color">{{ settings().address }}</p>
     
-    <a routerLink="/menu" class="w-full text-white font-bold py-4 px-6 rounded-lg text-xl transition-transform transform hover:scale-105 shadow-lg mb-6"
-       [style.backgroundColor]="settings().layout.primary_color">
+    <a routerLink="/menu" class="w-full font-bold py-4 px-6 rounded-lg text-xl transition-transform transform hover:scale-105 hover:shadow-xl mb-6"
+       [style.backgroundColor]="settings().layout.primary_color"
+       [style.color]="settings().layout.button_text_color">
       Ver Cardápio
     </a>
     
     @if (!user()) {
-      <button (click)="login()" class="w-full bg-white text-gray-700 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105 shadow-lg mb-6">
+      <button (click)="login()" class="w-full bg-white text-gray-800 font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-transform transform hover:scale-105 hover:shadow-xl mb-6 border border-gray-200 shadow-sm">
         <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.42-4.55H24v8.51h12.8c-.57 2.76-2.21 5.12-4.64 6.7l7.98 6.19c4.63-4.28 7.27-10.32 7.27-17.44z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.82l-7.98-6.19c-2.11 1.43-4.81 2.27-7.91 2.27-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></svg>
         Entrar com Google
       </button>
     } @else {
-      <div class="w-full text-center border border-gray-700 rounded-lg p-4 mb-6">
+      <div class="w-full text-center border border-gray-200 rounded-lg p-4 mb-6">
         <img [src]="user()?.photo_url" alt="Foto do usuário" class="w-16 h-16 rounded-full mx-auto mb-2 border-2" [style.borderColor]="settings().layout.accent_color">
-        <p class="font-semibold">Olá, {{ user()?.name }}!</p>
+        <p class="font-semibold">{{ user()?.name }}!</p>
         <button (click)="logout()" class="text-sm mt-2 font-semibold" [style.color]="settings().layout.accent_color">Sair</button>
       </div>
     }
 
-    <div class="flex space-x-6 mb-8">
-      <a [href]="'https://wa.me/' + settings().whatsapp" target="_blank" class="transition-colors" [style.color]="settings().layout.accent_color">
-        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.996 0-3.942-.524-5.63-1.475l-6.768 2.247zM6.78 18.92c1.462.875 3.134 1.366 4.887 1.367 5.405 0 9.792-4.385 9.793-9.791s-4.387-9.792-9.793-9.792c-5.404 0-9.792 4.387-9.792 9.792 0 1.896.546 3.719 1.58 5.257l.34.5-.24 1.44z"/></svg>
+    <div class="flex space-x-8 mb-8">
+      <a [href]="'https://wa.me/' + settings().whatsapp" target="_blank" class="transition-transform transform hover:scale-110" [style.color]="settings().layout.text_secondary_color">
+        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.996 0-3.942-.524-5.63-1.475l-6.768 2.247zM6.78 18.92c1.462.875 3.134 1.366 4.887 1.367 5.405 0 9.792-4.385 9.793-9.791s-4.387-9.792-9.793-9.792c-5.404 0-9.792 4.387-9.792 9.792 0 1.896.546 3.719 1.58 5.257l.34.5-.24 1.44z"/></svg>
       </a>
-      <a [href]="settings().instagram" target="_blank" class="transition-colors" [style.color]="settings().layout.accent_color">
-        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.057 1.644-.069 4.85-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059-1.281.073-1.689.073-4.948s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z"/></svg>
+      <a [href]="settings().instagram" target="_blank" class="transition-transform transform hover:scale-110" [style.color]="settings().layout.text_secondary_color">
+        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.057 1.644-.069 4.85-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.358-.2 6.78-2.618 6.98-6.98.059-1.281.073-1.689.073-4.948s-.014-3.667-.072-4.947c-.2-4.358-2.618-6.78-6.98-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z"/></svg>
       </a>
     </div>
 
-    <div class="mt-auto pt-4 text-xs text-gray-400">
-      <a routerLink="/admin" class="hover:text-white transition-colors px-2">Acesso Lojista</a>
-      <span class="text-gray-600">|</span>
-      <a routerLink="/delivery" class="hover:text-white transition-colors px-2">Acesso Entregador</a>
+    <div class="mt-auto pt-4 text-xs text-gray-500">
+      <a routerLink="/admin" class="hover:text-gray-800 transition-colors px-2">Acesso Lojista</a>
+      <span class="text-gray-400">|</span>
+      <a routerLink="/delivery" class="hover:text-gray-800 transition-colors px-2">Acesso Entregador</a>
     </div>
   </div>
 </div>

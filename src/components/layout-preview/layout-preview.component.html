@@ -30,7 +30,7 @@
               <h2 class="font-bold text-lg" [style.color]="layout().category_text_color">Açaí</h2>
            </div>
           @for (i of [1, 2]; track i) {
-            <div class="rounded-md overflow-hidden flex" [style.backgroundColor]="layout().card_color">
+            <div (click)="currentView.set('product-detail')" class="rounded-md overflow-hidden flex cursor-pointer" [style.backgroundColor]="layout().card_color">
               <div class="flex-1 p-2">
                 <h3 class="font-bold text-sm">Produto de Exemplo</h3>
                 <p class="text-xs mb-1" [style.color]="layout().text_secondary_color">Descrição do produto.</p>
@@ -46,6 +46,53 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             <span class="absolute -top-1 -right-1 bg-pink-500 text-xs text-white rounded-full w-4 h-4 flex items-center justify-center">2</span>
           </button>
+        </div>
+      </div>
+    }
+    @case ('product-detail') {
+      <div class="flex flex-col h-full overflow-hidden">
+        <div class="w-full h-24 bg-gray-500 flex-shrink-0"></div>
+        <div class="p-2 border-b" [style.borderColor]="layout().card_color">
+          <h2 class="text-base font-bold">Produto de Exemplo</h2>
+          <p class="text-xs" [style.color]="layout().text_secondary_color">Descrição do produto.</p>
+        </div>
+        <div class="flex-grow p-2 overflow-y-auto space-y-3">
+          <div>
+            <h3 class="font-semibold text-sm mb-1">Tamanho</h3>
+            <div class="grid grid-cols-2 gap-1">
+              <div class="p-2 border-2 rounded-md relative" [style.borderColor]="layout().card_color">
+                <span>300ml</span> <span class="block" [style.color]="layout().accent_color">R$ 15,00</span>
+              </div>
+              <div class="p-2 border-2 rounded-md relative ring-2" [style.borderColor]="layout().primary_color" [style.ringColor]="layout().primary_color" [style.backgroundColor]="layout().primary_color + '1A'">
+                <span>500ml</span> <span class="block" [style.color]="layout().accent_color">R$ 20,00</span>
+                <div class="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center" [style.backgroundColor]="layout().primary_color" [style.color]="layout().button_text_color">
+                  <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 class="font-semibold text-sm mb-1">Adicionais</h3>
+            <div class="space-y-1">
+              <div class="p-2 rounded-md border-2" [style.borderColor]="layout().primary_color" [style.backgroundColor]="layout().primary_color + '1A'">
+                <p>Leite em pó</p>
+              </div>
+              <div class="p-2 rounded-md" [style.backgroundColor]="layout().card_color">
+                <p>Frutas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-2 border-t mt-auto" [style.borderColor]="layout().card_color">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-1">
+              <button class="w-6 h-6 rounded" [style.backgroundColor]="layout().card_color">-</button>
+              <span>1</span>
+              <button class="w-6 h-6 rounded" [style.backgroundColor]="layout().card_color">+</button>
+            </div>
+            <button (click)="currentView.set('cart')" class="font-bold py-2 px-3 rounded-md text-sm" [style.backgroundColor]="layout().primary_color" [style.color]="layout().button_text_color">Adicionar</button>
+          </div>
+           <button (click)="currentView.set('products')" class="w-full mt-1 bg-transparent hover:bg-gray-700 text-xs py-1 px-3 rounded-md" [style.color]="layout().text_secondary_color">Voltar</button>
         </div>
       </div>
     }

@@ -339,24 +339,24 @@ export class DataService {
   private getDefaultSettings(): ShopSettings {
     const weekTemplate = { is_open: true, start: "14:00", end: "22:00" };
     return {
-      name: "Açaí Point", logo_url: "", banner_url: "",
+      name: "Açaí na Garrafa Rafinha", logo_url: "", banner_url: "",
       slider_images: [], pdv_background_image_url: '',
-      address: "Seu Endereço Aqui", whatsapp: "5500000000000", delivery_whatsapp: "", instagram: "https://instagram.com", facebook: "https://facebook.com",
-      welcome_message: "Bem-vindo ao Açaí Point! O melhor açaí da cidade.", wait_time: "30-50 min",
+      address: "Av. Principal, 123, Centro", whatsapp: "5500000000000", delivery_whatsapp: "", instagram: "https://instagram.com", facebook: "https://facebook.com",
+      welcome_message: "Bem-vindo! O melhor açaí da cidade, feito com carinho para você.", wait_time: "30-50 min",
       opening_hours: { monday: { ...weekTemplate }, tuesday: { ...weekTemplate }, wednesday: { ...weekTemplate }, thursday: { ...weekTemplate }, friday: { ...weekTemplate }, saturday: { ...weekTemplate }, sunday: { is_open: false, start: "14:00", end: "22:00" }, },
       delivery: { type: 'fixed', fixed_fee: 5.00, neighborhoods: [] }, pix_key: "seu-email-pix@dominio.com",
       layout: { 
-        primary_color: '#8B5CF6', 
-        accent_color: '#A78BFA', 
-        background_color: '#111827', 
-        text_color: '#FFFFFF', 
-        card_color: '#1F2937',
+        primary_color: '#7C3AED', 
+        accent_color: '#FBBF24', 
+        background_color: '#F9FAFB', 
+        text_color: '#1F2937', 
+        card_color: '#FFFFFF',
         button_text_color: '#FFFFFF',
-        text_secondary_color: '#9CA3AF',
-        status_open_color: '#34D399',
+        text_secondary_color: '#6B7280',
+        status_open_color: '#10B981',
         status_closed_color: '#EF4444',
         header_text_color: '#FFFFFF',
-        category_text_color: '#A78BFA'
+        category_text_color: '#1F2937'
       },
       loyalty_program: { enabled: true, points_per_real: 1, points_for_reward: 100, reward_type: 'fixed', reward_value: 10 },
       is_temporarily_closed: false, temporary_closure_message: 'Estamos fechados para manutenção. Voltamos logo!',
