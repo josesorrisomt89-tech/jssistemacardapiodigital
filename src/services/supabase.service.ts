@@ -13,7 +13,7 @@ export class ApiService {
   private apiKey = supabaseConfig.anonKey;
 
   private handleError(error: any): Observable<never> {
-    console.error('API Error:', error);
+    console.error('API Error:', error.message || error);
     const errorMessage = error?.error?.message || error?.message || 'Ocorreu um erro desconhecido na comunicação com o servidor.';
     
     let friendlyMessage = `Erro na API: ${errorMessage}`;

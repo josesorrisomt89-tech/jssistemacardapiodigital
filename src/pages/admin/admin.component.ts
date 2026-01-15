@@ -94,13 +94,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     name: ['', { validators: [Validators.required] }]
   });
 
-  addonCategoryForm = this.fb.group({
-    id: [''],
-    order: [0],
-    name: ['', { validators: [Validators.required] }],
-    required: [false],
-    addons: this.fb.array([])
-  });
+  addonCategoryForm: FormGroup;
 
   couponForm: FormGroup;
 
@@ -164,7 +158,65 @@ export class AdminComponent implements OnInit, OnDestroy {
   sortedCoupons = computed(() => this.dataService.coupons());
   
   activeOrders = computed(() => this.dataService.orders().filter(o => o.status !== 'Pago e Entregue' && o.status !== 'Cancelado'));
-  totalSales = computed(() => this.dataService.orders().reduce((sum, order) => order.status !== 'Cancelado' ? sum + order.total : sum, 0));
+  
+  // Sales Tab Filters & Data
+  salesFilterStartDate = signal<string>('');
+  salesFilterEndDate = signal<string>('');
+  salesFilterType = signal<string>('');
+  salesFilterStatus = signal<string>('');
+  salesFilterPaymentMethod = signal<string>('');
+
+  uniqueSalesFilterOptions = computed(() => {
+    const allOrders = this.dataService.orders();
+    const types = new Set(allOrders.map(o => o.delivery_option));
+    const statuses = new Set(allOrders.map(o => o.status));
+    const payments = new Set(allOrders.map(o => o.payment_method));
+    return {
+      types: Array.from(types),
+      statuses: Array.from(statuses),
+      payments: Array.from(payments)
+    };
+  });
+
+  filteredSalesOrders = computed(() => {
+    const orders = this.dataService.orders();
+    const startDate = this.salesFilterStartDate();
+    const endDate = this.salesFilterEndDate();
+    const type = this.salesFilterType();
+    const status = this.salesFilterStatus();
+    const payment = this.salesFilterPaymentMethod();
+
+    return orders.filter(o => {
+      const orderDate = new Date(o.date);
+      if (startDate && new Date(startDate) > orderDate) return false;
+      if (endDate && new Date(endDate).setHours(23,59,59,999) < orderDate.getTime()) return false;
+      if (type && o.delivery_option !== type) return false;
+      if (status && o.status !== status) return false;
+      if (payment && o.payment_method !== payment) return false;
+      return true;
+    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  });
+  
+  salesDashboardStats = computed(() => {
+    const filteredOrders = this.filteredSalesOrders().filter(o => o.status !== 'Cancelado');
+    const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+    const orderCount = filteredOrders.length;
+    const avgTicket = orderCount > 0 ? totalRevenue / orderCount : 0;
+    
+    const revenueByPayment = filteredOrders.reduce((acc, order) => {
+      acc[order.payment_method] = (acc[order.payment_method] || 0) + order.total;
+      return acc;
+    }, {} as {[key: string]: number});
+
+    const revenueByType = filteredOrders.reduce((acc, order) => {
+      acc[order.delivery_option] = (acc[order.delivery_option] || 0) + order.total;
+      return acc;
+    }, {} as {[key: string]: number});
+
+    return { totalRevenue, orderCount, avgTicket, revenueByPayment, revenueByType };
+  });
+  
+  filteredTotalSales = computed(() => this.filteredSalesOrders().reduce((sum, order) => order.status !== 'Cancelado' ? sum + order.total : sum, 0));
 
   scheduledOrders = computed(() => this.dataService.orders().filter(o => o.status === 'Agendado').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
   receivedOrders = computed(() => this.dataService.orders().filter(o => o.status === 'Recebido').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
@@ -194,6 +246,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   pdvSelectedSize = signal<ProductSize | null>(null);
   pdvSelectedAddons = signal<{[key: string]: Addon}>({});
   pdvProductQuantity = signal(1);
+  pdvProductNotes = signal('');
 
   isPdvAddToCartDisabled = computed(() => {
     const product = this.pdvSelectedProduct();
@@ -234,6 +287,16 @@ export class AdminComponent implements OnInit, OnDestroy {
       points_for_reward: [100, [Validators.required, Validators.min(1)]],
       reward_type: ['fixed' as 'fixed' | 'free_shipping', Validators.required],
       reward_value: [10, [Validators.required, Validators.min(0)]]
+    });
+
+    this.addonCategoryForm = this.fb.group({
+      id: [''],
+      order: [0],
+      name: ['', { validators: [Validators.required] }],
+      required: [false],
+      min_selection: [0, [Validators.min(0)]],
+      max_selection: [0, [Validators.min(0)]],
+      addons: this.fb.array([])
     });
     
     this.pdvCheckoutForm = this.fb.group({
@@ -693,7 +756,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   async deleteCategory(id: string) { if(confirm('Tem certeza?')) { await this.dataService.deleteCategory(id); } }
   
   editAddonCategory(ac: AddonCategory | null) {
-      this.addonCategoryForm.reset({required: false});
+      this.addonCategoryForm.reset({required: false, min_selection: 0, max_selection: 0});
       this.addonCategoryAddons.clear();
       if (ac) {
           this.editingAddonCategory.set(ac);
@@ -879,6 +942,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.pdvSelectedSize.set(null);
     this.pdvProductQuantity.set(1);
     this.pdvSelectedAddons.set({});
+    this.pdvProductNotes.set('');
     this.isPdvProductModalOpen.set(true);
   }
 
@@ -903,7 +967,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     const addons: Addon[] = Object.values(this.pdvSelectedAddons());
     const quantity = this.pdvProductQuantity();
     const totalPrice = (size.price + addons.reduce((sum, addon) => sum + addon.price, 0)) * quantity;
-    const newItem: CartItem = { product_id: product.id, product_name: product.name, size, addons, quantity, total_price: totalPrice };
+    const newItem: CartItem = { product_id: product.id, product_name: product.name, size, addons, quantity, total_price: totalPrice, notes: this.pdvProductNotes() || undefined };
     this.pdvCart.update(items => [...items, newItem]);
     this.closePdvProductModal();
   }

@@ -61,6 +61,9 @@
                 <span class="font-bold">{{ item.quantity }}x {{ item.product_name }} @if(item.size.name !== 'Único') { ({{ item.size.name }}) }</span>
                 <span>{{ item.size.price | currency:'BRL' }}</span>
               </div>
+              @if (item.notes) {
+                <p class="pl-2 text-[10px] italic">Obs: {{ item.notes }}</p>
+              }
               @if(item.addons.length > 0) {
                 <div class="pl-2 text-[10px]">
                     @for (group of getGroupedAddons(item); track group.categoryName) {

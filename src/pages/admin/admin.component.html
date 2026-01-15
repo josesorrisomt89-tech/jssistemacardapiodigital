@@ -165,6 +165,9 @@
                          <div class="text-xs space-y-1 mb-3">
                           @for(item of order.items; track $index) {
                             <p>{{ item.quantity }}x {{ item.product_name }} ({{item.size.name}})</p>
+                            @if (item.notes) {
+                                <p class="text-yellow-300 italic pl-2">Obs: {{ item.notes }}</p>
+                            }
                           }
                         </div>
 
@@ -260,6 +263,9 @@
                                 <span class="font-semibold">{{item.product_name}} ({{item.size.name}})</span>
                                 <span>{{item.total_price | currency:'BRL'}}</span>
                             </div>
+                            @if (item.notes) {
+                                <p class="text-xs text-yellow-300 italic">Obs: {{ item.notes }}</p>
+                            }
                              @if(item.addons.length > 0) {
                                 <p class="text-xs text-gray-400">+ {{ getAddonNames(item.addons) }}</p>
                              }
@@ -323,6 +329,85 @@
         <!-- Tab: Vendas -->
         <div [class.hidden]="activeTab() !== 'sales'">
           <h2 class="text-2xl font-bold mb-4">Histórico de Vendas</h2>
+          @if(salesDashboardStats(); as stats) {
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
+                <div class="bg-gray-900 p-4 rounded-lg">
+                    <p class="text-sm text-gray-400">Faturamento Total</p>
+                    <p class="text-3xl font-bold text-green-400">{{ stats.totalRevenue | currency:'BRL' }}</p>
+                </div>
+                <div class="bg-gray-900 p-4 rounded-lg">
+                    <p class="text-sm text-gray-400">Pedidos (Não Cancelados)</p>
+                    <p class="text-3xl font-bold text-purple-400">{{ stats.orderCount }}</p>
+                </div>
+                <div class="bg-gray-900 p-4 rounded-lg">
+                    <p class="text-sm text-gray-400">Ticket Médio</p>
+                    <p class="text-3xl font-bold text-blue-400">{{ stats.avgTicket | currency:'BRL' }}</p>
+                </div>
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                 <div class="bg-gray-900 p-4 rounded-lg">
+                    <h3 class="font-semibold mb-2">Faturamento por Pagamento</h3>
+                    <div class="space-y-1 text-sm">
+                       @for(item of stats.revenueByPayment | keyvalue; track item.key) {
+                        <div class="flex justify-between">
+                            <span>{{ paymentMethodNames[item.key] || item.key }}</span>
+                            <span class="font-semibold">{{ item.value | currency:'BRL' }}</span>
+                        </div>
+                       }
+                    </div>
+                </div>
+                <div class="bg-gray-900 p-4 rounded-lg">
+                    <h3 class="font-semibold mb-2">Faturamento por Tipo</h3>
+                     <div class="space-y-1 text-sm">
+                       @for(item of stats.revenueByType | keyvalue; track item.key) {
+                        <div class="flex justify-between">
+                            <span>{{ paymentMethodNames[item.key] || item.key }}</span>
+                            <span class="font-semibold">{{ item.value | currency:'BRL' }}</span>
+                        </div>
+                       }
+                    </div>
+                </div>
+            </div>
+          }
+          <!-- Filters -->
+          <div class="bg-gray-900 p-4 rounded-lg mb-4 flex flex-wrap gap-4 items-end">
+            <div class="flex-grow">
+                <label class="text-xs text-gray-400">Data Início</label>
+                <input type="date" class="w-full bg-gray-700 p-2 rounded text-sm" [value]="salesFilterStartDate()" (input)="salesFilterStartDate.set($any($event.target).value)">
+            </div>
+            <div class="flex-grow">
+                <label class="text-xs text-gray-400">Data Fim</label>
+                <input type="date" class="w-full bg-gray-700 p-2 rounded text-sm" [value]="salesFilterEndDate()" (input)="salesFilterEndDate.set($any($event.target).value)">
+            </div>
+            <div class="flex-grow">
+                <label class="text-xs text-gray-400">Tipo</label>
+                <select class="w-full bg-gray-700 p-2 rounded text-sm" [value]="salesFilterType()" (change)="salesFilterType.set($any($event.target).value)">
+                    <option value="">Todos</option>
+                    @for(type of uniqueSalesFilterOptions().types; track type) {
+                        <option [value]="type">{{ paymentMethodNames[type] || type }}</option>
+                    }
+                </select>
+            </div>
+            <div class="flex-grow">
+                <label class="text-xs text-gray-400">Status</label>
+                <select class="w-full bg-gray-700 p-2 rounded text-sm" [value]="salesFilterStatus()" (change)="salesFilterStatus.set($any($event.target).value)">
+                    <option value="">Todos</option>
+                    @for(status of uniqueSalesFilterOptions().statuses; track status) {
+                        <option [value]="status">{{ status }}</option>
+                    }
+                </select>
+            </div>
+             <div class="flex-grow">
+                <label class="text-xs text-gray-400">Pagamento</label>
+                <select class="w-full bg-gray-700 p-2 rounded text-sm" [value]="salesFilterPaymentMethod()" (change)="salesFilterPaymentMethod.set($any($event.target).value)">
+                    <option value="">Todos</option>
+                    @for(payment of uniqueSalesFilterOptions().payments; track payment) {
+                        <option [value]="payment">{{ paymentMethodNames[payment] || payment }}</option>
+                    }
+                </select>
+            </div>
+          </div>
+
            <div class="bg-gray-900 p-4 rounded-lg">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
@@ -333,7 +418,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for(order of dataService.orders(); track order.id) {
+                            @for(order of filteredSalesOrders(); track order.id) {
                                 <tr class="border-b border-gray-700">
                                     <td class="p-3">{{ order.date | date:'dd/MM HH:mm' }}</td>
                                     <td class="p-3">{{ order.customer_name }}</td>
@@ -346,8 +431,8 @@
                         </tbody>
                          <tfoot>
                             <tr class="font-semibold text-white">
-                                <td colspan="5" class="p-3 text-right text-lg">TOTAL DE VENDAS:</td>
-                                <td class="p-3 text-right text-lg">{{ totalSales() | currency:'BRL' }}</td>
+                                <td colspan="5" class="p-3 text-right text-lg">TOTAL FILTRADO:</td>
+                                <td class="p-3 text-right text-lg">{{ filteredTotalSales() | currency:'BRL' }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -473,7 +558,17 @@
                   <h3 class="font-semibold">{{ editingAddonCategory()?.id ? 'Editando' : 'Novo' }} Grupo</h3>
                   <div class="flex justify-between items-center">
                     <input formControlName="name" placeholder="Nome do Grupo" class="w-full bg-gray-700 p-2 rounded">
-                    <label class="flex items-center ml-4 text-sm"><input type="checkbox" formControlName="required" class="mr-2">Obrigatório</label>
+                    <label class="flex items-center ml-4 text-sm whitespace-nowrap"><input type="checkbox" formControlName="required" class="mr-2">Obrigatório</label>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-gray-400">Seleção Mínima</label>
+                        <input type="number" formControlName="min_selection" placeholder="0" class="w-full bg-gray-700 p-2 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400">Seleção Máxima (0 = sem limite)</label>
+                        <input type="number" formControlName="max_selection" placeholder="0" class="w-full bg-gray-700 p-2 rounded text-sm">
+                    </div>
                   </div>
                   <h4 class="text-sm font-semibold pt-2 border-t border-gray-700">Adicionais:</h4>
                   <div formArrayName="addons" class="space-y-2">
@@ -1222,13 +1317,16 @@
             }
           }
         </div>
-        <div class="sticky bottom-0 p-4 border-t border-gray-700 flex items-center justify-between z-10 bg-gray-800">
-          <div class="flex items-center space-x-2">
-            <button (click)="decrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">-</button>
-            <span>{{ pdvProductQuantity() }}</span>
-            <button (click)="incrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">+</button>
+        <div class="sticky bottom-0 p-4 border-t border-gray-700 bg-gray-800 z-10 space-y-3">
+          <input type="text" [value]="pdvProductNotes()" (input)="pdvProductNotes.set($any($event.target).value)" placeholder="Observações..." class="w-full p-2 rounded bg-gray-700 text-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <button (click)="decrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">-</button>
+              <span>{{ pdvProductQuantity() }}</span>
+              <button (click)="incrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">+</button>
+            </div>
+            <button (click)="addProductToPdvCartFromModal()" [disabled]="isPdvAddToCartDisabled()" class="text-white font-bold py-3 px-6 rounded-lg bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed">Adicionar</button>
           </div>
-          <button (click)="addProductToPdvCartFromModal()" [disabled]="isPdvAddToCartDisabled()" class="text-white font-bold py-3 px-6 rounded-lg bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed">Adicionar</button>
         </div>
       </div>
     </div>

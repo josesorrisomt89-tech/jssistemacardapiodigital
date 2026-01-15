@@ -85,6 +85,20 @@ export class DataService {
         this.deliveryDrivers.set(responses.deliveryDrivers);
         this.driverPayments.set(responses.driverPayments);
 
+        // Extract selection rules embedded in the addons jsonb field
+        this.addonCategories.update(categories => {
+          return categories.map(cat => {
+            const rules = cat.addons?.find((a: any) => a.__selection_rules__);
+            const cleanAddons = cat.addons?.filter((a: any) => !a.__selection_rules__) || [];
+            return {
+              ...cat,
+              addons: cleanAddons,
+              min_selection: (rules as any)?.min ?? 0,
+              max_selection: (rules as any)?.max ?? 0
+            };
+          });
+        });
+
         this.loadingStatus.set('loaded');
       },
       error: (error) => {
@@ -189,14 +203,44 @@ export class DataService {
     this.categories.update(items => items.filter(i => i.id !== id));
   }
 
-  async saveAddonCategory(addonCategory: AddonCategory) {
-     const data = await firstValueFrom(this.apiService.upsert<AddonCategory>('addon_categories', addonCategory));
-     this.addonCategories.update(items => {
-        const index = items.findIndex(i => i.id === data[0].id);
-        if(index > -1) { items[index] = data[0]; return [...items]; }
-        return [...items, data[0]];
+  async saveAddonCategory(addonCategory: AddonCategory): Promise<AddonCategory> {
+    const { min_selection, max_selection, ...categoryData } = addonCategory;
+
+    const cleanAddons = categoryData.addons.filter((a: any) => !a.__selection_rules__);
+    const addonsToSave = [...cleanAddons];
+    if ((min_selection && min_selection > 0) || (max_selection && max_selection > 0)) {
+      addonsToSave.push({
+        __selection_rules__: true,
+        min: min_selection || 0,
+        max: max_selection || 0,
+      } as any);
+    }
+
+    const categoryToSave = {
+      ...categoryData,
+      addons: addonsToSave,
+    };
+
+    const savedData = await firstValueFrom(this.apiService.upsert<any>('addon_categories', categoryToSave));
+    const returnedCategory = savedData[0];
+
+    const finalCategory: AddonCategory = {
+      ...returnedCategory,
+      addons: cleanAddons,
+      min_selection: min_selection || 0,
+      max_selection: max_selection || 0,
+    };
+
+    this.addonCategories.update(items => {
+      const index = items.findIndex(i => i.id === finalCategory.id);
+      if (index > -1) {
+        items[index] = finalCategory;
+        return [...items];
+      }
+      return [...items, finalCategory];
     });
-     return data[0];
+
+    return finalCategory;
   }
   
   async deleteAddonCategory(id: string) { 

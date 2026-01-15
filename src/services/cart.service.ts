@@ -11,7 +11,7 @@ export class CartService {
   
   itemCount = computed(() => this.items().reduce((acc, item) => acc + item.quantity, 0));
 
-  addItem(product_id: string, product_name: string, size: ProductSize, addons: Addon[], quantity: number) {
+  addItem(product_id: string, product_name: string, size: ProductSize, addons: Addon[], quantity: number, notes?: string) {
     const itemPrice = (size.price + addons.reduce((sum, addon) => sum + addon.price, 0)) * quantity;
     
     const newItem: CartItem = {
@@ -20,7 +20,8 @@ export class CartService {
       size,
       addons,
       quantity,
-      total_price: itemPrice
+      total_price: itemPrice,
+      notes
     };
 
     this.items.update(currentItems => [...currentItems, newItem]);

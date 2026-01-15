@@ -72,6 +72,8 @@ export interface AddonCategory {
   required: boolean;
   addons: Addon[];
   order: number;
+  min_selection?: number;
+  max_selection?: number;
 }
 
 export interface ProductSize {
@@ -107,6 +109,7 @@ export interface CartItem {
   addons: Addon[];
   quantity: number;
   total_price: number;
+  notes?: string;
 }
 
 export interface Coupon {
@@ -154,6 +157,7 @@ export interface User {
   email: string;
   photo_url: string;
   loyalty_points: number;
+  used_coupons?: string[];
 }
 
 export interface Receivable {

@@ -92,7 +92,8 @@ export class AuthService {
           name: 'Cliente Teste',
           email: 'cliente@teste.com',
           photo_url: 'https://picsum.photos/id/237/100/100',
-          loyalty_points: 0
+          loyalty_points: 0,
+          used_coupons: []
         };
     }
     
@@ -151,6 +152,17 @@ export class AuthService {
     
     const newPoints = user.loyalty_points - loyaltySettings.points_for_reward;
     const updatedUser = { ...user, loyalty_points: newPoints };
+    this.currentUser.set(updatedUser);
+    this.saveUserToStorage(updatedUser);
+  }
+
+  useCoupon(couponCode: string): void {
+    const user = this.currentUser();
+    if (!user) return;
+
+    const updatedCoupons = [...(user.used_coupons || []), couponCode];
+    const updatedUser = { ...user, used_coupons: updatedCoupons };
+    
     this.currentUser.set(updatedUser);
     this.saveUserToStorage(updatedUser);
   }

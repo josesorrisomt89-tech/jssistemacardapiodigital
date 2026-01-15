@@ -54,6 +54,7 @@ export class MenuComponent implements OnInit {
   selectedSize = signal<ProductSize | null>(null);
   selectedAddons = signal<{[key: string]: Addon}>({});
   productQuantity = signal(1);
+  productNotes = signal('');
 
   isAddToCartDisabled = computed(() => {
     const product = this.selectedProduct();
@@ -65,16 +66,26 @@ export class MenuComponent implements OnInit {
       return true;
     }
 
-    // 2. Required addon check
-    const requiredAddonCategories = product.addon_categories
+    // 2. Addon selections check
+    const allProductAddonCategories = product.addon_categories
       .map(catId => this.getAddonCategoryById(catId))
-      .filter((cat): cat is AddonCategory => !!cat && cat.required);
+      .filter((cat): cat is AddonCategory => !!cat);
+
+    const selectedAddonsInScope = this.selectedAddons();
+
+    for (const cat of allProductAddonCategories) {
+      const categoryAddonIds = new Set(cat.addons.map(a => a.id));
+      const selectionsInCatCount = Object.keys(selectedAddonsInScope).filter(id => categoryAddonIds.has(id)).length;
       
-    for (const cat of requiredAddonCategories) {
-      const addonIdsInThisCategory = cat.addons.map(a => a.id);
-      const hasSelection = addonIdsInThisCategory.some(addonId => !!this.selectedAddons()[addonId]);
-      if (!hasSelection) {
-        return true; // A required category is missing a selection
+      const min = cat.min_selection || (cat.required ? 1 : 0);
+      const max = cat.max_selection || 0; // 0 means unlimited
+
+      if (selectionsInCatCount < min) {
+        return true; // Minimum not met
+      }
+      if (max > 0 && selectionsInCatCount > max) {
+        // This case should be prevented by toggleAddon, but good to have as a safeguard.
+        return true; // Maximum exceeded
       }
     }
 
@@ -91,6 +102,7 @@ export class MenuComponent implements OnInit {
   isSubmittingOrder = signal(false);
 
   isCouponsModalOpen = signal(false);
+  isAvailableCouponsModalOpen = signal(false);
   appliedCoupon = signal<Coupon | null>(null);
   couponCodeInput = signal('');
   couponError = signal<string | null>(null);
@@ -124,6 +136,12 @@ export class MenuComponent implements OnInit {
   total = computed(() => {
     const newTotal = this.cartService.subtotal() + this.currentDeliveryFee() - this.discountAmount() - this.shippingDiscount() - this.appliedLoyaltyDiscount() - this.loyaltyShippingDiscount();
     return Math.max(0, newTotal);
+  });
+
+  availableCoupons = computed(() => {
+    const allCoupons = this.coupons();
+    const usedCodes = this.user()?.used_coupons || [];
+    return allCoupons.filter(c => !usedCodes.includes(c.code));
   });
 
   remainingLoyaltyPoints = computed(() => {
@@ -242,6 +260,7 @@ export class MenuComponent implements OnInit {
     this.selectedSize.set(null);
     this.productQuantity.set(1);
     this.selectedAddons.set({});
+    this.productNotes.set('');
     this.isProductModalOpen.set(true);
   }
 
@@ -249,11 +268,34 @@ export class MenuComponent implements OnInit {
   incrementProductQuantity() { this.productQuantity.update(q => q + 1); }
   decrementProductQuantity() { this.productQuantity.update(q => q > 1 ? q - 1 : 1); }
 
+  private getAddonCategoryByAddonId(addonId: string): AddonCategory | undefined {
+    return this.dataService.addonCategories().find(cat => cat.addons.some(a => a.id === addonId));
+  }
+
   toggleAddon(addon: Addon) {
     if (!addon.is_available) return;
-    const currentAddons = {...this.selectedAddons()};
-    if (currentAddons[addon.id]) delete currentAddons[addon.id];
-    else currentAddons[addon.id] = addon;
+
+    const addonCat = this.getAddonCategoryByAddonId(addon.id);
+    if (!addonCat) return;
+
+    const max = addonCat.max_selection || 0; // 0 is unlimited
+    const currentAddons = { ...this.selectedAddons() };
+
+    if (currentAddons[addon.id]) {
+      // It's a deselection, always allowed.
+      delete currentAddons[addon.id];
+    } else {
+      // It's a selection, check against max.
+      const categoryAddonIds = new Set(addonCat.addons.map(a => a.id));
+      const selectionsInCatCount = Object.keys(currentAddons).filter(id => categoryAddonIds.has(id)).length;
+
+      if (max > 0 && selectionsInCatCount >= max) {
+        alert(`Você pode selecionar no máximo ${max} ${max === 1 ? 'opção' : 'opções'} para "${addonCat.name}".`);
+        return; // Prevent selection
+      }
+      currentAddons[addon.id] = addon;
+    }
+    
     this.selectedAddons.set(currentAddons);
   }
 
@@ -266,7 +308,7 @@ export class MenuComponent implements OnInit {
     
     const addons: Addon[] = Object.values(this.selectedAddons());
     
-    this.cartService.addItem(product.id, product.name, size, addons, this.productQuantity());
+    this.cartService.addItem(product.id, product.name, size, addons, this.productQuantity(), this.productNotes());
     this.closeProductModal();
     this.isCartSidebarOpen.set(true);
   }
@@ -422,6 +464,9 @@ export class MenuComponent implements OnInit {
 
       order.items.forEach(item => {
         message += `*- ${item.quantity}x ${item.product_name} ${item.size.name !== 'Único' ? `(${item.size.name})` : ''}*\n`;
+        if (item.notes) {
+            message += `  *Obs:* ${item.notes}\n`;
+        }
         if (item.addons.length > 0) {
           message += `  *Adicionais:*\n`;
           item.addons.forEach(addon => {
@@ -447,6 +492,11 @@ export class MenuComponent implements OnInit {
       this.trackOrder(newOrder.id);
       this.savePastOrderId(newOrder.id);
       if (order.delivery_option === 'delivery') this.saveLastAddress();
+
+      // Mark coupon as used
+      if (this.appliedCoupon()) {
+        this.authService.useCoupon(this.appliedCoupon()!.code);
+      }
 
       this.authService.addLoyaltyPoints(order.subtotal, this.settings());
       if (this.appliedLoyaltyDiscount() > 0 || this.appliedLoyaltyFreeShipping()) {
@@ -521,6 +571,11 @@ export class MenuComponent implements OnInit {
 
   applyCoupon(code: string) {
     this.couponError.set(null);
+    const user = this.user();
+    if (user?.used_coupons?.includes(code.toLowerCase())) {
+      this.couponError.set('Este cupom já foi utilizado por você.');
+      return;
+    }
     const coupon = this.coupons().find(c => c.code.toLowerCase() === code.toLowerCase());
     if (!coupon) { this.couponError.set('Cupom inválido.'); return; }
     if (coupon.minimum_order_value && this.cartService.subtotal() < coupon.minimum_order_value) {
@@ -530,6 +585,7 @@ export class MenuComponent implements OnInit {
     this.appliedLoyaltyDiscount.set(0);
     this.appliedLoyaltyFreeShipping.set(false);
     this.couponCodeInput.set('');
+    this.isCouponsModalOpen.set(false);
   }
   
   removeCoupon() { this.appliedCoupon.set(null); }
