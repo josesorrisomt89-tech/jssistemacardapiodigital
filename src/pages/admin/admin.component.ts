@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef, OnInit, OnDestroy, Signal, WritableSignal } from '@angular/core';
 import { CurrencyPipe, DatePipe, KeyValuePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, FormArray, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
 import { ImageUploadService } from '../../services/image-upload.service';
@@ -14,7 +14,7 @@ import { GeminiService } from '../../services/gemini.service';
   selector: 'app-admin',
   templateUrl: './admin.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, KeyValuePipe, LayoutPreviewComponent, ReceiptComponent]
+  imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, KeyValuePipe, LayoutPreviewComponent, ReceiptComponent, RouterLink]
 })
 export class AdminComponent implements OnInit, OnDestroy {
   private dataService: DataService = inject(DataService);
@@ -590,6 +590,30 @@ export class AdminComponent implements OnInit, OnDestroy {
   addNeighborhood(hood?: NeighborhoodFee) { this.deliveryNeighborhoods.push(this.fb.group({ name: [hood?.name || ''], fee: [hood?.fee || 0] })); }
   removeNeighborhood(index: number) { this.deliveryNeighborhoods.removeAt(index); }
   
+  sortNeighborhoods() {
+    const neighborhoodsArray = this.deliveryNeighborhoods;
+    const currentValues = neighborhoodsArray.value as NeighborhoodFee[];
+  
+    if (!currentValues || currentValues.length < 2) {
+      return;
+    }
+  
+    const sortedValues = [...currentValues].sort((a, b) =>
+      (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' })
+    );
+  
+    // Limpa o FormArray preservando a referência
+    neighborhoodsArray.clear();
+  
+    // Repopula o FormArray com os novos FormGroups na ordem correta
+    sortedValues.forEach(hood => {
+      neighborhoodsArray.push(this.fb.group({
+        name: hood.name || '',
+        fee: hood.fee || 0
+      }));
+    });
+  }
+
   addSliderImage(image: string = '') { this.sliderImages.push(this.fb.control(image)); }
   async removeSliderImage(index: number) {
     const urlToRemove = this.sliderImages.at(index).value;

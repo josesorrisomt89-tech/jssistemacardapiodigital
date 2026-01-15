@@ -32,21 +32,49 @@ export class MenuComponent implements OnInit {
   searchTerm = signal('');
   
   filteredProducts = computed(() => {
-    const allProducts = this.products().sort((a,b) => a.order - b.order);
+    const allProducts = this.products();
     const catId = this.selectedCategory();
     const term = this.searchTerm().toLowerCase();
 
-    let products = allProducts;
-
-    if (catId !== 'all') {
-      products = products.filter(p => p.category_id === catId);
+    if (catId === 'all') {
+      return [];
     }
+
+    let products = allProducts.filter(p => p.category_id === catId);
 
     if (term) {
       products = products.filter(p => p.name.toLowerCase().includes(term));
     }
     
-    return products;
+    return products.sort((a,b) => a.order - b.order);
+  });
+
+  groupedProductsWhenAll = computed(() => {
+    const allProducts = this.products();
+    const allCategories = this.categories();
+    const term = this.searchTerm().toLowerCase();
+
+    if (this.selectedCategory() !== 'all') {
+        return [];
+    }
+
+    let productsToFilter = allProducts;
+    if (term) {
+        productsToFilter = allProducts.filter(p => p.name.toLowerCase().includes(term));
+    }
+
+    return allCategories
+        .map(category => {
+            const productsForCategory = productsToFilter
+                .filter(product => product.category_id === category.id)
+                .sort((a, b) => a.order - b.order);
+
+            return {
+                category,
+                products: productsForCategory
+            };
+        })
+        .filter(group => group.products.length > 0);
   });
 
   isProductModalOpen = signal(false);
@@ -291,8 +319,9 @@ export class MenuComponent implements OnInit {
     // Se está marcando...
     const max = addonCat.max_selection || 0;
     const categoryAddonIds = new Set(addonCat.addons.map(a => a.id));
-    // Fix: Explicitly type the parameter 'a' to ensure correct type inference.
-    const selectionsInCat = Object.values(currentAddons).filter((a: Addon) => categoryAddonIds.has(a.id));
+    // FIX: By casting Object.values, we ensure selectionsInCat is correctly typed as Addon[],
+    // which prevents downstream errors when iterating over it.
+    const selectionsInCat = (Object.values(currentAddons) as Addon[]).filter(a => categoryAddonIds.has(a.id));
   
     if (max === 1) {
       // Comportamento de rádio: remove todos os outros da mesma categoria.

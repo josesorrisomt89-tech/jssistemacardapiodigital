@@ -74,6 +74,12 @@
         }
         <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg">Entrar</button>
       </form>
+      <div class="text-center mt-6">
+        <a routerLink="/" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          Sair e voltar ao início
+        </a>
+      </div>
     </div>
   } @else {
     <div class="max-w-7xl mx-auto">
@@ -991,7 +997,10 @@
                       </div>
                     }
                   </div>
-                  <button type="button" (click)="addNeighborhood()" class="mt-2 text-sm text-purple-400">+ Adicionar Bairro</button>
+                  <div class="mt-2 flex items-center space-x-4">
+                     <button type="button" (click)="addNeighborhood()" class="text-sm text-purple-400">+ Adicionar Bairro</button>
+                     <button type="button" (click)="sortNeighborhoods()" class="text-sm text-yellow-400">Ordenar A-Z</button>
+                  </div>
                }
             </div>
 
