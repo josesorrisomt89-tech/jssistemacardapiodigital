@@ -17,8 +17,6 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   user = this.authService.currentUser;
 
   isLoginModalOpen = signal(false);
-  installButtonVisible = signal(false);
-  private deferredPrompt: any;
 
   sliderImages = computed(() => {
     const images = this.settings().slider_images;
@@ -31,35 +29,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   currentIndex = signal(0);
   private intervalId?: number;
 
-  private beforeInstallPromptHandler = (e: Event) => {
-    e.preventDefault();
-    this.deferredPrompt = e;
-    this.installButtonVisible.set(true);
-  };
-
   ngOnInit() {
     this.startSlider();
-    window.addEventListener('beforeinstallprompt', this.beforeInstallPromptHandler);
   }
 
   ngOnDestroy() {
     this.stopSlider();
-    window.removeEventListener('beforeinstallprompt', this.beforeInstallPromptHandler);
-  }
-
-  promptInstall(): void {
-    if (this.deferredPrompt) {
-      this.deferredPrompt.prompt();
-      this.deferredPrompt.userChoice.then((choiceResult: { outcome: string }) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the A2HS prompt');
-        } else {
-          console.log('User dismissed the A2HS prompt');
-        }
-        this.installButtonVisible.set(false);
-        this.deferredPrompt = null;
-      });
-    }
   }
 
   startSlider(): void {
