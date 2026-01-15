@@ -21,6 +21,15 @@ export class ReceiptComponent {
   private products = this.dataService.products;
   private addonCategories = this.dataService.addonCategories;
 
+  paymentMethodNames: { [key: string]: string } = {
+    'pix-machine': 'PIX na Maquininha',
+    'card': 'Cartão de Crédito/Débito',
+    'cash': 'Dinheiro',
+    'pix-online': 'PIX (enviar comprovante)',
+    'counter': 'Venda Balcão',
+    'credit': 'Fiado'
+  };
+
   printReceipt(): void {
     window.print();
   }

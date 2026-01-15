@@ -58,10 +58,26 @@ export class MenuComponent implements OnInit {
   isAddToCartDisabled = computed(() => {
     const product = this.selectedProduct();
     if (!product) return true;
+
+    // 1. Size check
     const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
-    if (priceType === 'sized') {
-      return !this.selectedSize();
+    if (priceType === 'sized' && !this.selectedSize()) {
+      return true;
     }
+
+    // 2. Required addon check
+    const requiredAddonCategories = product.addon_categories
+      .map(catId => this.getAddonCategoryById(catId))
+      .filter((cat): cat is AddonCategory => !!cat && cat.required);
+      
+    for (const cat of requiredAddonCategories) {
+      const addonIdsInThisCategory = cat.addons.map(a => a.id);
+      const hasSelection = addonIdsInThisCategory.some(addonId => !!this.selectedAddons()[addonId]);
+      if (!hasSelection) {
+        return true; // A required category is missing a selection
+      }
+    }
+
     return false;
   });
 
@@ -140,6 +156,15 @@ export class MenuComponent implements OnInit {
     change_for: [{value: '', disabled: true}],
     scheduled_time: ['']
   });
+
+  now = new Date();
+
+  paymentMethodNames: { [key: string]: string } = {
+    'pix-machine': 'PIX na Maquininha',
+    'card': 'Cartão de Crédito/Débito',
+    'cash': 'Dinheiro',
+    'pix-online': 'PIX (enviar comprovante)'
+  };
 
   constructor() {
     effect(() => {
@@ -342,6 +367,7 @@ export class MenuComponent implements OnInit {
     if (this.checkoutForm.get('payment_method')?.value === 'pix-online' && !this.pixProofFile()) {
       alert('Por favor, anexe o comprovante do PIX.'); return;
     }
+    this.now = new Date();
     this.checkoutStep.set(2);
   }
   
@@ -391,20 +417,30 @@ export class MenuComponent implements OnInit {
         message += `*Endereço:* ${order.delivery_address}\n*Bairro:* ${order.neighborhood}\n`;
       }
       message += `\n*Itens do Pedido:*\n`;
+
+      const currencyPipe = new CurrencyPipe('pt-BR');
+
       order.items.forEach(item => {
-        message += `  - ${item.quantity}x ${item.product_name} ${item.size.name !== 'Único' ? `(${item.size.name})` : ''}\n`;
-        if (item.addons.length > 0) message += `    *Adicionais:* ${this.getAddonNames(item.addons)}\n`;
+        message += `*- ${item.quantity}x ${item.product_name} ${item.size.name !== 'Único' ? `(${item.size.name})` : ''}*\n`;
+        if (item.addons.length > 0) {
+          message += `  *Adicionais:*\n`;
+          item.addons.forEach(addon => {
+            const addonPriceText = addon.price > 0 ? currencyPipe.transform(addon.price, 'BRL', 'symbol', '1.2-2') : 'Grátis';
+            message += `    - ${addon.name} (+ ${addonPriceText})\n`;
+          });
+        }
       });
-      message += `\n*Subtotal:* ${new CurrencyPipe('pt-BR').transform(order.subtotal, 'BRL', 'symbol', '1.2-2')}\n`;
-      if (order.delivery_fee > 0) message += `*Taxa de Entrega:* ${new CurrencyPipe('pt-BR').transform(order.delivery_fee, 'BRL', 'symbol', '1.2-2')}\n`;
-      if ((order.discount_amount ?? 0) > 0) message += `*Desconto:* -${new CurrencyPipe('pt-BR').transform(order.discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-      if ((order.shipping_discount_amount ?? 0) > 0) message += `*Desc. Frete:* -${new CurrencyPipe('pt-BR').transform(order.shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-      if ((order.loyalty_discount_amount ?? 0) > 0) message += `*Desc. Fidelidade:* -${new CurrencyPipe('pt-BR').transform(order.loyalty_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-      if ((order.loyalty_shipping_discount_amount ?? 0) > 0) message += `*Frete Grátis (Fidelidade):* -${new CurrencyPipe('pt-BR').transform(order.loyalty_shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-      message += `*TOTAL:* *${new CurrencyPipe('pt-BR').transform(order.total, 'BRL', 'symbol', '1.2-2')}*\n\n`;
-      message += `*Forma de Pagamento:* ${order.payment_method}\n`;
+      
+      message += `\n*Subtotal:* ${currencyPipe.transform(order.subtotal, 'BRL', 'symbol', '1.2-2')}\n`;
+      if (order.delivery_fee > 0) message += `*Taxa de Entrega:* ${currencyPipe.transform(order.delivery_fee, 'BRL', 'symbol', '1.2-2')}\n`;
+      if ((order.discount_amount ?? 0) > 0) message += `*Desconto:* -${currencyPipe.transform(order.discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
+      if ((order.shipping_discount_amount ?? 0) > 0) message += `*Desc. Frete:* -${currencyPipe.transform(order.shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
+      if ((order.loyalty_discount_amount ?? 0) > 0) message += `*Desc. Fidelidade:* -${currencyPipe.transform(order.loyalty_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
+      if ((order.loyalty_shipping_discount_amount ?? 0) > 0) message += `*Frete Grátis (Fidelidade):* -${currencyPipe.transform(order.loyalty_shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
+      message += `*TOTAL:* *${currencyPipe.transform(order.total, 'BRL', 'symbol', '1.2-2')}*\n\n`;
+      message += `*Forma de Pagamento:* ${this.paymentMethodNames[order.payment_method] || order.payment_method}\n`;
       if (order.payment_method === 'cash' && order.change_for) {
-        message += `*Troco para:* ${new CurrencyPipe('pt-BR').transform(order.change_for, 'BRL', 'symbol', '1.2-2')}\n`;
+        message += `*Troco para:* ${currencyPipe.transform(order.change_for, 'BRL', 'symbol', '1.2-2')}\n`;
       }
 
       const newOrder = await this.dataService.addOrder(order);

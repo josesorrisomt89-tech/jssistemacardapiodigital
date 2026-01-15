@@ -52,6 +52,17 @@ export class AdminComponent implements OnInit, OnDestroy {
     card_color: 'Cor do Card'
   };
 
+  paymentMethodNames: { [key: string]: string } = {
+    'pix-machine': 'PIX Maquininha',
+    'card': 'Cartão',
+    'cash': 'Dinheiro',
+    'pix-online': 'PIX Online',
+    'credit': 'Fiado',
+    'delivery': 'Delivery',
+    'pickup': 'Retirada',
+    'counter': 'Balcão'
+  };
+
   mainSettingsForm: FormGroup;
   loyaltyForm: FormGroup;
 

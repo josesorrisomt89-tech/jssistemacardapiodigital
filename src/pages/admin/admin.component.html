@@ -332,9 +332,9 @@
                                 <tr class="border-b border-gray-700">
                                     <td class="p-3">{{ order.date | date:'dd/MM HH:mm' }}</td>
                                     <td class="p-3">{{ order.customer_name }}</td>
-                                    <td class="p-3">{{ order.delivery_option }}</td>
+                                    <td class="p-3">{{ paymentMethodNames[order.delivery_option] || order.delivery_option }}</td>
                                     <td class="p-3"><span class="px-2 py-1 rounded-full text-xs" [class.bg-green-500]="order.status === 'Entregue'" [class.bg-red-500]="order.status === 'Cancelado'" [class.bg-blue-500]="order.status !== 'Entregue' && order.status !== 'Cancelado'">{{ order.status }}</span></td>
-                                    <td class="p-3">{{ order.payment_method }}</td>
+                                    <td class="p-3">{{ paymentMethodNames[order.payment_method] || order.payment_method }}</td>
                                     <td class="p-3 text-right font-semibold">{{ order.total | currency:'BRL' }}</td>
                                 </tr>
                             }

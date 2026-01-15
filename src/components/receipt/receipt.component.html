@@ -97,7 +97,7 @@
           <p class="flex justify-between font-bold text-sm"><span>TOTAL:</span> <span>{{ order().total | currency:'BRL' }}</span></p>
         </div>
         <div class="text-center mt-4">
-          <p>Pagamento: {{ order().payment_method }}
+          <p>Pagamento: {{ paymentMethodNames[order().payment_method] || order().payment_method }}
             @if(order().payment_method === 'cash' && order().change_for) {
               <span>(Troco para {{order().change_for | currency:'BRL'}})</span>
             }

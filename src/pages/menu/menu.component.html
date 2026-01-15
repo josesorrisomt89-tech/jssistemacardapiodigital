@@ -297,23 +297,35 @@
                 </div>
               </div>
               @if (checkoutForm.get('delivery_option')?.value === 'delivery') {
-                <div class="space-y-2">
-                  <div class="grid grid-cols-3 gap-2">
-                    <div class="col-span-2"><input formControlName="street" placeholder="Rua / Avenida" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color"></div>
-                    <div><input formControlName="number" placeholder="Nº" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color"></div>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Endereço</label>
+                    <div class="grid grid-cols-3 gap-2">
+                      <div class="col-span-2"><input formControlName="street" placeholder="Rua / Avenida" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color"></div>
+                      <div><input formControlName="number" placeholder="Nº" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color"></div>
+                    </div>
                   </div>
-                  @if (settings().delivery.type === 'neighborhood') {
-                    <select formControlName="neighborhood" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
-                      <option value="">Selecione seu bairro</option>
-                      @for (hood of settings().delivery.neighborhoods; track hood.name) {
-                        <option [value]="hood.name">{{ hood.name }} - {{ hood.fee | currency:'BRL' }}</option>
-                      }
-                    </select>
-                  } @else {
-                     <input formControlName="neighborhood" placeholder="Bairro" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
-                  }
-                  <input formControlName="complement" placeholder="Complemento (opcional)" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
-                  <input formControlName="reference" placeholder="Ponto de Referência (opcional)" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Bairro</label>
+                    @if (settings().delivery.type === 'neighborhood') {
+                      <select formControlName="neighborhood" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
+                        <option value="">Selecione seu bairro</option>
+                        @for (hood of settings().delivery.neighborhoods; track hood.name) {
+                          <option [value]="hood.name">{{ hood.name }} - {{ hood.fee | currency:'BRL' }}</option>
+                        }
+                      </select>
+                    } @else {
+                       <input formControlName="neighborhood" placeholder="Digite seu bairro" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
+                    }
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Complemento <span class="text-gray-400">(Opcional)</span></label>
+                    <input formControlName="complement" placeholder="Ex: Apto 101, Bloco B" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Ponto de Referência <span class="text-gray-400">(Opcional)</span></label>
+                    <input formControlName="reference" placeholder="Ex: Próximo à padaria" class="w-full p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
+                  </div>
                 </div>
               }
               <div>
@@ -354,29 +366,60 @@
               </div>
             </form>
           } @else if (checkoutStep() === 2) {
-             <div>
-               <h3 class="text-lg font-semibold mb-2">Resumo do Pedido</h3>
-               <div class="space-y-1 text-sm p-3 rounded-md" [style.backgroundColor]="settings().layout.card_color">
-                 <p><b>Nome:</b> {{ checkoutForm.value.customer_name }}</p>
-                 @if (checkoutForm.value.delivery_option === 'delivery') {
-                    <p><b>Endereço:</b> {{ composedAddress }}, {{ checkoutForm.value.neighborhood }}</p>
-                 } @else {
-                    <p><b>Opção:</b> Retirada na Loja</p>
-                 }
-                 <p><b>Pagamento:</b> {{ checkoutForm.value.payment_method }}</p>
-                 @if (checkoutForm.value.scheduled_time) {
-                    <p><b>Horário Agendado:</b> {{ checkoutForm.value.scheduled_time }}</p>
-                 }
-               </div>
-                <div class="mt-2 text-sm">
-                    @for(item of cartService.items(); track $index) {
-                      <div class="flex justify-between py-1 border-b" [style.borderColor]="settings().layout.card_color">
-                        <span>{{item.quantity}}x {{item.product_name}} ({{item.size.name}})</span>
-                        <span>{{item.total_price | currency:'BRL'}}</span>
-                      </div>
-                    }
+             <div class="bg-white text-black font-mono text-xs w-full p-4 rounded-md">
+                <div class="text-center">
+                  <h2 class="text-lg font-bold">{{ settings().name }}</h2>
+                  <p>{{ settings().address }}</p>
+                  <p>WhatsApp: {{ settings().whatsapp }}</p>
                 </div>
-             </div>
+                <div class="border-t border-b border-dashed border-black my-2 py-1">
+                  <p class="flex justify-between"><span>Data:</span> <span>{{ now | date:'dd/MM/yy HH:mm' }}</span></p>
+                  <p class="font-bold mt-1">DADOS DO CLIENTE:</p>
+                  <p>Nome: {{ checkoutForm.value.customer_name }}</p>
+                  @if (checkoutForm.value.delivery_option === 'delivery') {
+                    <p>Endereço: {{ composedAddress }}, {{ checkoutForm.value.neighborhood }}</p>
+                  } @else {
+                    <p>Opção: Retirada na Loja</p>
+                  }
+                  @if (checkoutForm.value.scheduled_time) {
+                    <p>Agendado para: {{ checkoutForm.value.scheduled_time }}</p>
+                  }
+                </div>
+                <div>
+                  <h3 class="text-center font-bold mb-1">ITENS</h3>
+                  @for(item of cartService.items(); track $index) {
+                    <div class="mb-1 border-b border-dotted border-black pb-1">
+                      <div class="flex justify-between">
+                        <span class="font-bold">{{ item.quantity }}x {{ item.product_name }} @if(item.size.name !== 'Único') { ({{ item.size.name }}) }</span>
+                        <span>{{ item.size.price * item.quantity | currency:'BRL' }}</span>
+                      </div>
+                      @if(getGroupedAddons(item).length > 0) {
+                        <div class="pl-2 text-[10px]">
+                            @for (group of getGroupedAddons(item); track group.categoryName) {
+                                <div class="mt-1">
+                                    <p class="font-semibold italic">{{ group.categoryName }}:</p>
+                                    @for (addon of group.addons; track addon.id) {
+                                        <p class="pl-2 flex justify-between">
+                                            <span>- {{ addon.name }}</span>
+                                            <span>{{ addon.price > 0 ? (addon.price * item.quantity | currency:'BRL') : 'Grátis' }}</span>
+                                        </p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+                <div class="text-center mt-4">
+                  <p>Pagamento: {{ paymentMethodNames[checkoutForm.value.payment_method!] || checkoutForm.value.payment_method }}
+                    @if(checkoutForm.value.payment_method === 'cash' && checkoutForm.value.change_for) {
+                      <span>(Troco para {{checkoutForm.value.change_for | currency:'BRL'}})</span>
+                    }
+                  </p>
+                  <p class="font-bold mt-2">Obrigado pela preferência!</p>
+                </div>
+              </div>
           }
         </div>
         
