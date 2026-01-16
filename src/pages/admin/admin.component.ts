@@ -715,12 +715,16 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (!sizes) return [];
     const uniqueMap = new Map<string, ProductSize>();
     sizes.forEach(size => {
-      // Make sure size and size.name are not null/undefined before processing
-      if (size && typeof size.name === 'string') {
-        // More aggressive key: remove all whitespace and convert to lower case
-        const key = `${size.name.replace(/\s+/g, '').toLowerCase()}|${size.price}`;
+      // 1. Validate that the size object and its name are valid strings
+      // 2. Filter out entries where the name is empty or only contains whitespace
+      if (size && typeof size.name === 'string' && size.name.trim() !== '') {
+        const trimmedName = size.name.trim();
+        const key = `${trimmedName.toLowerCase()}|${size.price}`;
+        
+        // 3. Add to map only if it's a unique combination of name and price
         if (!uniqueMap.has(key)) {
-          uniqueMap.set(key, size);
+          // 4. Store the size object with the name trimmed to remove leading/trailing spaces
+          uniqueMap.set(key, { ...size, name: trimmedName });
         }
       }
     });
@@ -731,13 +735,22 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.productFile.set(null);
     this.productForm.reset({ is_available: true, price_type: 'sized', addon_categories: [] });
     this.productSizes.clear();
+
     if (product) {
       this.editingProduct.set(product);
-      const productData = { ...product, price_type: product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed') };
+      
+      const { sizes, ...productDataForPatch } = product;
+
+      const productData = { 
+        ...productDataForPatch, 
+        price_type: product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed') 
+      };
+      
       this.productForm.patchValue(productData);
+
       if (productData.price_type === 'sized' && product.sizes) {
-          const uniqueSizes = this.getUniqueSizes(product.sizes);
-          uniqueSizes.forEach(size => this.addProductSize(size));
+          const cleanSizes = this.getUniqueSizes(product.sizes);
+          cleanSizes.forEach(size => this.addProductSize(size));
       }
     } else {
         this.editingProduct.set({} as Product);
@@ -745,20 +758,37 @@ export class AdminComponent implements OnInit, OnDestroy {
     }
   }
   
-  addProductSize(size?: ProductSize) { this.productSizes.push(this.fb.group({ name: [size?.name || '', Validators.required], price: [size?.price || 0, Validators.required], is_available: [size?.is_available ?? true] })); }
+  addProductSize(size?: ProductSize) { 
+    this.productSizes.push(this.fb.group({ 
+        name: [size?.name || '', Validators.required], 
+        price: [size?.price || 0], 
+        is_available: [size?.is_available ?? true] 
+    })); 
+  }
   removeProductSize(index: number) { this.productSizes.removeAt(index); }
   
   async saveProduct() {
-    if (this.productForm.invalid) { alert('Por favor, preencha todos os campos obrigatórios do produto.'); return; }
+    // Definitve Fix: Clean the form array itself before validation and saving.
+    const sizesArray = this.productForm.get('sizes') as FormArray;
+    if (this.productForm.get('price_type')?.value === 'sized' && sizesArray) {
+      for (let i = sizesArray.length - 1; i >= 0; i--) {
+        const sizeGroup = sizesArray.at(i);
+        const nameControl = sizeGroup.get('name');
+        if (!nameControl?.value || nameControl.value.trim() === '') {
+          sizesArray.removeAt(i);
+        }
+      }
+    }
+    
+    if (this.productForm.invalid) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
     
     this.isUploading.set(true);
     try {
       const formData = this.productForm.getRawValue();
       const currentProduct = this.editingProduct();
-
-      if (formData.price_type === 'sized' && formData.sizes) {
-        formData.sizes = this.getUniqueSizes(formData.sizes);
-      }
 
       if (this.productFile()) {
         const pathPrefix = `products/${formData.id || this.generateUUID()}`;

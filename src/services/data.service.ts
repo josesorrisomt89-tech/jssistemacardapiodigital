@@ -1,6 +1,6 @@
 import { Injectable, signal, effect, inject } from '@angular/core';
 import { firstValueFrom, forkJoin, map } from 'rxjs';
-import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon } from '../models';
+import { ShopSettings, Category, Product, AddonCategory, Order, DayOpeningHours, Coupon, Receivable, Expense, DeliveryDriver, DriverPayment, OrderStatus, Addon, ProductSize } from '../models';
 import { ApiService } from './supabase.service';
 import { ImageUploadService } from './image-upload.service';
 
@@ -173,22 +173,19 @@ export class DataService {
     const isUpdate = this.products().some(p => p.id === product.id);
 
     if (isUpdate) {
-        // Perform the patch operation. We don't use the return value because it might be inconsistent.
         await firstValueFrom(this.apiService.patch<Product>('products', `id=eq.${product.id}`, product));
 
-        // Update the local signal with the 'product' object we sent, which we know is clean and correct.
         this.products.update(items => {
             const index = items.findIndex(i => i.id === product.id);
             if (index > -1) {
                 const newItems = [...items];
-                newItems[index] = product; // Use the clean 'product' object as the source of truth
+                newItems[index] = product;
                 return newItems;
             }
             return items;
         });
-        return product; // Return the clean product object to the component
+        return product;
     } else {
-        // This is a new product creation, the returned data should be reliable.
         const data = await firstValueFrom(this.apiService.post<Product>('products', [product], 'return=representation'));
         if (!data || data.length === 0) {
             throw new Error('Falha ao criar o produto no banco de dados.');
