@@ -842,4 +842,423 @@
                            <div class="space-y-2 max-h-96 overflow-y-auto">
                               @for(delivery of reportDeliveries(); track delivery.id) {
                                 <div class="bg-gray-800 p-2 rounded text-sm flex justify-between">
-                                  <span>#{{delivery.id.slice(-4)}} - {{delivery.date | date:'dd/MM'}}
+                                  <span>#{{delivery.id.slice(-4)}} - {{delivery.date | date:'dd/MM'}}</span>
+                                  <span class="font-semibold">{{delivery.delivery_fee | currency:'BRL'}}</span>
+                                </div>
+                              }
+                           </div>
+                        </div>
+                        <!-- Payments -->
+                        <div>
+                           <h3 class="font-bold mb-2">Pagamentos ({{reportPayments().length}}) - Total: {{ reportTotals().totalPaid | currency:'BRL' }}</h3>
+                           <div class="space-y-2 max-h-96 overflow-y-auto">
+                              @for(payment of reportPayments(); track payment.id) {
+                                <div class="bg-gray-800 p-2 rounded text-sm flex justify-between">
+                                  <span>{{payment.payment_date | date:'dd/MM/yy'}}</span>
+                                  <span class="font-semibold">{{payment.amount | currency:'BRL'}}</span>
+                                </div>
+                              }
+                           </div>
+                        </div>
+                      </div>
+                   } @else {
+                     <div class="text-center py-10">
+                       <p>Selecione um entregador para ver seus relatórios.</p>
+                     </div>
+                   }
+                </div>
+              </div>
+            }
+        </div>
+
+        <!-- Tab: Layout -->
+        <div [class.hidden]="activeTab() !== 'layout'">
+          <h2 class="text-2xl font-bold mb-4">Aparência da Loja</h2>
+          <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-gray-900 p-6 rounded-lg">
+                <div [formGroupName]="'layout'" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                  @for (item of colorNames | keyvalue; track item.key) {
+                    <div>
+                      <label [for]="item.key" class="block text-sm font-medium text-gray-300">{{ item.value }}</label>
+                      <div class="mt-1 flex items-center gap-2">
+                        <input [id]="item.key" [formControlName]="item.key" type="color" class="w-10 h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
+                        <input [formControlName]="item.key" type="text" class="w-full bg-gray-700 p-2 rounded-md">
+                      </div>
+                    </div>
+                  }
+                </div>
+                <div class="mt-8 pt-6 border-t border-gray-700">
+                    <button type="submit" [disabled]="isUploading()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg disabled:opacity-50">
+                      @if (isUploading()) { Salvando... } @else { Salvar Aparência }
+                    </button>
+                </div>
+            </div>
+            <div class="lg:col-span-1">
+                <h3 class="text-lg font-bold mb-2">Pré-visualização</h3>
+                <div class="aspect-[9/16] w-full max-w-sm mx-auto bg-gray-700 rounded-2xl p-2 shadow-lg">
+                    <app-layout-preview [layout]="mainSettingsForm.get('layout')?.value"></app-layout-preview>
+                </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab: Settings -->
+        <div [class.hidden]="activeTab() !== 'settings'">
+          <h2 class="text-2xl font-bold mb-4">Configurações Gerais</h2>
+          <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="bg-gray-900 p-6 rounded-lg space-y-8">
+            <!-- Basic Info -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-semibold border-b border-gray-700 pb-2">Informações da Loja</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="text-xs">Nome da Loja</label><input formControlName="name" class="w-full bg-gray-700 p-2 rounded"></div>
+                <div><label class="text-xs">Endereço</label><input formControlName="address" class="w-full bg-gray-700 p-2 rounded"></div>
+                <div><label class="text-xs">WhatsApp (com código do país, ex: 55119...)</label><input formControlName="whatsapp" class="w-full bg-gray-700 p-2 rounded"></div>
+                <div><label class="text-xs">WhatsApp Entregadores (opcional)</label><input formControlName="delivery_whatsapp" class="w-full bg-gray-700 p-2 rounded"></div>
+                <div><label class="text-xs">Instagram (URL completa)</label><input formControlName="instagram" class="w-full bg-gray-700 p-2 rounded"></div>
+                <div><label class="text-xs">Facebook (URL completa)</label><input formControlName="facebook" class="w-full bg-gray-700 p-2 rounded"></div>
+              </div>
+              <div><label class="text-xs">Mensagem de Boas-Vindas</label><textarea formControlName="welcome_message" class="w-full bg-gray-700 p-2 rounded h-20"></textarea></div>
+            </div>
+
+            <!-- Images -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-semibold border-b border-gray-700 pb-2">Imagens</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="text-sm">Logo (quadrado)</label>
+                  @if(mainSettingsForm.get('logo_url')?.value) { <img [src]="mainSettingsForm.get('logo_url')?.value" class="w-24 h-24 rounded-full my-2 object-cover"> }
+                  <input type="file" (change)="onFileChange($event, 'logo_url')" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                </div>
+                <div>
+                  <label class="text-sm">Banner (retangular)</label>
+                  @if(mainSettingsForm.get('banner_url')?.value) { <img [src]="mainSettingsForm.get('banner_url')?.value" class="w-full h-24 rounded-md my-2 object-cover"> }
+                  <input type="file" (change)="onFileChange($event, 'banner_url')" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                </div>
+                <div>
+                  <label class="text-sm">Imagem de Fundo PDV (opcional)</label>
+                  @if(mainSettingsForm.get('pdv_background_image_url')?.value) { <img [src]="mainSettingsForm.get('pdv_background_image_url')?.value" class="w-full h-24 rounded-md my-2 object-cover"> }
+                  <input type="file" (change)="onFileChange($event, 'pdv_background_image_url')" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                </div>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold mb-2">Imagens do Slider da Tela Inicial</h4>
+                <div formArrayName="slider_images" class="space-y-3">
+                  @for(image of sliderImages.controls; track $index) {
+                    <div class="flex items-center gap-3">
+                      <img [src]="image.value" class="w-24 h-12 rounded object-cover">
+                      <input type="file" (change)="onSliderFileChange($event, $index)" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                      <button type="button" (click)="removeSliderImage($index)" class="text-red-500 font-bold text-xl">×</button>
+                    </div>
+                  }
+                </div>
+                <button type="button" (click)="addSliderImage()" class="mt-3 text-sm text-purple-400">+ Adicionar Imagem ao Slider</button>
+              </div>
+            </div>
+
+            <!-- Operation -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-semibold border-b border-gray-700 pb-2">Operação</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="text-xs">Tempo de Espera (ex: 30-50 min)</label><input formControlName="wait_time" class="w-full bg-gray-700 p-2 rounded"></div>
+                <div><label class="text-xs">Chave PIX</label><input formControlName="pix_key" class="w-full bg-gray-700 p-2 rounded"></div>
+              </div>
+              <div [formGroupName]="'delivery'" class="space-y-4">
+                <h4 class="font-semibold">Entrega</h4>
+                <select formControlName="type" class="bg-gray-700 p-2 rounded">
+                  <option value="fixed">Taxa Fixa</option>
+                  <option value="neighborhood">Taxa por Bairro</option>
+                </select>
+                @if(mainSettingsForm.get('delivery.type')?.value === 'fixed') {
+                  <input type="number" formControlName="fixed_fee" placeholder="Valor da taxa fixa" class="bg-gray-700 p-2 rounded">
+                } @else {
+                  <div formArrayName="neighborhoods" class="space-y-2">
+                    @for(hood of deliveryNeighborhoods.controls; track $index) {
+                      <div [formGroupName]="$index" class="flex gap-2">
+                        <input formControlName="name" placeholder="Nome do Bairro" class="flex-grow bg-gray-700 p-1 rounded text-sm">
+                        <input type="number" formControlName="fee" placeholder="Taxa" class="w-24 bg-gray-700 p-1 rounded text-sm">
+                        <button type="button" (click)="removeNeighborhood($index)" class="text-red-400">×</button>
+                      </div>
+                    }
+                  </div>
+                  <button type="button" (click)="addNeighborhood()" class="text-xs text-purple-400">+ Bairro</button>
+                  <button type="button" (click)="sortNeighborhoods()" class="text-xs text-blue-400 ml-4">Ordenar Bairros</button>
+                }
+              </div>
+            </div>
+
+            <!-- Opening Hours -->
+            <div [formGroupName]="'opening_hours'">
+              <h3 class="text-lg font-semibold border-b border-gray-700 pb-2">Horário de Funcionamento</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                @for(day of weekDays; track day) {
+                  <div [formGroupName]="day" class="bg-gray-800 p-3 rounded">
+                    <label class="flex items-center space-x-3 mb-2">
+                      <input type="checkbox" formControlName="is_open" class="form-checkbox h-5 w-5 rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-600">
+                      <span class="font-semibold">{{ weekDayNames[day] }}</span>
+                    </label>
+                    <div class="flex gap-2">
+                      <input type="time" formControlName="start" class="w-full bg-gray-700 p-1 rounded text-sm">
+                      <input type="time" formControlName="end" class="w-full bg-gray-700 p-1 rounded text-sm">
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Admin Access -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-semibold border-b border-gray-700 pb-2">Acesso do Administrador</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="text-xs">Usuário</label><input formControlName="admin_username" class="w-full bg-gray-700 p-2 rounded"></div>
+                <div><label class="text-xs">Nova Senha (deixe em branco para não alterar)</label><input formControlName="admin_password" type="password" class="w-full bg-gray-700 p-2 rounded"></div>
+              </div>
+            </div>
+
+            <!-- Temporary Closure -->
+            <div class="space-y-4 bg-yellow-900/50 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold text-yellow-300">Fechamento Temporário</h3>
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" formControlName="is_temporarily_closed" class="form-checkbox h-5 w-5 rounded text-yellow-500 bg-gray-700 border-gray-600 focus:ring-yellow-600">
+                    <span class="font-medium">Fechar a loja temporariamente</span>
+                </label>
+                <div>
+                    <label class="text-xs">Mensagem de Fechamento</label>
+                    <input formControlName="temporary_closure_message" placeholder="Ex: Voltamos em breve!" class="w-full bg-gray-700 p-2 rounded">
+                </div>
+            </div>
+
+
+            <div class="pt-6 border-t border-gray-700">
+              <button type="submit" [disabled]="isUploading()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg disabled:opacity-50">
+                @if (isUploading()) { Salvando... } @else { Salvar Configurações }
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab: Help -->
+        <div [class.hidden]="activeTab() !== 'help'" class="printable-guide">
+          <div class="bg-gray-900 p-6 rounded-lg">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-3xl font-bold text-purple-400">Guia Rápido do Sistema</h2>
+              <button (click)="printHelpGuide()" class="no-print bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v3h6v-3z" clip-rule="evenodd" /></svg>
+                Imprimir Guia
+              </button>
+            </div>
+
+            <div class="space-y-8">
+              <section>
+                <h3 class="text-2xl font-semibold mb-3 text-yellow-400">1. Pedidos Ativos</h3>
+                <p class="text-gray-300">Esta é sua tela principal. Novos pedidos aparecerão aqui com um som de notificação. Os pedidos se movem pelas colunas (Recebido, Em Preparo, etc.). Arraste os cards ou use o seletor de status para atualizar um pedido. Para delivery, você pode enviar para entregadores.</p>
+              </section>
+              <section>
+                <h3 class="text-2xl font-semibold mb-3 text-yellow-400">2. PDV (Ponto de Venda)</h3>
+                <p class="text-gray-300">Use esta tela para registrar vendas feitas no balcão ou por telefone. Escolha "Venda Balcão" para pedidos rápidos ou "Delivery" para registrar um pedido de entrega. O sistema calcula o total e permite finalizar a venda, gerando um cupom que pode ser impresso ou enviado para o cliente.</p>
+              </section>
+              <section>
+                <h3 class="text-2xl font-semibold mb-3 text-yellow-400">3. Vendas e Financeiro</h3>
+                <p class="text-gray-300">A aba "Vendas" mostra um histórico completo de todos os pedidos. Use os filtros para ver relatórios por data, tipo, status ou forma de pagamento. A aba "Financeiro" ajuda a controlar o "Fiado" (Contas a Receber) e a registrar suas "Despesas" diárias.</p>
+              </section>
+               <section>
+                <h3 class="text-2xl font-semibold mb-3 text-yellow-400">4. Produtos</h3>
+                <p class="text-gray-300 mb-2">Aqui você gerencia todo o seu cardápio:</p>
+                <ul class="list-disc list-inside space-y-2 pl-4 text-gray-300">
+                  <li><strong>Categorias:</strong> Crie seções para o seu cardápio, como "Açaís Tradicionais", "Cremes", "Bebidas".</li>
+                  <li><strong>Grupos de Adicionais:</strong> Crie grupos como "Frutas", "Toppings", "Calda". Você pode definir regras como seleção mínima/máxima e se é obrigatório.</li>
+                  <li><strong>Produtos:</strong> Cadastre seus produtos. Dê um nome, descrição, e adicione-os a uma categoria. Você pode definir um preço fixo ou por tamanho. Vincule os "Grupos de Adicionais" que se aplicam a cada produto.</li>
+                  <li><strong>IA Mágica:</strong> Clique nos botões de varinha mágica ✨ para gerar descrições e imagens para seus produtos automaticamente!</li>
+                </ul>
+              </section>
+              <section>
+                <h3 class="text-2xl font-semibold mb-3 text-yellow-400">5. Cupons, Roleta e Fidelidade</h3>
+                <p class="text-gray-300">Engaje seus clientes! Crie cupons de desconto, configure uma Roleta da Sorte com prêmios e defina um programa de fidelidade para recompensar clientes recorrentes. Tudo é customizável nessas abas.</p>
+              </section>
+              <section>
+                <h3 class="text-2xl font-semibold mb-3 text-yellow-400">6. Entregadores</h3>
+                <p class="text-gray-300">Gerencie seus entregadores. Aprove ou recuse novos cadastros. Na aba "Relatórios", veja o desempenho de cada um e registre os pagamentos das taxas de entrega.</p>
+              </section>
+              <section>
+                <h3 class="text-2xl font-semibold mb-3 text-yellow-400">7. Layout e Configurações</h3>
+                <p class="text-gray-300">Personalize a aparência do seu cardápio na aba "Layout". Troque cores, logo e banners na aba "Configurações". Defina também seu horário de funcionamento, taxas de entrega e informações da loja. É aqui também que você pode fechar temporariamente a loja se precisar.</p>
+              </section>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modals -->
+      @if (editingProduct()) {
+        <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" (click)="editProduct(null)">
+          <div class="bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+            <div class="p-4 border-b border-gray-700">
+              <h2 class="text-xl font-bold">{{ editingProduct()?.id ? 'Editar' : 'Novo' }} Produto</h2>
+            </div>
+            <div class="flex-grow p-4 overflow-y-auto">
+              <form [formGroup]="productForm" (ngSubmit)="saveProduct()" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="md:col-span-2 space-y-4">
+                    <input formControlName="name" placeholder="Nome do Produto" class="w-full bg-gray-700 p-2 rounded">
+                    <div class="relative">
+                      <textarea formControlName="description" placeholder="Descrição" class="w-full bg-gray-700 p-2 rounded h-24"></textarea>
+                      <button type="button" (click)="generateDescription()" [disabled]="isGeneratingDescription()" class="absolute bottom-2 right-2 p-1 bg-purple-600 rounded-full hover:bg-purple-700 disabled:opacity-50" title="Gerar descrição com IA">✨</button>
+                    </div>
+                    <select formControlName="category_id" class="w-full bg-gray-700 p-2 rounded">
+                      <option value="">Selecione uma Categoria</option>
+                      @for(cat of sortedCategories(); track cat.id) { <option [value]="cat.id">{{cat.name}}</option> }
+                    </select>
+                  </div>
+                  <div class="space-y-2">
+                    <img [src]="productForm.get('image_url')?.value || 'https://picsum.photos/200/200'" class="w-full h-32 object-cover rounded">
+                    <input type="file" (change)="onProductFileChange($event)" accept="image/*" class="w-full text-sm text-gray-400 file:text-xs file:p-1 file:rounded file:border-0 file:bg-gray-600 file:text-white">
+                    <button type="button" (click)="generateImage()" [disabled]="isGeneratingImage()" class="w-full text-sm p-2 bg-purple-600 rounded hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                      ✨ Gerar Imagem com IA
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 class="font-semibold mb-2">Preço</h3>
+                    <select formControlName="price_type" class="w-full bg-gray-700 p-2 rounded mb-2">
+                      <option value="sized">Por Tamanho</option>
+                      <option value="fixed">Preço Fixo</option>
+                    </select>
+                    @if(productForm.get('price_type')?.value === 'fixed') {
+                      <input formControlName="price" type="number" placeholder="Preço" class="w-full bg-gray-700 p-2 rounded">
+                    } @else {
+                      <div formArrayName="sizes" class="space-y-2">
+                        @for(size of productSizes.controls; track $index) {
+                          <div [formGroupName]="$index" class="flex items-center gap-2">
+                            <input formControlName="name" placeholder="Ex: 300ml" class="w-full bg-gray-700 p-1 rounded text-sm">
+                            <input formControlName="price" type="number" placeholder="Preço" class="w-24 bg-gray-700 p-1 rounded text-sm">
+                            <label class="flex items-center text-sm"><input type="checkbox" formControlName="is_available" class="mr-1">Disp.</label>
+                            <button type="button" (click)="removeProductSize($index)" class="text-red-400">x</button>
+                          </div>
+                        }
+                      </div>
+                      <button type="button" (click)="addProductSize()" class="text-xs text-purple-400 mt-2">+ Adicionar Tamanho</button>
+                    }
+                  </div>
+                  <div>
+                    <h3 class="font-semibold mb-2">Grupos de Adicionais</h3>
+                    <div class="space-y-1 max-h-40 overflow-y-auto">
+                      @for(ac of sortedAddonCategories(); track ac.id) {
+                        <label class="flex items-center bg-gray-700 p-2 rounded">
+                          <input type="checkbox" [checked]="isAddonCategorySelected(ac.id)" (change)="onAddonCategoryChange($event, ac.id)" class="mr-2">
+                          {{ ac.name }}
+                        </label>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-700">
+                  <label class="flex items-center">
+                    <input type="checkbox" formControlName="is_available" class="mr-2">
+                    Produto Disponível para Venda
+                  </label>
+                </div>
+              </form>
+            </div>
+            <div class="p-4 border-t border-gray-700 flex justify-end space-x-2">
+              <button type="button" (click)="editProduct(null)" class="bg-gray-600 px-4 py-2 rounded">Cancelar</button>
+              <button type="button" (click)="saveProduct()" [disabled]="isUploading()" class="bg-green-600 px-4 py-2 rounded disabled:opacity-50">
+                @if(isUploading()) { Salvando... } @else { Salvar Produto }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (isPdvProductModalOpen() && pdvSelectedProduct(); as product) {
+        <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" (click)="closePdvProductModal()">
+          <div class="bg-gray-800 rounded-lg w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+            <div class="p-4 border-b border-gray-700"><h2 class="text-xl font-bold">{{product.name}}</h2></div>
+            <div class="flex-grow p-4 overflow-y-auto space-y-4">
+              @if(product.price_type !== 'fixed') {
+                <div>
+                  <h3 class="font-semibold mb-2">Tamanho</h3>
+                  <div class="grid grid-cols-2 gap-2">
+                    @for(size of product.sizes; track size.name) {
+                      <button (click)="pdvSelectedSize.set(size)" [disabled]="!size.is_available" class="p-3 border-2 rounded text-left disabled:opacity-50" [class.border-purple-500]="pdvSelectedSize() === size" [class.border-gray-700]="pdvSelectedSize() !== size">
+                        <span class="font-medium">{{size.name}}</span>
+                        <span class="block text-sm text-green-400">{{size.price | currency:'BRL'}}</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+              @for(addonCatId of product.addon_categories; track addonCatId) {
+                @if(getAddonCategoryById(addonCatId); as addonCat) {
+                  <div>
+                    <h3 class="font-semibold mb-2">{{addonCat.name}}</h3>
+                    <div class="space-y-2">
+                      @for(addon of addonCat.addons; track addon.id) {
+                        <label class="flex items-center p-2 rounded bg-gray-700">
+                          <input type="checkbox" [checked]="pdvSelectedAddons()[addon.id]" (change)="togglePdvAddon(addon)" [disabled]="!addon.is_available" class="mr-2">
+                          {{ addon.name }} (+{{addon.price | currency:'BRL'}})
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+               <div>
+                <label class="block font-semibold mb-2">Observações</label>
+                <textarea [value]="pdvProductNotes()" (input)="pdvProductNotes.set($any($event.target).value)" class="w-full p-2 rounded bg-gray-700 h-20"></textarea>
+              </div>
+            </div>
+            <div class="p-4 border-t border-gray-700 flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <button (click)="decrementPdvQuantity()" class="w-8 h-8 rounded bg-gray-700">-</button>
+                <span class="font-bold">{{pdvProductQuantity()}}</span>
+                <button (click)="incrementPdvQuantity()" class="w-8 h-8 rounded bg-gray-700">+</button>
+              </div>
+              <button (click)="addProductToPdvCartFromModal()" [disabled]="isPdvAddToCartDisabled()" class="bg-purple-600 px-4 py-2 rounded font-semibold disabled:opacity-50">Adicionar</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (isReceiptModalOpen() && orderToPrint(); as order) {
+        <app-receipt [order]="order" [settings]="dataService.settings()" [mode]="receiptMode()" (close)="handleReceiptClose()" (confirm)="handleDeliveryConfirmation()" (sendWhatsApp)="handleSendReceipt(order)"></app-receipt>
+      }
+
+      @if (isDriverModalOpen() && orderToAssign(); as order) {
+        <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" (click)="isDriverModalOpen.set(false)">
+          <div class="bg-gray-800 rounded-lg w-full max-w-sm" (click)="$event.stopPropagation()">
+            <div class="p-4 border-b border-gray-700">
+              <h3 class="text-xl font-bold">Enviar Entregador</h3>
+            </div>
+            <div class="p-4 max-h-80 overflow-y-auto space-y-2">
+              <button (click)="assignOrder('all')" class="w-full p-3 bg-teal-600 hover:bg-teal-700 rounded text-left">
+                <strong>Notificar TODOS os entregadores</strong>
+                <p class="text-xs">O primeiro a aceitar fica com a entrega.</p>
+              </button>
+              @for(driver of approvedDrivers(); track driver.id) {
+                <button (click)="assignOrder(driver.id)" class="w-full p-3 bg-gray-700 hover:bg-gray-600 rounded text-left">
+                  {{ driver.name }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (isConfirmModalOpen()) {
+        <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" (click)="closeConfirmModal()">
+          <div class="bg-gray-800 rounded-lg w-full max-w-sm p-6 text-center" (click)="$event.stopPropagation()">
+            <h3 class="text-lg font-bold mb-4">Confirmar Ação</h3>
+            <p class="mb-6">{{ confirmMessage() }}</p>
+            <div class="flex justify-center space-x-4">
+              <button (click)="closeConfirmModal()" class="bg-gray-600 px-6 py-2 rounded">Cancelar</button>
+              <button (click)="handleConfirm()" class="bg-red-600 px-6 py-2 rounded">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
