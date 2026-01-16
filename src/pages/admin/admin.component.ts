@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
 import { ImageUploadService } from '../../services/image-upload.service';
-import { ShopSettings, Category, Product, AddonCategory, ProductSize, Addon, Order, NeighborhoodFee, OrderStatus, Coupon, CartItem, Receivable, Expense, DeliveryDriver, DriverPayment } from '../../models';
+import { ShopSettings, Category, Product, AddonCategory, ProductSize, Addon, Order, NeighborhoodFee, OrderStatus, Coupon, CartItem, Receivable, Expense, DeliveryDriver, DriverPayment, WheelPrize } from '../../models';
 import { LayoutPreviewComponent } from '../../components/layout-preview/layout-preview.component';
 import { ReceiptComponent } from '../../components/receipt/receipt.component';
 import { GeminiService } from '../../services/gemini.service';
@@ -36,7 +36,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   });
   loginError = signal<string | null>(null);
 
-  activeTab = signal<'orders' | 'pdv' | 'sales' | 'accounts' | 'products' | 'drivers' | 'settings' | 'layout' | 'coupons' | 'loyalty' | 'help'>('orders');
+  activeTab = signal<'orders' | 'pdv' | 'sales' | 'accounts' | 'products' | 'drivers' | 'settings' | 'layout' | 'coupons' | 'loyalty' | 'roleta' | 'help'>('orders');
   
   orderStatuses: OrderStatus[] = ['Agendado', 'Recebido', 'Em Preparo', 'Aguardando Retirada', 'Saiu para Entrega', 'Entregue', 'Pago e Entregue', 'Cancelado'];
   weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -71,6 +71,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   mainSettingsForm: FormGroup;
   loyaltyForm: FormGroup;
+  wheelForm: FormGroup;
 
   mockUsers = signal<{name: string, email: string, loyalty_points: number}[]>([
     { name: 'Cliente Teste', email: 'cliente@teste.com', loyalty_points: 50 },
@@ -200,7 +201,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       if (status && o.status !== status) return false;
       if (payment && o.payment_method !== payment) return false;
       return true;
-    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }).sort((a,b) => new Date(b.date).getTime() - new Date(b.date).getTime());
   });
   
   salesDashboardStats = computed(() => {
@@ -303,6 +304,12 @@ export class AdminComponent implements OnInit, OnDestroy {
       points_for_reward: [100, [Validators.required, Validators.min(1)]],
       reward_type: ['fixed' as 'fixed' | 'free_shipping', Validators.required],
       reward_value: [10, [Validators.required, Validators.min(0)]]
+    });
+
+    this.wheelForm = this.fb.group({
+      enabled: [true],
+      minimum_order_value: [0, [Validators.min(0)]],
+      prizes: this.fb.array([])
     });
 
     this.addonCategoryForm = this.fb.group({
@@ -496,6 +503,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   get deliveryNeighborhoods() { return this.mainSettingsForm.get('delivery.neighborhoods') as FormArray; }
   get openingHoursControls() { return (this.mainSettingsForm.get('opening_hours') as FormGroup).controls; }
   get sliderImages() { return this.mainSettingsForm.get('slider_images') as FormArray; }
+  get wheelPrizes() { return this.wheelForm.get('prizes') as FormArray; }
 
   handleLogin() {
     this.loginError.set(null);
@@ -556,6 +564,15 @@ export class AdminComponent implements OnInit, OnDestroy {
     
     this.sliderImages.clear();
     settings.slider_images?.forEach(image => this.addSliderImage(image));
+
+    if(settings.wheel_of_fortune) {
+      this.wheelForm.patchValue({
+        enabled: settings.wheel_of_fortune.enabled,
+        minimum_order_value: settings.wheel_of_fortune.minimum_order_value
+      });
+      this.wheelPrizes.clear();
+      settings.wheel_of_fortune.prizes.forEach(prize => this.addWheelPrize(prize));
+    }
   }
   
   async saveMainSettings() {
@@ -602,6 +619,44 @@ export class AdminComponent implements OnInit, OnDestroy {
     await this.dataService.saveSettings(settingsToSave);
     alert('Configurações de fidelidade salvas!');
   }
+
+  async saveWheelSettings() {
+    if (this.wheelForm.invalid) {
+      alert('Por favor, corrija os erros no formulário da roleta antes de salvar.');
+      return;
+    }
+    const currentSettings = this.dataService.settings();
+    const settingsToSave: ShopSettings = { 
+      ...currentSettings, 
+      wheel_of_fortune: this.wheelForm.getRawValue(), 
+      id: 1 
+    };
+    await this.dataService.saveSettings(settingsToSave);
+    alert('Configurações da Roleta da Sorte salvas!');
+  }
+
+  addWheelPrize(prize?: WheelPrize) {
+    const prizeForm = this.fb.group({
+      label: [prize?.label || '', Validators.required],
+      type: [prize?.type || 'none', Validators.required],
+      value: [{value: prize?.value || 0, disabled: prize?.type === 'none' || prize?.type === 'free_shipping'}, [Validators.min(0)]],
+      couponCode: [prize?.couponCode || ''],
+      description: [prize?.description || '']
+    });
+
+    prizeForm.get('type')?.valueChanges.subscribe(type => {
+      const valueControl = prizeForm.get('value');
+      if (type === 'none' || type === 'free_shipping') {
+        valueControl?.setValue(0);
+        valueControl?.disable();
+      } else {
+        valueControl?.enable();
+      }
+    });
+    this.wheelPrizes.push(prizeForm);
+  }
+
+  removeWheelPrize(index: number) { this.wheelPrizes.removeAt(index); }
 
   addNeighborhood(hood?: NeighborhoodFee) { this.deliveryNeighborhoods.push(this.fb.group({ name: [hood?.name || ''], fee: [hood?.fee || 0] })); }
   removeNeighborhood(index: number) { this.deliveryNeighborhoods.removeAt(index); }

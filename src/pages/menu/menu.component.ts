@@ -6,13 +6,14 @@ import { DataService } from '../../services/data.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { ImageUploadService } from '../../services/image-upload.service';
-import { Product, AddonCategory, ProductSize, Addon, CartItem, Order, NeighborhoodFee, DayOpeningHours, Coupon } from '../../models';
+import { Product, AddonCategory, ProductSize, Addon, CartItem, Order, NeighborhoodFee, DayOpeningHours, Coupon, WheelPrize } from '../../models';
+import { WheelOfFortuneComponent } from '../../components/wheel-of-fortune/wheel-of-fortune.component';
 
 @Component({
   selector: 'app-menu',
   templateUrl: './menu.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, CurrencyPipe, DatePipe]
+  imports: [RouterLink, ReactiveFormsModule, CurrencyPipe, DatePipe, WheelOfFortuneComponent]
 })
 export class MenuComponent implements OnInit {
   private dataService: DataService = inject(DataService);
@@ -160,6 +161,16 @@ export class MenuComponent implements OnInit {
   appliedLoyaltyDiscount = signal(0);
   appliedLoyaltyFreeShipping = signal(false);
 
+  isWheelModalOpen = signal(false);
+  canSpinWheel = signal(true);
+
+  showWheelButton = computed(() => {
+    const wheelSettings = this.settings().wheel_of_fortune;
+    // We show the button if the feature is enabled and the user is allowed to spin.
+    // The minimum order value check is now handled on click.
+    return !!wheelSettings?.enabled && this.canSpinWheel();
+  });
+
   currentDeliveryFee = signal(0);
   
   discountAmount = computed(() => {
@@ -274,6 +285,12 @@ export class MenuComponent implements OnInit {
       const categories = this.categories();
       if(categories.length > 0) {
           this.selectedCategory.set(categories[0].id);
+      }
+       if (this.isBrowser()) {
+        const hasSpun = sessionStorage.getItem('hasSpunWheel');
+        if (hasSpun) {
+          this.canSpinWheel.set(false);
+        }
       }
   }
 
@@ -573,6 +590,19 @@ export class MenuComponent implements OnInit {
     'pix-machine': 'PIX na Maquininha', 'card': 'Cartão', 'cash': 'Dinheiro', 'pix-online': 'PIX Online', 'credit': 'Fiado'
   };
 
+  openWheelOrShowMessage() {
+    const wheelSettings = this.settings().wheel_of_fortune;
+    const subtotal = this.cartService.subtotal();
+    const minValue = wheelSettings?.minimum_order_value || 0;
+
+    if (minValue > 0 && subtotal < minValue) {
+        const formattedMinValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(minValue);
+        alert(`Você precisa ter pelo menos ${formattedMinValue} no carrinho para girar a roleta da sorte!`);
+    } else {
+        this.isWheelModalOpen.set(true);
+    }
+  }
+
   async finalizeOrder() {
     this.isSubmittingOrder.set(true);
     try {
@@ -636,6 +666,34 @@ export class MenuComponent implements OnInit {
         alert(`Ocorreu um erro ao enviar seu pedido: ${message}`);
     } finally {
         this.isSubmittingOrder.set(false);
+    }
+  }
+
+  handlePrize(prize: WheelPrize) {
+    this.canSpinWheel.set(false);
+    if (this.isBrowser()) {
+      sessionStorage.setItem('hasSpunWheel', 'true');
+    }
+
+    setTimeout(() => {
+      this.isWheelModalOpen.set(false);
+    }, 3000);
+
+    if (prize.type !== 'none') {
+      const newCoupon: Coupon = {
+        id: `WHEEL_${Date.now()}`,
+        code: prize.couponCode,
+        description: prize.description,
+        discount_type: prize.type,
+        discount_value: prize.value,
+        minimum_order_value: 0
+      };
+      
+      this.appliedCoupon.set(newCoupon);
+      
+      setTimeout(() => {
+        this.isCartSidebarOpen.set(true);
+      }, 500);
     }
   }
 

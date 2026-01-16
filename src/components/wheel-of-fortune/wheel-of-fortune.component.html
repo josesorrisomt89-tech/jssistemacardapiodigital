@@ -1,0 +1,128 @@
+<style>
+  .wheel-container {
+    --wheel-size: 300px;
+  }
+  .wheel {
+    width: var(--wheel-size);
+    height: var(--wheel-size);
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 8px solid white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3), inset 0 0 15px rgba(0,0,0,0.4);
+    transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+  .wheel-segment {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+  }
+  .segment-label {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: center;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  }
+  .wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    border: 5px solid #ccc;
+  }
+  .wheel-pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-top: 30px solid #c0392b;
+    z-index: 10;
+    filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5));
+  }
+  @keyframes tada {
+    from { transform: scale3d(1, 1, 1); }
+    10%, 20% { transform: scale3d(0.9, 0.9, 0.9) rotate3d(0, 0, 1, -3deg); }
+    30%, 50%, 70%, 90% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg); }
+    40%, 60%, 80% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg); }
+    to { transform: scale3d(1, 1, 1); }
+  }
+  .animate-tada {
+    animation: tada 1s ease-in-out;
+  }
+</style>
+
+<div class="flex flex-col items-center p-4">
+  @if (!winningPrize()) {
+    <h2 class="text-2xl font-bold mb-2 text-fuchsia-500">Açaí da Sorte!</h2>
+    <p class="text-gray-600 mb-4">Gire a roleta e ganhe um prêmio!</p>
+  } @else {
+    @if (winningPrize()?.type !== 'none') {
+      <div class="animate-tada">
+        <h2 class="text-2xl font-bold mb-2 text-green-600">Parabéns!</h2>
+        <p class="text-gray-800 font-semibold text-lg mb-2">Você ganhou: <span [style.color]="colors()[0]">{{ winningPrize()?.label }}</span></p>
+        <p class="text-sm text-gray-500">O desconto será aplicado no seu carrinho!</p>
+      </div>
+    } @else {
+      <div class="animate-tada">
+        <h2 class="text-2xl font-bold mb-2 text-gray-700">Que pena!</h2>
+        <p class="text-gray-600 mb-4">Não foi dessa vez, mais sorte na próxima!</p>
+      </div>
+    }
+  }
+
+  <div class="wheel-container relative my-6">
+    <div class="wheel-pointer"></div>
+    <div class="wheel" 
+         [style.background]="conicGradient()" 
+         [style.transform]="'rotate(' + rotation() + 'deg)'">
+        
+      @if (prizes().length > 0) {
+        @for(prize of prizes(); track $index) {
+          @let segmentDegree = 360 / prizes().length;
+          <div class="wheel-segment" [style.transform]="'rotate(' + (segmentDegree * $index - 90) + 'deg)'">
+              <span class="segment-label text-white" 
+                    [style.transform]="'translate(-50%, -50%) rotate(' + segmentDegree / 2 + 'deg) translateX(75px)'">
+                {{ prize.label }}
+              </span>
+          </div>
+        }
+      }
+    </div>
+    <div class="wheel-center"></div>
+  </div>
+
+  <button (click)="spin()" [disabled]="isSpinning() || !!winningPrize() || prizes().length === 0" 
+          class="font-bold py-4 px-8 rounded-lg text-xl transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          [style.backgroundColor]="colors()[0]" 
+          [style.color]="'white'">
+    @if (isSpinning()) {
+      GIRANDO...
+    } @else if (winningPrize()) {
+      PRÊMIO APLICADO!
+    } @else if (prizes().length > 0) {
+      GIRAR!
+    } @else {
+      RODA INDISPONÍVEL
+    }
+  </button>
+  @if (prizes().length === 0 && !isSpinning()) {
+    <p class="text-sm text-red-500 mt-2">Nenhum prêmio configurado para a roleta.</p>
+  }
+</div>

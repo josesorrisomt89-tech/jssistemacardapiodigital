@@ -4,6 +4,14 @@ export interface DayOpeningHours {
   end: string;
 }
 
+export interface WheelPrize {
+  label: string;
+  type: 'percentage' | 'fixed' | 'free_shipping' | 'none';
+  value: number;
+  couponCode: string;
+  description: string;
+}
+
 export interface ShopSettings {
   id?: number;
   name: string;
@@ -52,6 +60,11 @@ export interface ShopSettings {
     points_for_reward: number;
     reward_type: 'fixed' | 'free_shipping';
     reward_value: number;
+  };
+  wheel_of_fortune?: {
+    enabled: boolean;
+    minimum_order_value: number;
+    prizes: WheelPrize[];
   };
   is_temporarily_closed: boolean;
   temporary_closure_message: string;

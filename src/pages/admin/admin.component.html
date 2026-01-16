@@ -105,9 +105,10 @@
           <button (click)="activeTab.set('accounts')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'accounts'" [class.text-purple-400]="activeTab() === 'accounts'" [class.border-transparent]="activeTab() !== 'accounts'" [class.text-gray-400]="activeTab() !== 'accounts'">Financeiro</button>
           <button (click)="activeTab.set('products')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'products'" [class.text-purple-400]="activeTab() === 'products'" [class.border-transparent]="activeTab() !== 'products'" [class.text-gray-400]="activeTab() !== 'products'">Produtos</button>
           <button (click)="activeTab.set('coupons')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'coupons'" [class.text-purple-400]="activeTab() === 'coupons'" [class.border-transparent]="activeTab() !== 'coupons'" [class.text-gray-400]="activeTab() !== 'coupons'">Cupons</button>
+          <button (click)="activeTab.set('roleta')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'roleta'" [class.text-purple-400]="activeTab() === 'roleta'" [class.border-transparent]="activeTab() !== 'roleta'" [class.text-gray-400]="activeTab() !== 'roleta'">Roleta</button>
+          <button (click)="activeTab.set('loyalty')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'loyalty'" [class.text-purple-400]="activeTab() === 'loyalty'" [class.border-transparent]="activeTab() !== 'loyalty'" [class.text-gray-400]="activeTab() !== 'loyalty'">Fidelidade</button>
           <button (click)="activeTab.set('drivers')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'drivers'" [class.text-purple-400]="activeTab() === 'drivers'" [class.border-transparent]="activeTab() !== 'drivers'" [class.text-gray-400]="activeTab() !== 'drivers'">Entregadores</button>
           <button (click)="activeTab.set('layout')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'layout'" [class.text-purple-400]="activeTab() === 'layout'" [class.border-transparent]="activeTab() !== 'layout'" [class.text-gray-400]="activeTab() !== 'layout'">Layout</button>
-          <button (click)="activeTab.set('loyalty')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'loyalty'" [class.text-purple-400]="activeTab() === 'loyalty'" [class.border-transparent]="activeTab() !== 'loyalty'" [class.text-gray-400]="activeTab() !== 'loyalty'">Fidelidade</button>
           <button (click)="activeTab.set('settings')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'settings'" [class.text-purple-400]="activeTab() === 'settings'" [class.border-transparent]="activeTab() !== 'settings'" [class.text-gray-400]="activeTab() !== 'settings'">Configurações</button>
           <button (click)="activeTab.set('help')" class="py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap" [class.border-purple-500]="activeTab() === 'help'" [class.text-purple-400]="activeTab() === 'help'" [class.border-transparent]="activeTab() !== 'help'" [class.text-gray-400]="activeTab() !== 'help'">Ajuda</button>
         </nav>
@@ -673,6 +674,67 @@
              }
         </div>
 
+        <!-- Tab: Roleta da Sorte -->
+        <div [class.hidden]="activeTab() !== 'roleta'">
+          <h2 class="text-2xl font-bold mb-4">Configurações da Roleta da Sorte</h2>
+          <form [formGroup]="wheelForm" (ngSubmit)="saveWheelSettings()" class="bg-gray-900 p-6 rounded-lg space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <label class="flex items-center space-x-3 cursor-pointer">
+                <input type="checkbox" formControlName="enabled" class="form-checkbox h-5 w-5 rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-600">
+                <span class="text-lg font-medium">Ativar Roleta da Sorte</span>
+              </label>
+              <div>
+                <label class="block text-sm font-medium mb-1">Valor Mínimo do Pedido para Girar</label>
+                <input type="number" formControlName="minimum_order_value" class="w-full bg-gray-700 p-2 rounded">
+              </div>
+            </div>
+            
+            <div>
+              <h3 class="font-semibold mb-2 text-lg">Prêmios da Roleta (8 no total)</h3>
+              <div formArrayName="prizes" class="space-y-4">
+                @for(prizeControl of wheelPrizes.controls; track $index) {
+                  <div [formGroupName]="$index" class="p-3 bg-gray-800 rounded-lg space-y-3">
+                    <p class="font-bold text-purple-400">Prêmio {{$index + 1}}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="text-xs text-gray-400">Texto na Roleta</label>
+                        <input formControlName="label" placeholder="Ex: 10% OFF" class="w-full bg-gray-700 p-2 rounded text-sm">
+                      </div>
+                      <div>
+                        <label class="text-xs text-gray-400">Tipo de Prêmio</label>
+                        <select formControlName="type" class="w-full bg-gray-700 p-2 rounded text-sm">
+                          <option value="none">Sem Prêmio (Tente de Novo)</option>
+                          <option value="fixed">Valor Fixo (R$)</option>
+                          <option value="percentage">Porcentagem (%)</option>
+                          <option value="free_shipping">Frete Grátis</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="text-xs text-gray-400">Valor do Prêmio</label>
+                        <input formControlName="value" type="number" placeholder="0" class="w-full bg-gray-700 p-2 rounded text-sm">
+                      </div>
+                       <div>
+                        <label class="text-xs text-gray-400">Código do Cupom (gerado)</label>
+                        <input formControlName="couponCode" placeholder="Ex: SORTE10" class="w-full bg-gray-700 p-2 rounded text-sm">
+                      </div>
+                       <div class="sm:col-span-2">
+                        <label class="text-xs text-gray-400">Descrição do Prêmio</label>
+                        <input formControlName="description" placeholder="Ex: Prêmio da Roleta: 10% OFF" class="w-full bg-gray-700 p-2 rounded text-sm">
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-700">
+              <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg">
+                Salvar Configurações da Roleta
+              </button>
+            </div>
+          </form>
+        </div>
+
         <!-- Tab: Entregadores -->
         <div [class.hidden]="activeTab() !== 'drivers'" class="bg-gray-900 p-4 rounded-lg">
             <div class="flex items-center space-x-4 mb-4 border-b border-gray-700">
@@ -780,603 +842,4 @@
                            <div class="space-y-2 max-h-96 overflow-y-auto">
                               @for(delivery of reportDeliveries(); track delivery.id) {
                                 <div class="bg-gray-800 p-2 rounded text-sm flex justify-between">
-                                  <span>#{{delivery.id.slice(-4)}} - {{delivery.date | date:'dd/MM'}}</span>
-                                  <span class="font-semibold">{{delivery.delivery_fee | currency:'BRL'}}</span>
-                                </div>
-                              }
-                           </div>
-                        </div>
-                        <!-- Payments -->
-                        <div>
-                           <h3 class="font-bold mb-2">Pagamentos ({{reportPayments().length}}) - Total: {{ reportTotals().totalPaid | currency:'BRL' }}</h3>
-                             <div class="space-y-2 max-h-96 overflow-y-auto">
-                              @for(payment of reportPayments(); track payment.id) {
-                                <div class="bg-gray-800 p-2 rounded text-sm flex justify-between">
-                                  <span>{{payment.payment_date | date:'dd/MM/yy'}}</span>
-                                  <span class="font-semibold">{{payment.amount | currency:'BRL'}}</span>
-                                </div>
-                              }
-                           </div>
-                        </div>
-                      </div>
-                   } @else {
-                      <p class="text-center text-gray-500 pt-10">Selecione um entregador para ver os relatórios.</p>
-                   }
-                </div>
-              </div>
-            }
-        </div>
-        
-        <!-- Tab: Layout -->
-        <div [class.hidden]="activeTab() !== 'layout'">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <div>
-                    <h2 class="text-2xl font-bold mb-4">Aparência da Loja</h2>
-                    <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="space-y-4">
-                        <div formGroupName="layout" class="grid grid-cols-2 gap-4">
-                            @for (item of colorNames | keyvalue; track item.key) {
-                              <div>
-                                <label class="block text-sm font-medium mb-1">{{ item.value }}</label>
-                                <input type="color" [formControlName]="item.key" class="w-full h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
-                              </div>
-                            }
-                        </div>
-                         <div class="pt-4 border-t border-gray-700">
-                            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg flex items-center justify-center disabled:opacity-50" [disabled]="isUploading()">
-                               @if (isUploading()) {
-                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                Salvando...
-                              } @else {
-                                Salvar Aparência
-                              }
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="h-[600px] rounded-lg border-4 border-gray-700 overflow-hidden">
-                    <app-layout-preview [layout]="mainSettingsForm.get('layout')!.value" />
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab: Fidelidade -->
-        <div [class.hidden]="activeTab() !== 'loyalty'">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Settings -->
-            <div>
-              <h2 class="text-2xl font-bold mb-4">Programa de Fidelidade</h2>
-              <form [formGroup]="loyaltyForm" (ngSubmit)="saveLoyaltySettings()" class="bg-gray-900 p-4 rounded-lg space-y-4">
-                <label class="flex items-center space-x-3 cursor-pointer">
-                  <input type="checkbox" formControlName="enabled" class="form-checkbox h-5 w-5 rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-600">
-                  <span class="text-lg font-medium">Ativar Programa de Fidelidade</span>
-                </label>
-                <div class="grid grid-cols-2 gap-4">
-                   <div>
-                      <label class="block text-sm font-medium mb-1">Pontos por Real Gasto</label>
-                      <input type="number" formControlName="points_per_real" class="w-full bg-gray-700 p-2 rounded">
-                   </div>
-                   <div>
-                      <label class="block text-sm font-medium mb-1">Pontos para Recompensa</label>
-                      <input type="number" formControlName="points_for_reward" class="w-full bg-gray-700 p-2 rounded">
-                   </div>
-                </div>
-                <div>
-                   <label class="block text-sm font-medium mb-1">Tipo de Recompensa</label>
-                   <select formControlName="reward_type" class="w-full bg-gray-700 p-2 rounded">
-                      <option value="fixed">Desconto Fixo (R$)</option>
-                      <option value="free_shipping">Frete Grátis</option>
-                   </select>
-                </div>
-                <div>
-                   <label class="block text-sm font-medium mb-1">Valor da Recompensa (R$)</label>
-                   <input type="number" formControlName="reward_value" class="w-full bg-gray-700 p-2 rounded">
-                </div>
-                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg">Salvar Configurações</button>
-              </form>
-            </div>
-            <!-- User List -->
-            <div>
-              <h2 class="text-2xl font-bold mb-4">Clientes</h2>
-              <div class="bg-gray-900 p-4 rounded-lg space-y-2">
-                 @for(user of mockUsers(); track user.email) {
-                    <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center">
-                        <div>
-                            <p class="font-semibold">{{ user.name }}</p>
-                            <p class="text-xs text-gray-400">{{ user.email }}</p>
-                        </div>
-                        <p class="font-bold text-lg text-purple-400">{{ user.loyalty_points }} pts</p>
-                    </div>
-                 }
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab: Configurações -->
-        <div [class.hidden]="activeTab() !== 'settings'">
-          <h2 class="text-2xl font-bold mb-4">Configurações Gerais</h2>
-          <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="bg-gray-900 p-6 rounded-lg space-y-6">
-            <!-- Basic Info -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-4">
-                  <div>
-                    <label class="block text-sm font-medium mb-1">Nome da Loja</label>
-                    <input formControlName="name" class="w-full bg-gray-700 p-2 rounded">
-                  </div>
-                   <div>
-                    <label class="block text-sm font-medium mb-1">Endereço</label>
-                    <input formControlName="address" class="w-full bg-gray-700 p-2 rounded">
-                  </div>
-              </div>
-              <div class="space-y-4">
-                 <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <label class="block text-sm font-medium mb-1">Logo</label>
-                      <input type="file" (change)="onFileChange($event, 'logo_url')" class="text-xs">
-                    </div>
-                     <div>
-                      <label class="block text-sm font-medium mb-1">Banner Principal</label>
-                      <input type="file" (change)="onFileChange($event, 'banner_url')" class="text-xs">
-                    </div>
-                 </div>
-                 <div>
-                    <label class="block text-sm font-medium mb-1">Imagem de Fundo do PDV</label>
-                    <input type="file" (change)="onFileChange($event, 'pdv_background_image_url')" class="text-xs">
-                 </div>
-              </div>
-            </div>
-            
-            <!-- Slider Images -->
-            <div>
-              <h3 class="font-semibold mb-2 text-lg">Imagens do Slider da Tela Inicial</h3>
-              <div formArrayName="slider_images" class="space-y-2">
-                @for(control of sliderImages.controls; track $index) {
-                  <div class="flex items-center gap-2">
-                    <img [src]="control.value || 'https://picsum.photos/100/50'" class="w-24 h-12 object-cover rounded">
-                    <input type="file" (change)="onSliderFileChange($event, $index)" class="flex-grow text-xs">
-                    <button type="button" (click)="removeSliderImage($index)" class="text-red-400 font-bold">X</button>
-                  </div>
-                }
-              </div>
-              <button type="button" (click)="addSliderImage()" class="mt-2 text-sm text-purple-400">+ Adicionar Imagem</button>
-            </div>
-
-            <!-- Contact & Social -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-4">
-                 <input formControlName="whatsapp" placeholder="Nº WhatsApp para Pedidos" class="w-full bg-gray-700 p-2 rounded">
-                 <input formControlName="delivery_whatsapp" placeholder="Nº WhatsApp para Entregadores (opcional)" class="w-full bg-gray-700 p-2 rounded">
-                 <input formControlName="pix_key" placeholder="Sua Chave PIX" class="w-full bg-gray-700 p-2 rounded">
-              </div>
-               <div class="space-y-4">
-                 <input formControlName="instagram" placeholder="Link do Instagram" class="w-full bg-gray-700 p-2 rounded">
-                 <input formControlName="facebook" placeholder="Link do Facebook" class="w-full bg-gray-700 p-2 rounded">
-              </div>
-            </div>
-            
-             <!-- Messages & Timing -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <input formControlName="welcome_message" placeholder="Mensagem de Boas-Vindas" class="w-full bg-gray-700 p-2 rounded">
-               <input formControlName="wait_time" placeholder="Tempo de Espera (ex: 30-50 min)" class="w-full bg-gray-700 p-2 rounded">
-            </div>
-
-            <!-- Opening Hours -->
-            <div>
-              <h3 class="font-semibold mb-2 text-lg">Horário de Funcionamento</h3>
-              <div formGroupName="opening_hours" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                @for(day of weekDays; track day) {
-                  <div [formGroupName]="day" class="bg-gray-800 p-3 rounded">
-                    <label class="flex items-center space-x-2 font-semibold">
-                      <input type="checkbox" formControlName="is_open"> <span>{{ weekDayNames[day] }}</span>
-                    </label>
-                    <div class="flex gap-2 mt-2">
-                      <input type="time" formControlName="start" class="w-1/2 bg-gray-700 p-1 rounded text-sm">
-                      <input type="time" formControlName="end" class="w-1/2 bg-gray-700 p-1 rounded text-sm">
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-            
-            <!-- Delivery -->
-            <div formGroupName="delivery">
-              <h3 class="font-semibold mb-2 text-lg">Entrega</h3>
-              <div class="flex items-center space-x-4 mb-2">
-                 <label><input type="radio" formControlName="type" value="fixed" class="mr-2">Taxa Fixa</label>
-                 <label><input type="radio" formControlName="type" value="neighborhood" class="mr-2">Por Bairro</label>
-              </div>
-               @if(mainSettingsForm.get('delivery.type')?.value === 'fixed') {
-                  <input type="number" formControlName="fixed_fee" placeholder="Valor da Taxa Fixa" class="w-full max-w-xs bg-gray-700 p-2 rounded">
-               } @else {
-                  <div formArrayName="neighborhoods" class="space-y-2">
-                    @for(hood of deliveryNeighborhoods.controls; track $index) {
-                      <div [formGroupName]="$index" class="flex items-center gap-2">
-                        <input formControlName="name" placeholder="Nome do Bairro" class="flex-grow bg-gray-700 p-2 rounded">
-                        <input formControlName="fee" type="number" placeholder="Taxa" class="w-24 bg-gray-700 p-2 rounded">
-                        <button type="button" (click)="removeNeighborhood($index)" class="text-red-400">X</button>
-                      </div>
-                    }
-                  </div>
-                  <div class="mt-2 flex items-center space-x-4">
-                     <button type="button" (click)="addNeighborhood()" class="text-sm text-purple-400">+ Adicionar Bairro</button>
-                     <button type="button" (click)="sortNeighborhoods()" class="text-sm text-yellow-400">Ordenar A-Z</button>
-                  </div>
-               }
-            </div>
-
-            <!-- Temporary Closure -->
-            <div>
-              <h3 class="font-semibold mb-2 text-lg">Fechamento Temporário</h3>
-              <div class="bg-gray-800 p-4 rounded-lg flex items-center justify-between">
-                <div>
-                  <p class="font-medium">Loja Fechada Temporariamente</p>
-                  <p class="text-xs text-gray-400">Ative para impedir novos pedidos e mostrar uma mensagem.</p>
-                </div>
-                <button type="button" (click)="toggleTemporaryClosure()" class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors" [class.bg-green-500]="!dataService.settings().is_temporarily_closed" [class.bg-gray-600]="dataService.settings().is_temporarily_closed">
-                  <span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform" [class.translate-x-6]="!dataService.settings().is_temporarily_closed" [class.translate-x-1]="dataService.settings().is_temporarily_closed"></span>
-                </button>
-              </div>
-               @if(dataService.settings().is_temporarily_closed) {
-                <input formControlName="temporary_closure_message" placeholder="Mensagem de fechamento (ex: Voltamos logo!)" class="w-full mt-2 bg-gray-700 p-2 rounded">
-               }
-            </div>
-            
-             <!-- Admin Credentials -->
-            <div>
-              <h3 class="font-semibold mb-2 text-lg">Credenciais de Acesso</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input formControlName="admin_username" placeholder="Nome de Usuário Admin" class="w-full bg-gray-700 p-2 rounded">
-                <input formControlName="admin_password" type="password" placeholder="Nova Senha (deixe em branco para manter)" class="w-full bg-gray-700 p-2 rounded">
-              </div>
-            </div>
-
-            <!-- Save Button -->
-            <div class="pt-4 border-t border-gray-700">
-              <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg flex items-center justify-center disabled:opacity-50" [disabled]="isUploading()">
-                  @if (isUploading()) {
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    Salvando...
-                  } @else {
-                    Salvar Configurações
-                  }
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Tab: Ajuda -->
-        <div [class.hidden]="activeTab() !== 'help'" class="p-6 bg-gray-900 rounded-lg">
-          <div class="printable-guide text-gray-300">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold text-purple-400">Guia de Solução de Problemas: Supabase</h2>
-                <button (click)="printHelpGuide()" class="no-print bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v3h6v-3z" clip-rule="evenodd" /></svg>
-                    Imprimir / Salvar Guia em PDF
-                </button>
-            </div>
-
-            <div class="space-y-8">
-                <!-- Printing Note -->
-                <div class="p-4 rounded-lg bg-gray-800 text-sm">
-                    <h3 class="text-lg font-semibold text-purple-400 mb-2">Como Salvar este Guia em PDF</h3>
-                    <p>O botão "Imprimir / Salvar Guia em PDF" abrirá a janela de impressão do seu navegador. Para salvar o arquivo, na opção <b class="text-yellow-400">"Destino"</b> ou <b class="text-yellow-400">"Impressora"</b>, selecione <b class="text-yellow-400">"Salvar como PDF"</b> em vez de uma impressora física.</p>
-                </div>
-
-                <!-- Introduction -->
-                <div class="p-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10">
-                    <h3 class="text-xl font-semibold text-yellow-400 mb-2">Por que este guia é importante?</h3>
-                    <p>Se você está recebendo erros como "Falha ao salvar", "Falha no upload da imagem" ou "violates row-level security policy", é quase certeza que as permissões no seu banco de dados Supabase não estão configuradas. Por padrão, o Supabase bloqueia todas as tentativas de escrita e upload para proteger seus dados.</p>
-                    <p class="mt-2">Este guia passo a passo vai te ensinar a habilitar as permissões necessárias para que seu painel administrativo funcione perfeitamente.</p>
-                </div>
-
-                <!-- Part 1: Database -->
-                <div class="p-4 rounded-lg bg-gray-800">
-                    <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Parte 1: Permissões do Banco de Dados (Salvar Dados)</h3>
-                    <div class="space-y-6 pl-4 border-l-2 border-purple-500">
-                        <!-- Step 1 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.1: Acesse a área de Autenticação</h4>
-                            <p class="mt-1">No painel do seu projeto no <a href="https://app.supabase.com" target="_blank" class="text-purple-400 underline">site do Supabase</a>, procure na barra lateral esquerda por um ícone de <b class="text-yellow-400">usuários (👥)</b>. Este é o menu de <strong>"Authentication"</strong>. Clique nele.</p>
-                        </div>
-                        <!-- Step 2 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.2: Encontre as Políticas de Acesso (Policies)</h4>
-                            <p class="mt-1">Dentro da seção de "Authentication", no menu de navegação que aparece, procure e clique na opção <strong>"Policies"</strong>.</p>
-                        </div>
-                        <!-- Step 4 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.3: Crie uma Nova Política</h4>
-                            <p class="mt-1">Para cada tabela, você precisa criar uma regra. Comece com a tabela <strong><code>addon_categories</code></strong>. Clique no botão <strong>"Create policy"</strong> ao lado dela.</p>
-                            <p class="mt-1">Na janela que aparece, clique em <b class="text-yellow-400">"For full customization"</b> (ou "Create a policy from scratch") para ir para o formulário completo.</p>
-                        </div>
-                        <!-- Step 5 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.4: Configure a Política de Acesso Total</h4>
-                            <p class="mt-1">Preencha o formulário exatamente como a seguir:</p>
-                            <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
-                                <li><strong>Policy Name:</strong> Digite <code>Public Access</code></li>
-                                <li><strong>Policy Command (ou Allowed operation):</strong> Marque a bolinha ao lado de <strong>ALL</strong>.</li>
-                                <li><strong>Target Roles:</strong> Deixe como está, com <code>public</code> selecionado.</li>
-                                <li>Na seção <b class="text-yellow-400">USING expression</b>, apague o que estiver lá e digite apenas a palavra <code>true</code>.</li>
-                                <li>Na seção <b class="text-yellow-400">WITH CHECK expression</b>, faça o mesmo: digite <code>true</code>.</li>
-                            </ul>
-                            <p class="mt-2">Clique no botão verde <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</p>
-                        </div>
-                         <!-- Step 6 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 1.5: Repita para TODAS as Tabelas</h4>
-                            <p class="mt-1">Você precisa repetir os Passos 1.3 e 1.4 para <b class="text-yellow-400">CADA UMA</b> das seguintes tabelas:</p>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-sm">
-                                <code class="bg-gray-700 p-2 rounded text-center">addon_categories</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">categories</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">coupons</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">delivery_drivers</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">driver_payments</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">expenses</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">orders</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">products</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">receivables</code>
-                                <code class="bg-gray-700 p-2 rounded text-center">settings</code>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                 <!-- Part 2: Storage -->
-                <div class="p-4 rounded-lg bg-gray-800">
-                    <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2">Parte 2: Permissões de Upload de Imagens</h3>
-                    <div class="space-y-6 pl-4 border-l-2 border-purple-500">
-                        <!-- Step 1 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.1: Crie o "Bucket" de Imagens</h4>
-                            <p class="mt-1">Na barra lateral esquerda do Supabase, clique no ícone de um <b class="text-yellow-400">cilindro (🛢️)</b> para ir para <strong>"Storage"</strong>.</p>
-                            <p class="mt-1">Se um bucket chamado <code>IMAGENS</code> já existir, pule para o Passo 2.2. Caso contrário, clique em <strong>"+ New bucket"</strong>.</p>
-                            <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
-                                <li>No campo "Name", digite <b class="text-red-500">exatamente</b> <code>IMAGENS</code>. O nome precisa ser este, em maiúsculas, para o aplicativo funcionar.</li>
-                                <li>Ative a opção <strong>"Public bucket"</strong>. Isso é muito importante!</li>
-                                <li>Clique em <strong>"Save"</strong>.</li>
-                            </ul>
-                        </div>
-                        <!-- Step 2 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.2: Acesse as Políticas do Bucket `IMAGENS`</h4>
-                            <p class="mt-1">Na lista de buckets, encontre o bucket <code>IMAGENS</code>. Clique no menu de três pontinhos (<code>...</code>) ao lado dele e selecione <strong>"Policies"</strong>.</p>
-                        </div>
-                        <!-- Step 3 -->
-                        <div>
-                            <h4 class="text-lg font-semibold text-purple-400">Passo 2.3: Crie as Políticas de Acesso (INSERT, UPDATE, DELETE)</h4>
-                            <p class="mt-1">Para permitir que o aplicativo envie, atualize e delete imagens, precisamos criar 3 políticas.</p>
-                            <p class="mt-2 font-bold">Para CADA uma das operações (`INSERT`, `UPDATE`, `DELETE`), siga estes passos:</p>
-                             <ul class="list-disc pl-5 mt-1 space-y-2 text-sm">
-                                <li>Encontre a operação (ex: <strong>INSERT</strong>) e clique no botão <strong>"+ New policy"</strong>.</li>
-                                <li>Na janela que aparece, clique na segunda opção: <b class="text-yellow-400">"For full customization"</b> (ou "Create a policy from scratch").</li>
-                                <li>Um formulário de criação de política aparecerá. Preencha-o exatamente assim:
-                                    <ul class="list-disc pl-5 mt-1 space-y-1">
-                                        <li><strong>Policy Name:</strong> Digite um nome, por exemplo <code>Public Inserts</code> (use <code>Public Updates</code> para a de update, e <code>Public Deletes</code> para a de delete).</li>
-                                        <li><strong>Allowed operation:</strong> Certifique-se de que a operação correta (`INSERT` neste caso) está marcada.</li>
-                                        <li><strong>Target roles:</strong> Deixe como está, com `public` selecionado.</li>
-                                        <li>Na seção <b class="text-yellow-400">USING expression</b>, apague o que estiver lá e digite apenas a palavra <code>true</code>.</li>
-                                        <li>Na seção <b class="text-yellow-400">WITH CHECK expression</b>, faça o mesmo: digite <code>true</code>.</li>
-                                    </ul>
-                                </li>
-                                <li>Clique em <strong>"Review"</strong> e depois em <strong>"Save policy"</strong>.</li>
-                                <li><b class="text-yellow-400">REPITA</b> este processo para `UPDATE` e `DELETE`.</li>
-                             </ul>
-                        </div>
-                        <!-- Step 4 -->
-                        <div class="p-3 rounded-lg border border-red-500/50 bg-red-500/10">
-                            <h4 class="text-lg font-semibold text-red-500">Passo 2.4 (MUITO IMPORTANTE): Limpeza de Políticas Antigas</h4>
-                            <p class="mt-1">Se você seguiu guias anteriores, pode ter criado políticas em um local incorreto. Precisamos removê-las para evitar conflitos.</p>
-                            <ul class="list-disc pl-5 mt-2 space-y-2 text-sm">
-                               <li>Volte para a seção de <strong>Authentication (ícone 👥) -> Policies</strong>.</li>
-                               <li>Na barra de busca "Filter tables and policies", digite <code>storage</code>.</li>
-                               <li>Você verá as tabelas <code>storage.objects</code> e <code>storage.buckets</code>.</li>
-                               <li>Clique em cada uma delas e <b class="text-yellow-400">DELETE TODAS AS POLÍTICAS</b> que aparecem listadas. Para deletar, clique nos três pontinhos ao lado da política e escolha "Delete".</li>
-                               <li>Faça isso para <code>storage.objects</code> e para <code>storage.buckets</code> até que não reste nenhuma política para elas. As únicas políticas de Storage devem ser as que você criou diretamente no bucket `IMAGENS`.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Conclusion -->
-                <div class="p-4 rounded-lg border border-green-500/50 bg-green-500/10">
-                    <h3 class="text-xl font-semibold text-green-400 mb-2">Conclusão</h3>
-                    <p>Após seguir todos esses passos, seu sistema de upload de imagens estará 100% funcional. Recarregue a página do seu painel administrativo e teste novamente.</p>
-                </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  }
-
-  <!-- Modals -->
-  @if (editingProduct()) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-30 p-4">
-      <div class="bg-gray-800 rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col">
-        <div class="p-4 border-b border-gray-700">
-          <h2 class="text-2xl font-bold">{{ editingProduct()?.id ? 'Editar' : 'Novo' }} Produto</h2>
-        </div>
-        <div class="flex-grow p-4 overflow-y-auto">
-          <form [formGroup]="productForm" id="productForm" (ngSubmit)="saveProduct()" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                  <input formControlName="name" placeholder="Nome do Produto" class="w-full bg-gray-700 p-2 rounded">
-                  <div class="flex items-center gap-2 mt-2">
-                    <button type="button" (click)="generateDescription()" [disabled]="isGeneratingDescription()" class="text-xs bg-purple-600 text-white px-2 py-1 rounded disabled:opacity-50">
-                        {{ isGeneratingDescription() ? 'Gerando...' : 'Gerar Descrição com IA' }}
-                    </button>
-                    @if (geminiService.isAvailable()) {
-                        <span class="text-xs text-green-400">✨ IA Disponível</span>
-                    } @else {
-                        <span class="text-xs text-gray-500" title="{{geminiService.error()}}">IA Indisponível</span>
-                    }
-                  </div>
-                  <textarea formControlName="description" placeholder="Descrição" class="w-full h-24 mt-2 bg-gray-700 p-2 rounded"></textarea>
-               </div>
-               <div>
-                  <img [src]="productForm.get('image_url')?.value || 'https://picsum.photos/300/200'" class="w-full h-40 object-cover rounded bg-gray-700">
-                  <div class="flex items-center gap-2 mt-2">
-                    <input type="file" (change)="onProductFileChange($event)" class="text-xs">
-                    <button type="button" (click)="generateImage()" [disabled]="isGeneratingImage()" class="text-xs bg-purple-600 text-white px-2 py-1 rounded disabled:opacity-50">
-                        {{ isGeneratingImage() ? 'Gerando...' : 'Gerar Imagem com IA' }}
-                    </button>
-                  </div>
-               </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <select formControlName="category_id" class="w-full bg-gray-700 p-2 rounded">
-                <option value="" disabled>Selecione uma Categoria</option>
-                @for (category of sortedCategories(); track category.id) { <option [value]="category.id">{{ category.name }}</option> }
-              </select>
-               <label class="flex items-center space-x-2"><input type="checkbox" formControlName="is_available"><span>Disponível</span></label>
-            </div>
-             <div>
-              <h3 class="font-semibold mb-2">Preços</h3>
-              <div class="flex items-center space-x-4 mb-2">
-                 <label><input type="radio" formControlName="price_type" value="sized" class="mr-2">Por Tamanho</label>
-                 <label><input type="radio" formControlName="price_type" value="fixed" class="mr-2">Preço Fixo</label>
-              </div>
-              @if (productForm.get('price_type')?.value === 'fixed') {
-                <input type="number" formControlName="price" placeholder="Preço Fixo" class="w-full max-w-xs bg-gray-700 p-2 rounded">
-              } @else {
-                 <div formArrayName="sizes" class="space-y-2">
-                  @for(size of productSizes.controls; track size) {
-                    <div [formGroupName]="$index" class="flex items-center gap-2">
-                      <input formControlName="name" placeholder="Nome do Tamanho (ex: 300ml)" class="flex-grow bg-gray-700 p-2 rounded">
-                      <input type="number" formControlName="price" placeholder="Preço" class="w-28 bg-gray-700 p-2 rounded">
-                      <label class="flex items-center text-sm"><input type="checkbox" formControlName="is_available" class="mr-1">Disp.</label>
-                      <button type="button" (click)="removeProductSize($index)" class="text-red-400">X</button>
-                    </div>
-                  }
-                 </div>
-                 <button type="button" (click)="addProductSize()" class="mt-2 text-sm text-purple-400">+ Adicionar Tamanho</button>
-              }
-            </div>
-             <div>
-              <h3 class="font-semibold mb-2">Grupos de Adicionais</h3>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                @for(ac of sortedAddonCategories(); track ac.id) {
-                   <label class="p-2 bg-gray-700 rounded-md text-sm flex items-center">
-                      <input type="checkbox" [checked]="isAddonCategorySelected(ac.id)" (change)="onAddonCategoryChange($event, ac.id)" class="mr-2">
-                      {{ ac.name }}
-                   </label>
-                }
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="p-4 border-t border-gray-700 flex justify-end space-x-2">
-          <button type="button" (click)="editingProduct.set(null)" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
-          <button type="submit" form="productForm" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center disabled:opacity-50" [disabled]="isUploading()">
-            @if(isUploading()){
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              Salvando...
-            } @else {
-              Salvar Produto
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-  }
-  
-  @if(isReceiptModalOpen() && orderToPrint(); as order) {
-    <app-receipt [order]="order" [settings]="dataService.settings()" [mode]="receiptMode()" (close)="handleReceiptClose()" (confirm)="handleDeliveryConfirmation()" (sendWhatsApp)="handleSendReceipt(order)" />
-  }
-
-  @if(isPdvProductModalOpen() && pdvSelectedProduct(); as product) {
-     <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40 p-4">
-      <div class="bg-gray-800 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide flex flex-col">
-        <div class="sticky top-0 p-4 border-b border-gray-700 flex justify-between items-center z-10 bg-gray-800">
-          <h2 class="text-2xl font-bold">{{ product.name }}</h2>
-          <button (click)="closePdvProductModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
-        </div>
-        <div class="p-4 flex-grow overflow-y-auto">
-          @if (product.price_type !== 'fixed') {
-            <h3 class="font-semibold mb-2">Tamanho</h3>
-            <div class="grid grid-cols-2 gap-2 mb-4">
-              @for (size of product.sizes; track size.name) {
-                <button (click)="pdvSelectedSize.set(size)" [disabled]="!size.is_available" class="p-3 border rounded-md text-left relative" [class.opacity-50]="!size.is_available" [class.cursor-not-allowed]="!size.is_available" [class.border-purple-500]="pdvSelectedSize() === size" [class.bg-purple-500/20]="pdvSelectedSize() === size" [class.border-gray-600]="pdvSelectedSize() !== size">
-                  <span class="font-medium">{{ size.name }}</span>
-                  <span class="block text-sm text-purple-400">{{ size.price | currency:'BRL' }}</span>
-                   @if (!size.is_available) { <span class="absolute top-1 right-1 text-xs bg-red-600 text-white px-1.5 py-0.5 rounded">Indisponível</span> }
-                </button>
-              }
-            </div>
-          }
-          @for (addonCatId of product.addon_categories; track addonCatId) {
-            @if (getAddonCategoryById(addonCatId); as addonCat) {
-              <div>
-                <h3 class="font-semibold mb-2">{{ addonCat.name }} <span class="text-xs text-gray-500">{{ addonCat.required ? '(Obrigatório)' : '(Opcional)'}}</span></h3>
-                <div class="space-y-2 mb-4">
-                  @for (addon of addonCat.addons; track addon.id) {
-                    <label class="flex items-center justify-between p-3 rounded-md bg-gray-700" [class.cursor-pointer]="addon.is_available" [class.cursor-not-allowed]="!addon.is_available" [class.opacity-60]="!addon.is_available">
-                      <div>
-                        <span>{{ addon.name }}</span>
-                         @if (addon.price > 0) { <span class="text-xs ml-2 text-purple-400">+{{ addon.price | currency:'BRL' }}</span> }
-                         @if (!addon.is_available) { <span class="text-xs text-red-400 ml-2 font-semibold"> (Indisponível)</span> }
-                      </div>
-                      <input type="checkbox" class="form-checkbox h-5 w-5 rounded bg-gray-800 border-purple-400 text-purple-500" [checked]="pdvSelectedAddons()[addon.id]" (change)="togglePdvAddon(addon)" [disabled]="!addon.is_available">
-                    </label>
-                  }
-                </div>
-              </div>
-            }
-          }
-        </div>
-        <div class="sticky bottom-0 p-4 border-t border-gray-700 bg-gray-800 z-10 space-y-3">
-          <input type="text" [value]="pdvProductNotes()" (input)="pdvProductNotes.set($any($event.target).value)" placeholder="Observações..." class="w-full p-2 rounded bg-gray-700 text-sm">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <button (click)="decrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">-</button>
-              <span>{{ pdvProductQuantity() }}</span>
-              <button (click)="incrementPdvQuantity()" class="w-8 h-8 rounded-md bg-gray-700">+</button>
-            </div>
-            <button (click)="addProductToPdvCartFromModal()" [disabled]="isPdvAddToCartDisabled()" class="text-white font-bold py-3 px-6 rounded-lg bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed">Adicionar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  @if(isDriverModalOpen() && orderToAssign(); as order) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-30 p-4">
-      <div class="bg-gray-800 rounded-lg w-full max-w-md">
-        <div class="p-4 border-b border-gray-700">
-          <h2 class="text-xl font-bold">Atribuir Entrega para #{{order.id.slice(-4)}}</h2>
-        </div>
-        <div class="p-4 space-y-2">
-          @for(driver of approvedDrivers(); track driver.id) {
-            <button (click)="assignOrder(driver.id)" class="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded">
-              <p class="font-semibold">{{driver.name}}</p>
-              <p class="text-xs text-gray-400">{{driver.whatsapp}}</p>
-            </button>
-          }
-          <button (click)="assignOrder('all')" class="w-full text-left p-3 bg-yellow-600/20 text-yellow-300 hover:bg-yellow-600/30 rounded">
-            <p class="font-semibold">⚡ Enviar para Todos</p>
-            <p class="text-xs">O primeiro a aceitar fica com a entrega.</p>
-          </button>
-        </div>
-        <div class="p-4 border-t border-gray-700 flex justify-end">
-          <button (click)="isDriverModalOpen.set(false)" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  @if(isConfirmModalOpen() && confirmAction(); as action) {
-     <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40 p-4">
-      <div class="bg-gray-800 rounded-lg w-full max-w-sm p-6 text-center">
-        <h2 class="text-xl font-bold mb-4">Confirmar Ação</h2>
-        <p class="text-gray-300 mb-6">{{ confirmMessage() }}</p>
-        <div class="flex justify-center gap-4">
-          <button (click)="closeConfirmModal()" class="bg-gray-600 hover:bg-gray-500 font-bold py-2 px-6 rounded">Cancelar</button>
-          <button (click)="handleConfirm()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded">Confirmar</button>
-        </div>
-      </div>
-     </div>
-  }
-
-</div>
+                                  <span>#{{delivery.id.slice(-4)}} - {{delivery.date | date:'dd/MM'}}

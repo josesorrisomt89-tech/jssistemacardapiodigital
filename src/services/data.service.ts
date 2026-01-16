@@ -68,6 +68,7 @@ export class DataService {
             delivery: { ...defaults.delivery, ...(settingsRes.delivery || {}) },
             layout: { ...defaults.layout, ...(settingsRes.layout || {}) },
             loyalty_program: { ...defaults.loyalty_program, ...(settingsRes.loyalty_program || {}) },
+            wheel_of_fortune: { ...defaults.wheel_of_fortune, ...(settingsRes.wheel_of_fortune || {}) },
             slider_images: settingsRes.slider_images || [],
           };
           this.settings.set(mergedSettings);
@@ -390,6 +391,20 @@ export class DataService {
         category_text_color: '#1F2937'
       },
       loyalty_program: { enabled: true, points_per_real: 1, points_for_reward: 100, reward_type: 'fixed', reward_value: 10 },
+      wheel_of_fortune: {
+        enabled: true,
+        minimum_order_value: 0,
+        prizes: [
+          { label: '10% OFF', type: 'percentage', value: 10, couponCode: 'SORTE10', description: 'Prêmio da Roleta: 10% OFF' },
+          { label: 'Tente de Novo', type: 'none', value: 0, couponCode: '', description: '' },
+          { label: 'R$5 OFF', type: 'fixed', value: 5, couponCode: 'SORTE5', description: 'Prêmio da Roleta: R$5 OFF' },
+          { label: 'Tente de Novo', type: 'none', value: 0, couponCode: '', description: '' },
+          { label: 'Frete Grátis', type: 'free_shipping', value: 0, couponCode: 'SORTEFRETE', description: 'Prêmio da Roleta: Frete Grátis' },
+          { label: 'Tente de Novo', type: 'none', value: 0, couponCode: '', description: '' },
+          { label: '5% OFF', type: 'percentage', value: 5, couponCode: 'SORTE5P', description: 'Prêmio da Roleta: 5% OFF' },
+          { label: 'Tente de Novo', type: 'none', value: 0, couponCode: '', description: '' },
+        ]
+      },
       is_temporarily_closed: false, temporary_closure_message: 'Estamos fechados para manutenção. Voltamos logo!',
       admin_username: 'admin', admin_password: 'admin'
     };
