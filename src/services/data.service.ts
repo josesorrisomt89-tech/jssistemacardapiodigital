@@ -169,14 +169,34 @@ export class DataService {
     return data[0];
   }
   
-  async saveProduct(product: Product) {
-     const data = await firstValueFrom(this.apiService.upsert<Product>('products', product));
-     this.products.update(items => {
-        const index = items.findIndex(i => i.id === data[0].id);
-        if(index > -1) { items[index] = data[0]; return [...items]; }
-        return [...items, data[0]];
-    });
-     return data[0];
+  async saveProduct(product: Product): Promise<Product> {
+    const isUpdate = this.products().some(p => p.id === product.id);
+
+    if (isUpdate) {
+        // Perform the patch operation. We don't use the return value because it might be inconsistent.
+        await firstValueFrom(this.apiService.patch<Product>('products', `id=eq.${product.id}`, product));
+
+        // Update the local signal with the 'product' object we sent, which we know is clean and correct.
+        this.products.update(items => {
+            const index = items.findIndex(i => i.id === product.id);
+            if (index > -1) {
+                const newItems = [...items];
+                newItems[index] = product; // Use the clean 'product' object as the source of truth
+                return newItems;
+            }
+            return items;
+        });
+        return product; // Return the clean product object to the component
+    } else {
+        // This is a new product creation, the returned data should be reliable.
+        const data = await firstValueFrom(this.apiService.post<Product>('products', [product], 'return=representation'));
+        if (!data || data.length === 0) {
+            throw new Error('Falha ao criar o produto no banco de dados.');
+        }
+        const newProduct = data[0];
+        this.products.update(items => [...items, newProduct]);
+        return newProduct;
+    }
   }
   
   async deleteProduct(id: string) {
@@ -221,14 +241,28 @@ export class DataService {
       addons: addonsToSave,
     };
 
-    const savedData = await firstValueFrom(this.apiService.upsert<any>('addon_categories', categoryToSave));
+    const isUpdate = this.addonCategories().some(ac => ac.id === categoryToSave.id);
+    let savedData: any[];
+
+    if (isUpdate) {
+        savedData = await firstValueFrom(this.apiService.patch<any>('addon_categories', `id=eq.${categoryToSave.id}`, categoryToSave));
+    } else {
+        savedData = await firstValueFrom(this.apiService.post<any>('addon_categories', [categoryToSave], 'return=representation'));
+    }
+    
+    if (!savedData || savedData.length === 0) {
+      throw new Error('Falha ao salvar o grupo de adicionais no banco de dados.');
+    }
     const returnedCategory = savedData[0];
+
+    const rules = returnedCategory.addons?.find((a: any) => a.__selection_rules__);
+    const finalCleanAddons = returnedCategory.addons?.filter((a: any) => !a.__selection_rules__) || [];
 
     const finalCategory: AddonCategory = {
       ...returnedCategory,
-      addons: cleanAddons,
-      min_selection: min_selection || 0,
-      max_selection: max_selection || 0,
+      addons: finalCleanAddons,
+      min_selection: (rules as any)?.min ?? 0,
+      max_selection: (rules as any)?.max ?? 0,
     };
 
     this.addonCategories.update(items => {

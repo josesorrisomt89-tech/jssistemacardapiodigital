@@ -267,7 +267,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   expenseForm: FormGroup;
   editingExpense = signal<Expense | null>(null);
   sortedReceivables = computed(() => this.dataService.receivables().sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
-  sortedExpenses = computed(() => this.dataService.expenses().sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  sortedExpenses = computed(() => this.dataService.expenses().sort((a,b) => new Date(b.date).getTime() - new Date(b.date).getTime()));
   
   constructor() {
     this.mainSettingsForm = this.fb.group({
@@ -711,6 +711,22 @@ export class AdminComponent implements OnInit, OnDestroy {
     }
   }
 
+  private getUniqueSizes(sizes: ProductSize[]): ProductSize[] {
+    if (!sizes) return [];
+    const uniqueMap = new Map<string, ProductSize>();
+    sizes.forEach(size => {
+      // Make sure size and size.name are not null/undefined before processing
+      if (size && typeof size.name === 'string') {
+        // More aggressive key: remove all whitespace and convert to lower case
+        const key = `${size.name.replace(/\s+/g, '').toLowerCase()}|${size.price}`;
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, size);
+        }
+      }
+    });
+    return Array.from(uniqueMap.values());
+  }
+
   editProduct(product: Product | null) {
     this.productFile.set(null);
     this.productForm.reset({ is_available: true, price_type: 'sized', addon_categories: [] });
@@ -719,8 +735,9 @@ export class AdminComponent implements OnInit, OnDestroy {
       this.editingProduct.set(product);
       const productData = { ...product, price_type: product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed') };
       this.productForm.patchValue(productData);
-      if (productData.price_type === 'sized') {
-          product.sizes.forEach(size => this.addProductSize(size));
+      if (productData.price_type === 'sized' && product.sizes) {
+          const uniqueSizes = this.getUniqueSizes(product.sizes);
+          uniqueSizes.forEach(size => this.addProductSize(size));
       }
     } else {
         this.editingProduct.set({} as Product);
@@ -739,13 +756,21 @@ export class AdminComponent implements OnInit, OnDestroy {
       const formData = this.productForm.getRawValue();
       const currentProduct = this.editingProduct();
 
+      if (formData.price_type === 'sized' && formData.sizes) {
+        formData.sizes = this.getUniqueSizes(formData.sizes);
+      }
+
       if (this.productFile()) {
         const pathPrefix = `products/${formData.id || this.generateUUID()}`;
         const newUrl = await this.imageUploadService.uploadImage(this.productFile()!, pathPrefix, currentProduct?.image_url);
         (formData as any).image_url = newUrl;
       }
       
-      if (formData.price_type === 'fixed') (formData as any).sizes = []; else (formData as any).price = 0;
+      if (formData.price_type === 'fixed') {
+        (formData as any).sizes = [];
+      } else {
+        (formData as any).price = 0;
+      }
       
       if (!formData.id) {
         (formData as any).id = this.generateUUID();

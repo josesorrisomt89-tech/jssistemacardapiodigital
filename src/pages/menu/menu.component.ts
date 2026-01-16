@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
@@ -98,7 +98,9 @@ export class MenuComponent implements OnInit {
         sizePrice = this.selectedSize()?.price ?? 0;
     }
     
-    const addonsPrice = Object.values(this.selectedAddons()).reduce((sum, addon) => sum + addon.price, 0);
+    // FIX: Explicitly cast the result of Object.values to Addon[] to ensure type safety.
+    // This prevents `addon` being inferred as `unknown` inside the reduce function.
+    const addonsPrice = (Object.values(this.selectedAddons()) as Addon[]).reduce((sum, addon) => sum + addon.price, 0);
     
     return (sizePrice + addonsPrice) * quantity;
   });
@@ -173,280 +175,338 @@ export class MenuComponent implements OnInit {
   shippingDiscount = computed(() => {
     const coupon = this.appliedCoupon();
     const subtotal = this.cartService.subtotal();
-    if (!coupon || subtotal <= 0 || coupon.discount_type !== 'free_shipping') return 0;
-    if (coupon.minimum_order_value && subtotal < coupon.minimum_order_value) return 0;
+    if (!coupon || subtotal <= 0 || coupon.discount_type !== 'free_shipping') {
+      return 0;
+    }
+    if (coupon.minimum_order_value && subtotal < coupon.minimum_order_value) {
+      return 0;
+    }
     return this.currentDeliveryFee();
   });
-  
-  loyaltyShippingDiscount = computed(() => this.appliedLoyaltyFreeShipping() ? this.currentDeliveryFee() : 0);
+
+  loyaltyShippingDiscount = computed(() => {
+    if (!this.appliedLoyaltyFreeShipping()) return 0;
+    return this.currentDeliveryFee();
+  });
 
   total = computed(() => {
-    const newTotal = this.cartService.subtotal() + this.currentDeliveryFee() - this.discountAmount() - this.shippingDiscount() - this.appliedLoyaltyDiscount() - this.loyaltyShippingDiscount();
-    return Math.max(0, newTotal);
+    const subtotal = this.cartService.subtotal();
+    const fee = this.currentDeliveryFee();
+    const couponDisc = this.discountAmount();
+    const shipDisc = this.shippingDiscount();
+    const loyaltyDisc = this.appliedLoyaltyDiscount();
+    const loyaltyShipDisc = this.loyaltyShippingDiscount();
+    return Math.max(0, subtotal + fee - couponDisc - shipDisc - loyaltyDisc - loyaltyShipDisc);
   });
 
-  availableCoupons = computed(() => {
-    const allCoupons = this.coupons();
-    const usedCodes = this.user()?.used_coupons || [];
-    return allCoupons.filter(c => !usedCodes.includes(c.code));
-  });
-
-  remainingLoyaltyPoints = computed(() => {
-    const currentUser = this.user();
-    const loyaltySettings = this.settings().loyalty_program;
-    if (!currentUser || !loyaltySettings?.enabled) return 0;
-    return Math.max(0, loyaltySettings.points_for_reward - currentUser.loyalty_points);
-  });
+  checkoutForm: FormGroup;
+  now = new Date();
 
   trackedOrder = signal<Order | null>(null);
   isTrackingModalOpen = signal(false);
-  private readonly TRACKED_ORDER_ID_KEY = 'acai_tracked_order_id';
-
-  isPastOrdersModalOpen = signal(false);
   pastOrders = signal<Order[]>([]);
-  private readonly PAST_ORDER_IDS_KEY = 'acai_past_order_ids';
-  private readonly LAST_ADDRESS_KEY = 'acai_last_address';
-
-  availableSlots = signal<string[]>([]);
-
-  checkoutForm = this.fb.group({
-    customer_name: ['', Validators.required],
-    delivery_option: ['delivery', Validators.required],
-    street: ['', Validators.required],
-    number: ['', Validators.required],
-    complement: [''],
-    reference: [''],
-    neighborhood: ['', Validators.required],
-    payment_method: ['pix-machine', Validators.required],
-    change_for: [{value: '', disabled: true}],
-    scheduled_time: ['']
-  });
-
-  now = new Date();
-
-  paymentMethodNames: { [key: string]: string } = {
-    'pix-machine': 'PIX na Maquininha',
-    'card': 'Cartão de Crédito/Débito',
-    'cash': 'Dinheiro',
-    'pix-online': 'PIX (enviar comprovante)'
-  };
+  isPastOrdersModalOpen = signal(false);
 
   constructor() {
-    effect(() => {
-        const allOrders = this.dataService.orders();
-        const trackedId = this.loadTrackedOrderId();
-        if (trackedId) {
-            this.trackedOrder.set(allOrders.find(o => o.id === trackedId) || null);
-        }
-        const pastOrderIds = this.getPastOrderIds();
-        if (pastOrderIds.length > 0) {
-          const userOrders = allOrders.filter(o => pastOrderIds.includes(o.id));
-          this.pastOrders.set(userOrders.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        }
+    this.checkoutForm = this.fb.group({
+      customer_name: ['', Validators.required],
+      delivery_option: ['delivery', Validators.required],
+      street: [''],
+      number: [''],
+      neighborhood: [''],
+      complement: [''],
+      reference: [''],
+      payment_method: ['pix-machine', Validators.required],
+      change_for: [{ value: '', disabled: true }],
+      scheduled_time: ['']
     });
-    
+
     effect(() => {
-      const currentUser = this.user();
-      if(currentUser && this.checkoutForm.get('customer_name')?.value === '') {
-        this.checkoutForm.get('customer_name')?.setValue(currentUser.name);
+      const deliveryOption = this.checkoutForm.get('delivery_option')?.value;
+      const addressControls = ['street', 'number', 'neighborhood'];
+      if (deliveryOption === 'delivery') {
+        addressControls.forEach(name => this.checkoutForm.get(name)?.setValidators(Validators.required));
+      } else {
+        addressControls.forEach(name => {
+          this.checkoutForm.get(name)?.clearValidators();
+          this.checkoutForm.get(name)?.reset('');
+        });
       }
-    });
-
-    this.checkoutForm.get('payment_method')?.valueChanges.subscribe(value => {
-        const changeForControl = this.checkoutForm.get('change_for');
-        if (value === 'cash') changeForControl?.enable();
-        else { changeForControl?.disable(); changeForControl?.reset(); }
-    });
-
-    this.checkoutForm.get('delivery_option')?.valueChanges.subscribe(value => {
-        const controlsToManage = {
-            street: this.checkoutForm.get('street'), number: this.checkoutForm.get('number'),
-            complement: this.checkoutForm.get('complement'), reference: this.checkoutForm.get('reference'),
-            neighborhood: this.checkoutForm.get('neighborhood'),
-        };
-        if (value === 'pickup') {
-            Object.values(controlsToManage).forEach(control => { control?.clearValidators(); control?.reset(); });
-        } else {
-            controlsToManage.street?.setValidators(Validators.required);
-            controlsToManage.number?.setValidators(Validators.required);
-            controlsToManage.neighborhood?.setValidators(Validators.required);
-            controlsToManage.complement?.clearValidators();
-            controlsToManage.reference?.clearValidators();
-        }
-        Object.values(controlsToManage).forEach(control => control?.updateValueAndValidity());
-        this.updateDeliveryFee();
+      addressControls.forEach(name => this.checkoutForm.get(name)?.updateValueAndValidity());
+      this.updateDeliveryFee();
     });
 
     this.checkoutForm.get('neighborhood')?.valueChanges.subscribe(() => {
-        if(this.checkoutForm.get('delivery_option')?.value === 'delivery') this.updateDeliveryFee();
+      this.updateDeliveryFee();
+    });
+
+    this.checkoutForm.get('payment_method')?.valueChanges.subscribe(value => {
+      const changeForControl = this.checkoutForm.get('change_for');
+      if (value === 'cash') {
+        changeForControl?.enable();
+      } else {
+        changeForControl?.disable();
+        changeForControl?.reset('');
+      }
+    });
+
+    effect(() => {
+        const user = this.user();
+        if(user) {
+            this.checkoutForm.patchValue({ customer_name: user.name });
+            this.loadPastOrders();
+        }
+    });
+
+    effect(() => {
+        const orderId = this.getTrackedOrderId();
+        if (orderId) {
+            const allOrders = this.dataService.orders();
+            const order = allOrders.find(o => o.id === orderId);
+            this.trackedOrder.set(order ?? null);
+        } else {
+            this.trackedOrder.set(null);
+        }
     });
   }
-  
-  ngOnInit() {}
 
-  get todaysHours(): string {
-      const { hoursToday } = this.shopStatus();
-      if (!hoursToday || !hoursToday.is_open) return 'Fechado hoje';
-      return `${hoursToday.start} - ${hoursToday.end}`;
+  ngOnInit() {
+      const categories = this.categories();
+      if(categories.length > 0) {
+          this.selectedCategory.set(categories[0].id);
+      }
   }
 
-  updateDeliveryFee() {
-    const deliverySettings = this.settings().delivery;
-    if (this.checkoutForm.get('delivery_option')?.value === 'pickup') { this.currentDeliveryFee.set(0); return; }
-    if (deliverySettings.type === 'fixed') { this.currentDeliveryFee.set(deliverySettings.fixed_fee); }
-    else {
-        const selectedHoodName = this.checkoutForm.get('neighborhood')?.value;
-        const hood = deliverySettings.neighborhoods.find(h => h.name === selectedHoodName);
-        this.currentDeliveryFee.set(hood ? hood.fee : 0);
+  loadPastOrders(): void {
+    if (!this.isBrowser()) return;
+    try {
+        const orderHistoryJson = localStorage.getItem('acai_order_history');
+        const orderIds = orderHistoryJson ? JSON.parse(orderHistoryJson) : [];
+        const allOrders = this.dataService.orders();
+        const userOrders = allOrders
+            .filter(o => orderIds.includes(o.id))
+            .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        this.pastOrders.set(userOrders);
+    } catch (e) {
+        console.error('Error loading past orders', e);
+        this.pastOrders.set([]);
     }
   }
+
+  openPastOrdersModal(): void {
+      this.loadPastOrders();
+      this.isPastOrdersModalOpen.set(true);
+  }
+
+  private getTrackedOrderId(): string | null {
+    if (!this.isBrowser()) return null;
+    return localStorage.getItem('acai_tracked_order_id');
+  }
+
+  private setTrackedOrderId(orderId: string): void {
+    if (!this.isBrowser()) return;
+    localStorage.setItem('acai_tracked_order_id', orderId);
+    this.trackedOrder.set(this.dataService.orders().find(o => o.id === orderId) || null);
+  }
+
+  clearTrackedOrder(): void {
+    if (!this.isBrowser()) return;
+    localStorage.removeItem('acai_tracked_order_id');
+    this.trackedOrder.set(null);
+    this.isTrackingModalOpen.set(false);
+  }
+
+  isBrowser(): boolean {
+    return typeof window !== 'undefined' && typeof window.document !== 'undefined';
+  }
+
+  todaysHours = computed(() => {
+    const hours = this.shopStatus().hoursToday;
+    if (!hours || !hours.is_open) return 'Fechado';
+    return `${hours.start} - ${hours.end}`;
+  });
 
   openProductModal(product: Product) {
     if (!product.is_available) return;
     this.selectedProduct.set(product);
-    this.selectedSize.set(null);
     this.productQuantity.set(1);
     this.selectedAddons.set({});
     this.productNotes.set('');
+    
+    const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
+    if (priceType === 'sized' && product.sizes?.length > 0) {
+      this.selectedSize.set(product.sizes[0]);
+    } else {
+      this.selectedSize.set(null);
+    }
+    
     this.isProductModalOpen.set(true);
   }
 
-  closeProductModal() { this.isProductModalOpen.set(false); }
-  incrementProductQuantity() { this.productQuantity.update(q => q + 1); }
-  decrementProductQuantity() { this.productQuantity.update(q => q > 1 ? q - 1 : 1); }
-
-  private getAddonCategoryByAddonId(addonId: string): AddonCategory | undefined {
-    return this.dataService.addonCategories().find(cat => cat.addons.some(a => a.id === addonId));
+  closeProductModal() {
+    this.isProductModalOpen.set(false);
   }
 
-  toggleAddon(addon: Addon) {
-    if (!addon.is_available) return;
-  
-    const addonCat = this.getAddonCategoryByAddonId(addon.id);
-    if (!addonCat) return;
-  
-    const currentAddons = { ...this.selectedAddons() };
-    const isCurrentlySelected = !!currentAddons[addon.id];
-  
-    // Se está desmarcando, simplesmente remove.
-    if (isCurrentlySelected) {
-      delete currentAddons[addon.id];
-      this.selectedAddons.set(currentAddons);
-      return;
-    }
-  
-    // Se está marcando...
-    const max = addonCat.max_selection || 0;
-    const categoryAddonIds = new Set(addonCat.addons.map(a => a.id));
-    // FIX: By casting Object.values, we ensure selectionsInCat is correctly typed as Addon[],
-    // which prevents downstream errors when iterating over it.
-    const selectionsInCat = (Object.values(currentAddons) as Addon[]).filter(a => categoryAddonIds.has(a.id));
-  
-    if (max === 1) {
-      // Comportamento de rádio: remove todos os outros da mesma categoria.
-      for (const existingAddon of selectionsInCat) {
-        delete currentAddons[existingAddon.id];
-      }
-      currentAddons[addon.id] = addon;
-    } else if (max > 0 && selectionsInCat.length >= max) {
-      // Limite máximo (diferente de 1) atingido.
-      alert(`Você pode selecionar no máximo ${max} ${max === 1 ? 'opção' : 'opções'} para "${addonCat.name}".`);
-      return; // Impede a seleção.
-    } else {
-      // Adição normal (sem limite ou com limite > 1 não atingido).
-      currentAddons[addon.id] = addon;
-    }
-  
-    this.selectedAddons.set(currentAddons);
+  incrementProductQuantity() {
+    this.productQuantity.update(q => q + 1);
   }
 
-  addToCart() {
-    const product = this.selectedProduct(); if (!product) return;
-    let size: ProductSize;
-    const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
-    if (priceType === 'fixed') { size = { name: 'Único', price: product.price ?? 0, is_available: true }; }
-    else { const selected = this.selectedSize(); if (!selected || !selected.is_available) { alert('Selecione um tamanho.'); return; } size = selected; }
-    
-    const addons: Addon[] = Object.values(this.selectedAddons());
-    
-    this.cartService.addItem(product.id, product.name, size, addons, this.productQuantity(), this.productNotes());
-    this.closeProductModal();
-    this.isCartSidebarOpen.set(true);
+  decrementProductQuantity() {
+    this.productQuantity.update(q => (q > 1 ? q - 1 : 1));
   }
-  
+
   getAddonCategoryById(id: string): AddonCategory | undefined {
     return this.dataService.addonCategories().find(ac => ac.id === id);
   }
 
-  getAddonNames(addons: Addon[]): string { return addons.map(a => a.name).join(', '); }
-
-  getGroupedAddons(item: CartItem): { categoryName: string, addons: Addon[] }[] {
-    const product = this.products().find(p => p.id === item.product_id);
-    if (!product || !item.addons || item.addons.length === 0) return [];
-    const itemAddonIds = new Set(item.addons.map(a => a.id));
-    const grouped: { categoryName: string, addons: Addon[] }[] = [];
-    const productAddonCategories = this.dataService.addonCategories()
-      .filter(ac => product.addon_categories.includes(ac.id))
-      .sort((a,b) => a.order - b.order);
-    for (const category of productAddonCategories) {
-      const addonsInCategory = category.addons.filter(addon => itemAddonIds.has(addon.id));
-      if (addonsInCategory.length > 0) {
-        grouped.push({ categoryName: category.name, addons: addonsInCategory.sort((a,b) => a.order - b.order) });
-      }
+  toggleAddon(addon: Addon) {
+    if (!addon.is_available) return;
+    const currentAddons = { ...this.selectedAddons() };
+    if (currentAddons[addon.id]) {
+      delete currentAddons[addon.id];
+    } else {
+      currentAddons[addon.id] = addon;
     }
-    return grouped;
+    this.selectedAddons.set(currentAddons);
+  }
+
+  addToCart() {
+    const product = this.selectedProduct();
+    if (!product || this.isAddToCartDisabled()) return;
+
+    let size: ProductSize;
+    const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
+    if(priceType === 'fixed') {
+        size = { name: 'Único', price: product.price ?? 0, is_available: true };
+    } else {
+        const selected = this.selectedSize();
+        if(!selected) {
+            alert('Por favor, selecione um tamanho.');
+            return;
+        }
+        size = selected;
+    }
+
+    this.cartService.addItem(
+      product.id,
+      product.name,
+      size,
+      Object.values(this.selectedAddons()),
+      this.productQuantity(),
+      this.productNotes()
+    );
+    this.closeProductModal();
+    this.isCartSidebarOpen.set(true);
   }
   
   startCheckout() {
+    if (!this.shopStatus().is_open || this.shopStatus().is_temporarily_closed) {
+      alert('A loja está fechada no momento e não aceita pedidos.');
+      return;
+    }
     this.isCartSidebarOpen.set(false);
-    this.checkoutStep.set(1);
-    this.loadLastAddress();
-    this.generateTimeSlots();
     this.isCheckoutModalOpen.set(true);
   }
-  
+
   closeCheckout() {
     this.isCheckoutModalOpen.set(false);
+    this.checkoutStep.set(1);
     this.pixProofFile.set(null);
     this.pixProofPreview.set(null);
   }
 
-  addMoreItems() {
-    this.closeCheckout();
-    this.isCartSidebarOpen.set(true);
+  goToReviewStep() {
+    this.checkoutForm.markAllAsTouched();
+    if(this.checkoutForm.invalid) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+    this.checkoutStep.set(2);
   }
 
-  private generateTimeSlots() {
-    const { hoursToday } = this.shopStatus();
-    if (!hoursToday || !hoursToday.is_open) {
-      this.availableSlots.set([]);
+  composedAddress = computed(() => {
+    const { street, number, complement, reference } = this.checkoutForm.value;
+    return [`${street || ''}, ${number || ''}`, complement, reference ? `(Ref: ${reference})` : ''].filter(p => p).join(' - ');
+  });
+
+  updateDeliveryFee() {
+    const settings = this.settings().delivery;
+    if (this.checkoutForm.get('delivery_option')?.value !== 'delivery') {
+      this.currentDeliveryFee.set(0);
+      return;
+    }
+
+    if (settings.type === 'fixed') {
+      this.currentDeliveryFee.set(settings.fixed_fee);
+    } else {
+      const neighborhoodName = this.checkoutForm.get('neighborhood')?.value;
+      const neighborhood = settings.neighborhoods.find(n => n.name === neighborhoodName);
+      this.currentDeliveryFee.set(neighborhood ? neighborhood.fee : 0);
+    }
+  }
+
+  availableCoupons = computed(() => {
+    const subtotal = this.cartService.subtotal();
+    return this.coupons().filter(c => subtotal >= (c.minimum_order_value || 0));
+  });
+
+  applyCoupon(code: string) {
+    this.couponError.set(null);
+    const couponCode = code.toUpperCase().trim();
+    const coupon = this.coupons().find(c => c.code.toUpperCase() === couponCode);
+
+    if (!coupon) {
+      this.couponError.set('Cupom inválido.');
+      return;
+    }
+
+    if (this.user()?.used_coupons?.includes(coupon.code)) {
+      this.couponError.set('Você já utilizou este cupom.');
       return;
     }
     
-    const slots = [];
-    const now = new Date();
-    const [startH, startM] = hoursToday.start.split(':').map(Number);
-    const [endH, endM] = hoursToday.end.split(':').map(Number);
-    
-    let slotTime = new Date();
-    slotTime.setHours(startH, startM, 0, 0);
+    const subtotal = this.cartService.subtotal();
+    if (coupon.minimum_order_value && subtotal < coupon.minimum_order_value) {
+      this.couponError.set(`Pedido mínimo de ${coupon.minimum_order_value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})} necessário.`);
+      return;
+    }
 
-    let currentTime = new Date();
-    currentTime.setMinutes(currentTime.getMinutes() + 30); // Start slots 30 mins from now
-    
-    if (slotTime < currentTime) slotTime = currentTime;
+    this.appliedCoupon.set(coupon);
+    this.isCouponsModalOpen.set(false);
+    this.couponCodeInput.set('');
+  }
 
-    const endTime = new Date();
-    endTime.setHours(endH, endM, 0, 0);
-
-    while (slotTime <= endTime) {
-      const hours = slotTime.getHours().toString().padStart(2, '0');
-      const minutes = slotTime.getMinutes().toString().padStart(2, '0');
-      slots.push(`${hours}:${minutes}`);
-      slotTime.setMinutes(slotTime.getMinutes() + 15);
+  removeCoupon() {
+    this.appliedCoupon.set(null);
+  }
+  
+  remainingLoyaltyPoints = computed(() => {
+    const user = this.user();
+    if (!user) return 0;
+    const pointsNeeded = this.settings().loyalty_program.points_for_reward;
+    return Math.max(0, pointsNeeded - user.loyalty_points);
+  });
+  
+  applyLoyaltyReward() {
+    const user = this.user();
+    const settings = this.settings().loyalty_program;
+    if (!user || !settings.enabled || user.loyalty_points < settings.points_for_reward) {
+      alert('Você não tem pontos suficientes.');
+      return;
     }
     
-    this.availableSlots.set(slots);
+    if (settings.reward_type === 'fixed') {
+      this.appliedLoyaltyDiscount.set(settings.reward_value);
+    } else if (settings.reward_type === 'free_shipping') {
+      this.appliedLoyaltyFreeShipping.set(true);
+    }
+    
+    this.isLoyaltyModalOpen.set(false);
+  }
+  
+  removeLoyaltyReward() {
+    this.appliedLoyaltyDiscount.set(0);
+    this.appliedLoyaltyFreeShipping.set(false);
   }
 
   onFileSelected(event: Event) {
@@ -455,222 +515,177 @@ export class MenuComponent implements OnInit {
       const file = input.files[0];
       this.pixProofFile.set(file);
       const reader = new FileReader();
-      reader.onload = (e) => this.pixProofPreview.set(e.target?.result as string);
+      reader.onload = (e: any) => this.pixProofPreview.set(e.target.result);
       reader.readAsDataURL(file);
     }
   }
 
-  copyPixKey() { navigator.clipboard.writeText(this.settings().pix_key); alert('Chave PIX copiada!'); }
+  copyPixKey() {
+    navigator.clipboard.writeText(this.settings().pix_key);
+    alert('Chave PIX copiada!');
+  }
 
-  goToReviewStep() {
-    this.checkoutForm.markAllAsTouched();
-    if (this.checkoutForm.invalid) {
-      alert('Por favor, preencha todos os campos obrigatórios.'); return;
-    }
-    if (this.checkoutForm.get('payment_method')?.value === 'pix-online' && !this.pixProofFile()) {
-      alert('Por favor, anexe o comprovante do PIX.'); return;
-    }
-    this.now = new Date();
-    this.checkoutStep.set(2);
+  availableSlots = computed(() => {
+      const { hoursToday } = this.shopStatus();
+      if (!hoursToday || !hoursToday.is_open) return [];
+      const slots = [];
+      const now = new Date();
+      const [startH, startM] = hoursToday.start.split(':').map(Number);
+      const [endH, endM] = hoursToday.end.split(':').map(Number);
+
+      let currentHour = now.getHours();
+      let currentMinute = now.getMinutes();
+      
+      // Round up to the next 15-minute interval
+      currentMinute = Math.ceil((currentMinute + 1) / 15) * 15;
+      if (currentMinute >= 60) {
+        currentMinute -= 60;
+        currentHour += 1;
+      }
+      
+      const startTime = Math.max(startH * 60 + startM, currentHour * 60 + currentMinute);
+      const endTime = endH * 60 + endM;
+
+      for (let time = startTime; time <= endTime; time += 15) {
+          const hours = Math.floor(time / 60);
+          const minutes = time % 60;
+          if (hours < 24) {
+              slots.push(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+          }
+      }
+      return slots;
+  });
+
+  getGroupedAddons(item: CartItem): { categoryName: string, addons: Addon[] }[] {
+    const product = this.products().find(p => p.id === item.product_id);
+    if (!product) return [];
+    return product.addon_categories
+      .map(catId => this.getAddonCategoryById(catId))
+      .filter((cat): cat is AddonCategory => !!cat)
+      .map(cat => ({
+        categoryName: cat.name,
+        addons: item.addons.filter(addon => cat.addons.some(a => a.id === addon.id))
+      }))
+      .filter(group => group.addons.length > 0);
   }
-  
-  get composedAddress(): string {
-    const { street, number, complement, reference } = this.checkoutForm.value;
-    return [`${street || ''}, ${number || ''}`, complement, reference ? `(Ref: ${reference})` : ''].filter(p => p).join(' - ');
-  }
+
+  paymentMethodNames: { [key: string]: string } = {
+    'pix-machine': 'PIX na Maquininha', 'card': 'Cartão', 'cash': 'Dinheiro', 'pix-online': 'PIX Online', 'credit': 'Fiado'
+  };
 
   async finalizeOrder() {
-    if (this.isSubmittingOrder()) return;
     this.isSubmittingOrder.set(true);
-
     try {
-      const formValue = this.checkoutForm.getRawValue();
-      let pixProofUrl: string | undefined;
-      if (this.pixProofFile()) {
-        pixProofUrl = await this.imageUploadService.uploadImage(this.pixProofFile()!, 'proofs');
-      }
-
-      const order: Omit<Order, 'id' | 'date' | 'status'> = {
-        customer_name: formValue.customer_name,
-        delivery_option: formValue.delivery_option as 'delivery' | 'pickup',
-        delivery_address: formValue.delivery_option === 'delivery' ? this.composedAddress : undefined,
-        neighborhood: formValue.delivery_option === 'delivery' ? formValue.neighborhood : undefined,
-        payment_method: formValue.payment_method as any,
-        change_for: formValue.payment_method === 'cash' ? Number(formValue.change_for) || undefined : undefined,
-        pix_proof_url: pixProofUrl,
-        items: this.cartService.items(),
-        subtotal: this.cartService.subtotal(),
-        delivery_fee: this.currentDeliveryFee(),
-        total: this.total(),
-        coupon_code: this.appliedCoupon()?.code,
-        discount_amount: this.discountAmount(),
-        shipping_discount_amount: this.shippingDiscount(),
-        loyalty_discount_amount: this.appliedLoyaltyDiscount(),
-        loyalty_shipping_discount_amount: this.loyaltyShippingDiscount(),
-        scheduled_time: formValue.scheduled_time || undefined
-      };
-
-      const whatsappNumber = this.settings().whatsapp;
-      const isScheduled = !!order.scheduled_time;
-      let message = isScheduled ? `*NOVO PEDIDO AGENDADO* \n\n` : `*NOVO PEDIDO* \n\n`;
-      message += `*Cliente:* ${order.customer_name}\n`;
-      if(order.scheduled_time) message += `*Horário:* ${order.scheduled_time}\n`;
-      message += `*Entrega:* ${order.delivery_option === 'delivery' ? 'Delivery' : 'Retirada na Loja'}\n`;
-      if (order.delivery_option === 'delivery') {
-        message += `*Endereço:* ${order.delivery_address}\n*Bairro:* ${order.neighborhood}\n`;
-      }
-      message += `\n*Itens do Pedido:*\n`;
-
-      const currencyPipe = new CurrencyPipe('pt-BR');
-
-      order.items.forEach(item => {
-        message += `*- ${item.quantity}x ${item.product_name} ${item.size.name !== 'Único' ? `(${item.size.name})` : ''}*\n`;
-        if (item.notes) {
-            message += `  *Obs:* ${item.notes}\n`;
+        const formValue = this.checkoutForm.getRawValue();
+        let pixProofUrl: string | undefined;
+        if (formValue.payment_method === 'pix-online') {
+            const file = this.pixProofFile();
+            if (!file) {
+                alert('Por favor, anexe o comprovante PIX.');
+                this.isSubmittingOrder.set(false);
+                return;
+            }
+            const pathPrefix = `pix_proofs/${Date.now()}`;
+            pixProofUrl = await this.imageUploadService.uploadImage(file, pathPrefix);
         }
-        if (item.addons.length > 0) {
-          message += `  *Adicionais:*\n`;
-          item.addons.forEach(addon => {
-            const addonPriceText = addon.price > 0 ? currencyPipe.transform(addon.price, 'BRL', 'symbol', '1.2-2') : 'Grátis';
-            message += `    - ${addon.name} (+ ${addonPriceText})\n`;
-          });
+        
+        const order: Omit<Order, 'id' | 'date' | 'status'> = {
+            customer_name: formValue.customer_name,
+            delivery_option: formValue.delivery_option,
+            delivery_address: formValue.delivery_option === 'delivery' ? this.composedAddress() : undefined,
+            neighborhood: formValue.delivery_option === 'delivery' ? formValue.neighborhood : undefined,
+            payment_method: formValue.payment_method,
+            change_for: formValue.payment_method === 'cash' ? Number(formValue.change_for) || undefined : undefined,
+            pix_proof_url: pixProofUrl,
+            items: this.cartService.items(),
+            subtotal: this.cartService.subtotal(),
+            delivery_fee: this.currentDeliveryFee(),
+            total: this.total(),
+            scheduled_time: formValue.scheduled_time || undefined,
+            coupon_code: this.appliedCoupon()?.code,
+            discount_amount: this.discountAmount(),
+            shipping_discount_amount: this.shippingDiscount(),
+            loyalty_discount_amount: this.appliedLoyaltyDiscount(),
+            loyalty_shipping_discount_amount: this.loyaltyShippingDiscount(),
+        };
+
+        const newOrder = await this.dataService.addOrder(order);
+
+        const coupon = this.appliedCoupon();
+        if (coupon) this.authService.useCoupon(coupon.code);
+        if (this.appliedLoyaltyDiscount() > 0 || this.appliedLoyaltyFreeShipping()) {
+            this.authService.redeemLoyaltyPoints(this.settings());
         }
-      });
-      
-      message += `\n*Subtotal:* ${currencyPipe.transform(order.subtotal, 'BRL', 'symbol', '1.2-2')}\n`;
-      if (order.delivery_fee > 0) message += `*Taxa de Entrega:* ${currencyPipe.transform(order.delivery_fee, 'BRL', 'symbol', '1.2-2')}\n`;
-      if ((order.discount_amount ?? 0) > 0) message += `*Desconto:* -${currencyPipe.transform(order.discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-      if ((order.shipping_discount_amount ?? 0) > 0) message += `*Desc. Frete:* -${currencyPipe.transform(order.shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-      if ((order.loyalty_discount_amount ?? 0) > 0) message += `*Desc. Fidelidade:* -${currencyPipe.transform(order.loyalty_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-      if ((order.loyalty_shipping_discount_amount ?? 0) > 0) message += `*Frete Grátis (Fidelidade):* -${currencyPipe.transform(order.loyalty_shipping_discount_amount, 'BRL', 'symbol', '1.2-2')}\n`;
-      message += `*TOTAL:* *${currencyPipe.transform(order.total, 'BRL', 'symbol', '1.2-2')}*\n\n`;
-      message += `*Forma de Pagamento:* ${this.paymentMethodNames[order.payment_method] || order.payment_method}\n`;
-      if (order.payment_method === 'cash' && order.change_for) {
-        message += `*Troco para:* ${currencyPipe.transform(order.change_for, 'BRL', 'symbol', '1.2-2')}\n`;
-      }
+        this.authService.addLoyaltyPoints(order.subtotal, this.settings());
+        
+        const message = this.generateWhatsAppMessage(newOrder);
+        this.openWhatsApp(message);
+        
+        this.cartService.clearCart();
+        this.closeCheckout();
+        this.removeCoupon();
+        this.removeLoyaltyReward();
+        
+        this.setTrackedOrderId(newOrder.id);
+        this.isTrackingModalOpen.set(true);
+        this.saveOrderToHistory(newOrder.id);
 
-      const newOrder = await this.dataService.addOrder(order);
-      this.trackOrder(newOrder.id);
-      this.savePastOrderId(newOrder.id);
-      if (order.delivery_option === 'delivery') this.saveLastAddress();
-
-      // Mark coupon as used
-      if (this.appliedCoupon()) {
-        this.authService.useCoupon(this.appliedCoupon()!.code);
-      }
-
-      this.authService.addLoyaltyPoints(order.subtotal, this.settings());
-      if (this.appliedLoyaltyDiscount() > 0 || this.appliedLoyaltyFreeShipping()) {
-        this.authService.redeemLoyaltyPoints(this.settings());
-      }
-      
-      this.cartService.clearCart();
-      this.closeCheckout();
-      
-      const sanitizedWhatsappNumber = whatsappNumber.replace(/\D/g, '');
-      const whatsappUrl = `https://wa.me/${sanitizedWhatsappNumber}?text=${encodeURIComponent(message)}`;
-      window.location.href = whatsappUrl;
-
-    } catch (error) {
-      console.error('Failed to save order:', error);
-      alert('Houve um erro ao registrar seu pedido. Tente novamente.');
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.error('Falha ao finalizar pedido:', e);
+        alert(`Ocorreu um erro ao enviar seu pedido: ${message}`);
     } finally {
-      this.isSubmittingOrder.set(false);
+        this.isSubmittingOrder.set(false);
     }
   }
 
-  private trackOrder(orderId: string) {
-    localStorage.setItem(this.TRACKED_ORDER_ID_KEY, orderId);
-    this.trackedOrder.set(this.dataService.orders().find(o => o.id === orderId) || null);
-  }
-  
-  private loadTrackedOrderId(): string | null {
-    return localStorage.getItem(this.TRACKED_ORDER_ID_KEY);
-  }
-
-  clearTrackedOrder() {
-    localStorage.removeItem(this.TRACKED_ORDER_ID_KEY);
-    this.trackedOrder.set(null);
-    this.isTrackingModalOpen.set(false);
-  }
-
-  private savePastOrderId(orderId: string) {
-    let ids = this.getPastOrderIds();
-    if (!ids.includes(orderId)) {
-        ids.push(orderId);
-        localStorage.setItem(this.PAST_ORDER_IDS_KEY, JSON.stringify(ids));
-    }
-  }
-
-  private getPastOrderIds(): string[] {
-    const stored = localStorage.getItem(this.PAST_ORDER_IDS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  }
-  
-  openPastOrdersModal() {
-    this.pastOrders.set(
-      this.dataService.orders()
-        .filter(o => this.getPastOrderIds().includes(o.id))
-        .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    );
-    this.isPastOrdersModalOpen.set(true);
-  }
-
-  private saveLastAddress() {
-      const { street, number, complement, reference, neighborhood } = this.checkoutForm.getRawValue();
-      const address = { street, number, complement, reference, neighborhood };
-      localStorage.setItem(this.LAST_ADDRESS_KEY, JSON.stringify(address));
-  }
-
-  private loadLastAddress() {
-      const stored = localStorage.getItem(this.LAST_ADDRESS_KEY);
-      if (stored) {
-          const address = JSON.parse(stored);
-          this.checkoutForm.patchValue(address);
-          this.updateDeliveryFee();
+  private saveOrderToHistory(orderId: string): void {
+      if (!this.isBrowser()) return;
+      try {
+          const historyJson = localStorage.getItem('acai_order_history');
+          const history = historyJson ? JSON.parse(historyJson) : [];
+          if (!history.includes(orderId)) {
+              history.push(orderId);
+              localStorage.setItem('acai_order_history', JSON.stringify(history));
+          }
+      } catch (e) {
+          console.error('Error saving order to history', e);
       }
   }
 
-  applyCoupon(code: string) {
-    this.couponError.set(null);
-    const user = this.user();
-    if (user?.used_coupons?.includes(code.toLowerCase())) {
-      this.couponError.set('Este cupom já foi utilizado por você.');
-      return;
-    }
-    const coupon = this.coupons().find(c => c.code.toLowerCase() === code.toLowerCase());
-    if (!coupon) { this.couponError.set('Cupom inválido.'); return; }
-    if (coupon.minimum_order_value && this.cartService.subtotal() < coupon.minimum_order_value) {
-      this.couponError.set(`Pedido mínimo de ${new CurrencyPipe('pt-BR').transform(coupon.minimum_order_value, 'BRL')} necessário.`); return;
-    }
-    this.appliedCoupon.set(coupon);
-    this.appliedLoyaltyDiscount.set(0);
-    this.appliedLoyaltyFreeShipping.set(false);
-    this.couponCodeInput.set('');
-    this.isCouponsModalOpen.set(false);
-  }
-  
-  removeCoupon() { this.appliedCoupon.set(null); }
+  private generateWhatsAppMessage(order: Order): string {
+    const header = `*NOVO PEDIDO PELO CARDÁPIO DIGITAL* 🎉\n\n`;
+    const customer = `*Cliente:* ${order.customer_name}\n`;
+    const delivery = order.delivery_option === 'delivery'
+        ? `*Entrega:* ${order.delivery_address}, ${order.neighborhood}\n`
+        : `*Opção:* Retirada na Loja\n`;
+    const schedule = order.scheduled_time ? `*AGENDADO PARA:* ${order.scheduled_time}\n` : '';
+    const items = order.items.map(item => {
+        let itemText = `*${item.quantity}x ${item.product_name} (${item.size.name})*`;
+        if(item.addons.length > 0) {
+            itemText += `\n  Adicionais: ${item.addons.map(a => a.name).join(', ')}`;
+        }
+        if(item.notes) {
+            itemText += `\n  _Obs: ${item.notes}_`;
+        }
+        return itemText;
+    }).join('\n\n');
+    const payment = `\n\n*Forma de Pagamento:* ${this.paymentMethodNames[order.payment_method] || order.payment_method}`;
+    const change = order.payment_method === 'cash' && order.change_for
+        ? ` (precisa de troco para ${order.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})`
+        : '';
+    const total = `\n\n*SUBTOTAL:* ${order.subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`
+      + `*ENTREGA:* ${order.delivery_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`
+      + (order.discount_amount ? `*DESCONTO:* -${(order.discount_amount + (order.shipping_discount_amount || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n` : '')
+      + (order.loyalty_discount_amount ? `*DESC. FIDELIDADE:* -${(order.loyalty_discount_amount + (order.loyalty_shipping_discount_amount || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n` : '')
+      + `*TOTAL A PAGAR: ${order.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}*`;
 
-  applyLoyaltyReward() {
-    const user = this.user();
-    const settings = this.settings().loyalty_program;
-    if (!user || !settings.enabled || user.loyalty_points < settings.points_for_reward) return;
-
-    this.removeCoupon();
-    if(settings.reward_type === 'fixed') {
-      this.appliedLoyaltyDiscount.set(settings.reward_value);
-      this.appliedLoyaltyFreeShipping.set(false);
-    } else {
-      this.appliedLoyaltyDiscount.set(0);
-      this.appliedLoyaltyFreeShipping.set(true);
-    }
-    this.isLoyaltyModalOpen.set(false);
-    this.isCartSidebarOpen.set(true);
+    return header + customer + delivery + schedule + '\n--- *ITENS* ---\n' + items + payment + change + total;
   }
 
-  removeLoyaltyReward() {
-    this.appliedLoyaltyDiscount.set(0);
-    this.appliedLoyaltyFreeShipping.set(false);
+  private openWhatsApp(message: string): void {
+      const whatsappNumber = this.settings().whatsapp.replace(/\D/g, '');
+      const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
   }
 }
