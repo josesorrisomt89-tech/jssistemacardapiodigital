@@ -25,7 +25,7 @@
           @if (shopStatus().is_temporarily_closed) {
             <span>Fechado Temporariamente</span>
           } @else {
-            <span>{{ shopStatus().is_open ? 'Aberto' : 'Fechado' }} ({{todaysHours}})</span>
+            <span>{{ shopStatus().is_open ? 'Aberto' : 'Fechado' }} ({{todaysHours()}})</span>
           }
         </div>
       </div>
