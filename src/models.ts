@@ -11,6 +11,8 @@ export interface WheelPrize {
   couponCode: string;
   description: string;
   color: string;
+  eligible_free_products?: { productId: string; sizeName: string }[];
+  minimum_order_value_for_free_product?: number;
 }
 
 export interface ShopSettings {
@@ -136,7 +138,7 @@ export interface Coupon {
   id: string;
   code: string;
   description: string;
-  discount_type: 'percentage' | 'fixed' | 'free_shipping' | 'free_product';
+  discount_type: 'percentage' | 'fixed' | 'free_shipping';
   discount_value: number;
   minimum_order_value?: number;
 }

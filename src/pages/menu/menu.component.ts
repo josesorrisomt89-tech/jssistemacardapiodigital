@@ -9,6 +9,8 @@ import { ImageUploadService } from '../../services/image-upload.service';
 import { Product, AddonCategory, ProductSize, Addon, CartItem, Order, NeighborhoodFee, DayOpeningHours, Coupon, WheelPrize } from '../../models';
 import { WheelOfFortuneComponent } from '../../components/wheel-of-fortune/wheel-of-fortune.component';
 
+type FreePrizeProduct = { product: Product, eligibleSizes: ProductSize[] };
+
 @Component({
   selector: 'app-menu',
   templateUrl: './menu.component.html',
@@ -164,10 +166,13 @@ export class MenuComponent implements OnInit {
   isWheelModalOpen = signal(false);
   canSpinWheel = signal(true);
 
+  isFreePrizeModalOpen = signal(false);
+  freePrizeContext = signal<{ products: FreePrizeProduct[], prize: WheelPrize } | null>(null);
+  freePrizeStep = signal<'product' | 'size'>('product');
+  selectedProductForFreePrize = signal<FreePrizeProduct | null>(null);
+
   showWheelButton = computed(() => {
     const wheelSettings = this.settings().loyalty_program?.wheel_of_fortune;
-    // We show the button if the feature is enabled and the user is allowed to spin.
-    // The minimum order value check is now handled on click.
     return !!wheelSettings?.enabled && this.canSpinWheel();
   });
 
@@ -180,15 +185,6 @@ export class MenuComponent implements OnInit {
     if (coupon.minimum_order_value && subtotal < coupon.minimum_order_value) return 0;
     if (coupon.discount_type === 'fixed') return Math.min(coupon.discount_value, subtotal);
     if (coupon.discount_type === 'percentage') return (subtotal * coupon.discount_value) / 100;
-    if (coupon.discount_type === 'free_product') {
-        const items = this.cartService.items();
-        if (items.length === 0) return 0;
-        const cheapestItemPrice = items.reduce((min, item) => {
-            const unitPrice = item.total_price / item.quantity;
-            return Math.min(min, unitPrice);
-        }, Infinity);
-        return cheapestItemPrice === Infinity ? 0 : cheapestItemPrice;
-    }
     return 0;
   });
   
@@ -217,6 +213,25 @@ export class MenuComponent implements OnInit {
     const loyaltyDisc = this.appliedLoyaltyDiscount();
     const loyaltyShipDisc = this.loyaltyShippingDiscount();
     return Math.max(0, subtotal + fee - couponDisc - shipDisc - loyaltyDisc - loyaltyShipDisc);
+  });
+
+  // Logic for free product minimum requirement
+  freeProductRequirement = signal(0);
+  paidItemsSubtotal = computed(() => {
+    return this.cartService.items()
+      .filter(item => item.notes !== 'Prêmio da Roleta')
+      .reduce((acc, item) => acc + item.total_price, 0);
+  });
+  isCheckoutBlockedByFreebie = computed(() => {
+    const requirement = this.freeProductRequirement();
+    return requirement > 0 && this.paidItemsSubtotal() < requirement;
+  });
+  remainingForFreebie = computed(() => {
+    const requirement = this.freeProductRequirement();
+    if (requirement > 0) {
+      return Math.max(0, requirement - this.paidItemsSubtotal());
+    }
+    return 0;
   });
 
   checkoutForm: FormGroup;
@@ -269,7 +284,7 @@ export class MenuComponent implements OnInit {
         changeForControl?.reset('');
       }
     });
-
+    
     effect(() => {
         const user = this.user();
         if(user) {
@@ -287,6 +302,14 @@ export class MenuComponent implements OnInit {
         } else {
             this.trackedOrder.set(null);
         }
+    });
+
+    effect(() => {
+      const items = this.cartService.items();
+      const hasFreeItem = items.some(item => item.notes === 'Prêmio da Roleta');
+      if (!hasFreeItem) {
+        this.freeProductRequirement.set(0);
+      }
     });
   }
 
@@ -428,6 +451,11 @@ export class MenuComponent implements OnInit {
   startCheckout() {
     if (!this.shopStatus().is_open || this.shopStatus().is_temporarily_closed) {
       alert('A loja está fechada no momento e não aceita pedidos.');
+      return;
+    }
+    if (this.isCheckoutBlockedByFreebie()) {
+      const remaining = this.remainingForFreebie().toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+      alert(`Você precisa adicionar mais ${remaining} em produtos para resgatar seu prêmio!`);
       return;
     }
     this.isCartSidebarOpen.set(false);
@@ -612,12 +640,106 @@ export class MenuComponent implements OnInit {
     }
   }
 
+  handlePrize(prize: WheelPrize) {
+    this.isWheelModalOpen.set(false);
+    this.canSpinWheel.set(false);
+    if (this.isBrowser()) {
+      sessionStorage.setItem('hasSpunWheel', 'true');
+    }
+
+    if (prize.type === 'none') {
+      return;
+    }
+
+    if (prize.type === 'free_product') {
+      const allProducts = this.products();
+      const eligibleProductMap = new Map<string, FreePrizeProduct>();
+
+      if (prize.eligible_free_products && prize.eligible_free_products.length > 0) {
+        for (const eligible of prize.eligible_free_products) {
+          const product = allProducts.find(p => p.id === eligible.productId);
+          if (product && product.is_available) {
+            const size = product.sizes.find(s => s.name === eligible.sizeName && s.is_available);
+            if (size) {
+              if (!eligibleProductMap.has(product.id)) {
+                eligibleProductMap.set(product.id, { product: product, eligibleSizes: [] });
+              }
+              eligibleProductMap.get(product.id)!.eligibleSizes.push(size);
+            }
+          }
+        }
+      }
+
+      const eligibleProducts = Array.from(eligibleProductMap.values());
+
+      if (eligibleProducts.length > 0) {
+        this.freePrizeContext.set({ products: eligibleProducts, prize });
+        this.freePrizeStep.set('product');
+        this.selectedProductForFreePrize.set(null);
+        this.isFreePrizeModalOpen.set(true);
+      } else {
+        alert('Parabéns! Você ganhou um produto grátis, mas não há opções elegíveis disponíveis no momento. Entre em contato com a loja.');
+      }
+    } else {
+      const coupon: Coupon = {
+        id: prize.couponCode,
+        code: prize.couponCode,
+        description: prize.description,
+        discount_type: prize.type,
+        discount_value: prize.value
+      };
+      
+      const existingCoupon = this.coupons().find(c => c.id === coupon.id);
+      if(!existingCoupon) {
+        this.dataService.coupons.update(c => [...c, coupon]);
+      }
+      
+      this.applyCoupon(coupon.code);
+      this.isCartSidebarOpen.set(true);
+    }
+  }
+
+  selectFreePrizeProduct(productData: FreePrizeProduct) {
+    this.selectedProductForFreePrize.set(productData);
+    this.freePrizeStep.set('size');
+  }
+  
+  selectFreePrizeSize(size: ProductSize) {
+    const productData = this.selectedProductForFreePrize();
+    const prize = this.freePrizeContext()?.prize;
+    if (!productData || !prize) return;
+
+    this.cartService.addItem(
+      productData.product.id,
+      productData.product.name,
+      size,
+      [],
+      1,
+      `Prêmio da Roleta`,
+      0 // Override price to be free
+    );
+
+    this.freeProductRequirement.set(prize.minimum_order_value_for_free_product || 0);
+
+    this.isFreePrizeModalOpen.set(false);
+    this.isCartSidebarOpen.set(true);
+  }
+  
+  backToProductSelection() {
+    this.freePrizeStep.set('product');
+    this.selectedProductForFreePrize.set(null);
+  }
+
+  getAddonNames(addons: Addon[]): string {
+    return addons.map(a => a.name).join(', ');
+  }
+
   async finalizeOrder() {
     this.isSubmittingOrder.set(true);
     try {
         const formValue = this.checkoutForm.getRawValue();
         let pixProofUrl: string | undefined;
-        if (formValue.payment_method === 'pix-online') {
+        if (formValue.payment_method === 'pix-online' && this.total() > 0) {
             const file = this.pixProofFile();
             if (!file) {
                 alert('Por favor, anexe o comprovante PIX.');
@@ -667,92 +789,91 @@ export class MenuComponent implements OnInit {
         
         this.setTrackedOrderId(newOrder.id);
         this.isTrackingModalOpen.set(true);
-        this.saveOrderToHistory(newOrder.id);
+        if (this.isBrowser()) {
+          const orderHistoryJson = localStorage.getItem('acai_order_history');
+          const orderHistory = orderHistoryJson ? JSON.parse(orderHistoryJson) : [];
+          orderHistory.push(newOrder.id);
+          localStorage.setItem('acai_order_history', JSON.stringify(orderHistory));
+        }
 
     } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        console.error('Falha ao finalizar pedido:', e);
-        alert(`Ocorreu um erro ao enviar seu pedido: ${message}`);
+      const message = e instanceof Error ? e.message : String(e);
+      alert('Ocorreu um erro ao finalizar o pedido. ' + message);
     } finally {
-        this.isSubmittingOrder.set(false);
+      this.isSubmittingOrder.set(false);
     }
-  }
-
-  handlePrize(prize: WheelPrize) {
-    this.canSpinWheel.set(false);
-    if (this.isBrowser()) {
-      sessionStorage.setItem('hasSpunWheel', 'true');
-    }
-
-    setTimeout(() => {
-      this.isWheelModalOpen.set(false);
-    }, 3000);
-
-    if (prize.type !== 'none') {
-      const newCoupon: Coupon = {
-        id: `WHEEL_${Date.now()}`,
-        code: prize.couponCode,
-        description: prize.description,
-        discount_type: prize.type,
-        discount_value: prize.value,
-        minimum_order_value: 0
-      };
-      
-      this.appliedCoupon.set(newCoupon);
-      
-      setTimeout(() => {
-        this.isCartSidebarOpen.set(true);
-      }, 500);
-    }
-  }
-
-  private saveOrderToHistory(orderId: string): void {
-      if (!this.isBrowser()) return;
-      try {
-          const historyJson = localStorage.getItem('acai_order_history');
-          const history = historyJson ? JSON.parse(historyJson) : [];
-          if (!history.includes(orderId)) {
-              history.push(orderId);
-              localStorage.setItem('acai_order_history', JSON.stringify(history));
-          }
-      } catch (e) {
-          console.error('Error saving order to history', e);
-      }
   }
 
   private generateWhatsAppMessage(order: Order): string {
-    const header = `*NOVO PEDIDO PELO CARDÁPIO DIGITAL* 🎉\n\n`;
-    const customer = `*Cliente:* ${order.customer_name}\n`;
-    const delivery = order.delivery_option === 'delivery'
-        ? `*Entrega:* ${order.delivery_address}, ${order.neighborhood}\n`
-        : `*Opção:* Retirada na Loja\n`;
-    const schedule = order.scheduled_time ? `*AGENDADO PARA:* ${order.scheduled_time}\n` : '';
-    const items = order.items.map(item => {
-        let itemText = `*${item.quantity}x ${item.product_name} (${item.size.name})*`;
-        if(item.addons.length > 0) {
-            itemText += `\n  Adicionais: ${item.addons.map(a => a.name).join(', ')}`;
-        }
-        if(item.notes) {
-            itemText += `\n  _Obs: ${item.notes}_`;
-        }
-        return itemText;
-    }).join('\n\n');
-    const payment = `\n\n*Forma de Pagamento:* ${this.paymentMethodNames[order.payment_method] || order.payment_method}`;
-    const change = order.payment_method === 'cash' && order.change_for
-        ? ` (precisa de troco para ${order.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})`
-        : '';
-    const total = `\n\n*SUBTOTAL:* ${order.subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`
-      + `*ENTREGA:* ${order.delivery_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`
-      + (order.discount_amount ? `*DESCONTO:* -${(order.discount_amount + (order.shipping_discount_amount || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n` : '')
-      + (order.loyalty_discount_amount ? `*DESC. FIDELIDADE:* -${(order.loyalty_discount_amount + (order.loyalty_shipping_discount_amount || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n` : '')
-      + `*TOTAL A PAGAR: ${order.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}*`;
+    const settings = this.settings();
+    let message = `*NOVO PEDIDO DO CARDÁPIO DIGITAL* 🎉\n\n`;
+    message += `*Pedido #${order.id.slice(-4).toUpperCase()}*\n`;
+    if (order.scheduled_time) {
+      message += `*⚠️ PEDIDO AGENDADO PARA ${order.scheduled_time} ⚠️*\n\n`;
+    }
+    message += `*Cliente:* ${order.customer_name}\n\n`;
 
-    return header + customer + delivery + schedule + '\n--- *ITENS* ---\n' + items + payment + change + total;
+    order.items.forEach(item => {
+        message += `*${item.quantity}x ${item.product_name}*`;
+        if (item.size.name !== 'Único') {
+            message += ` (${item.size.name})`;
+        }
+        message += ` - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total_price / item.quantity)}\n`;
+
+        if (item.addons.length > 0) {
+            const grouped = this.getGroupedAddons(item);
+            grouped.forEach(g => {
+                message += `  *_${g.categoryName}:_*\n`;
+                g.addons.forEach(addon => {
+                    message += `    - ${addon.name}`;
+                    if(addon.price > 0) message += ` (+${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(addon.price)})`
+                    message += '\n';
+                })
+            })
+        }
+        if (item.notes) {
+            message += `  *Obs:* ${item.notes}\n`;
+        }
+    });
+
+    message += `\n*Subtotal:* ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.subtotal)}\n`;
+
+    if (order.delivery_fee > 0) {
+        message += `*Taxa de Entrega:* ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.delivery_fee)}\n`;
+    }
+
+    if (order.discount_amount && order.discount_amount > 0) {
+        message += `*Desconto:* -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.discount_amount)}\n`;
+    }
+    if (order.shipping_discount_amount && order.shipping_discount_amount > 0) {
+        message += `*Desconto Frete:* -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.shipping_discount_amount)}\n`;
+    }
+     if (order.loyalty_discount_amount && order.loyalty_discount_amount > 0) {
+        message += `*Desconto Fidelidade:* -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.loyalty_discount_amount)}\n`;
+    }
+      if (order.loyalty_shipping_discount_amount && order.loyalty_shipping_discount_amount > 0) {
+        message += `*Frete Grátis Fidelidade:* -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.loyalty_shipping_discount_amount)}\n`;
+    }
+
+    message += `*Total:* *${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}*\n\n`;
+
+    if (order.delivery_option === 'delivery') {
+        message += `*ENTREGA:* ${order.delivery_address}, ${order.neighborhood}\n\n`;
+    } else {
+        message += `*RETIRADA NA LOJA*\n\n`;
+    }
+
+    message += `*Pagamento:* ${this.paymentMethodNames[order.payment_method] || order.payment_method}\n`;
+    if (order.payment_method === 'cash' && order.change_for) {
+        message += `*Troco para:* ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.change_for)}\n`;
+    }
+
+    return message;
   }
 
   private openWhatsApp(message: string): void {
-      const whatsappNumber = this.settings().whatsapp.replace(/\D/g, '');
-      const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-      window.open(url, '_blank');
+    const whatsappNumber = this.settings().whatsapp.replace(/\D/g, '');
+    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
   }
 }

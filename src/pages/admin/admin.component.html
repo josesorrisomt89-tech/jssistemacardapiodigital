@@ -729,6 +729,51 @@
                         <input formControlName="description" placeholder="Ex: Prêmio da Roleta: 10% OFF" class="w-full bg-gray-700 p-2 rounded text-sm">
                       </div>
                     </div>
+                    @if ($any(prizeControl).get('type')?.value === 'free_product') {
+                      <div class="pt-3 border-t border-gray-700 space-y-3">
+                        <div>
+                          <label class="text-xs text-gray-400">Valor Mínimo de Compra para Resgate (R$)</label>
+                          <input formControlName="minimum_order_value_for_free_product" type="number" placeholder="0" class="w-full bg-gray-700 p-2 rounded text-sm">
+                        </div>
+
+                        <label class="text-xs text-gray-400 block">Produtos e Tamanhos Elegíveis</label>
+                        
+                        <div formArrayName="eligible_free_products" class="space-y-1 max-h-24 overflow-y-auto bg-gray-900 p-2 rounded">
+                          @for(itemControl of $any(prizeControl.get('eligible_free_products')).controls; track $index; let i = $index) {
+                            <div class="flex items-center justify-between text-sm p-1">
+                              <span>{{ getProductName(itemControl.value.productId) }} ({{ itemControl.value.sizeName }})</span>
+                              <button type="button" (click)="removeEligibleFreeProduct(prizeControl, i)" class="text-red-400 font-bold">×</button>
+                            </div>
+                          }
+                        </div>
+            
+                        <div class="flex gap-2 items-end">
+                          <div class="flex-grow">
+                            <label class="text-xs text-gray-400">Produto</label>
+                            <select #prodSelect (change)="onProductSelectForPrize($event, prizeControl)" class="w-full bg-gray-700 p-2 rounded text-sm">
+                              <option value="">Selecione...</option>
+                              @for (product of sortedProducts(); track product.id) {
+                                  @if(product.price_type === 'sized' && product.sizes.length > 0) {
+                                      <option [value]="product.id">{{ product.name }}</option>
+                                  }
+                              }
+                            </select>
+                          </div>
+                          <div class="flex-grow">
+                            <label class="text-xs text-gray-400">Tamanho</label>
+                            <select #sizeSelect class="w-full bg-gray-700 p-2 rounded text-sm">
+                              <option value="">Selecione...</option>
+                              @if(prizeSizesMap.has(prizeControl)) {
+                                @for(size of prizeSizesMap.get(prizeControl); track size.name) {
+                                    <option [value]="size.name">{{ size.name }} - {{ size.price | currency:'BRL' }}</option>
+                                }
+                              }
+                            </select>
+                          </div>
+                          <button type="button" (click)="addEligibleFreeProduct(prizeControl, prodSelect.value, sizeSelect.value)" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-3 py-2 rounded text-sm">Add</button>
+                        </div>
+                      </div>
+                    }
                   </div>
                 }
               </div>

@@ -83,7 +83,7 @@
           <button (click)="selectedCategory.set(category.id)" 
                   class="py-2 px-4 rounded-full text-sm font-semibold whitespace-nowrap transition-colors"
                   [class.shadow-md]="selectedCategory() === category.id"
-                  [class.bg-gray-200]="selectedCategory() !== category.id"
+                  [class.bg-gray-200]="selectedCategory() !== 'all'"
                   [style.color]="selectedCategory() === category.id ? settings().layout.button_text_color : settings().layout.text_secondary_color"
                   [style.backgroundColor]="selectedCategory() === category.id ? settings().layout.primary_color : ''">
               {{ category.name }}
@@ -262,7 +262,12 @@
                   }
               </div>
           </div>
-        <button (click)="startCheckout()" class="w-full font-bold py-3 px-4 rounded-lg" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Finalizar Pedido ({{total() | currency:'BRL'}})</button>
+          @if (isCheckoutBlockedByFreebie()) {
+            <div class="p-2 text-xs text-center rounded-md bg-yellow-100 text-yellow-800 mb-2">
+              Faltam <strong>{{ remainingForFreebie() | currency:'BRL' }}</strong> em outros produtos para você resgatar seu prêmio!
+            </div>
+          }
+        <button (click)="startCheckout()" [disabled]="isCheckoutBlockedByFreebie()" class="w-full font-bold py-3 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Finalizar Pedido ({{total() | currency:'BRL'}})</button>
       </div>
     </div>
   }
@@ -379,7 +384,7 @@
   <!-- Checkout Modal -->
   @if (isCheckoutModalOpen()) {
     <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div class="w-full max-w-lg rounded-lg flex flex-col max-h-[90vh]" [style.backgroundColor]="settings().layout.card_color">
+      <div class="w-full max-w-lg rounded-lg flex flex-col max-h-[90vh]" [style.backgroundColor]="settings().layout.card_color" (click)="$event.stopPropagation()">
         <div class="p-4 border-b flex justify-between items-center" [style.borderColor]="settings().layout.background_color">
           <h2 class="text-xl font-bold">Finalizar Pedido</h2>
           <button (click)="closeCheckout()" class="text-gray-400 hover:text-gray-800">&times;</button>
@@ -463,7 +468,7 @@
                    @if (checkoutForm.get('payment_method')?.value === 'pix-online') {
                       <div class="p-3 rounded-lg border bg-white" [style.borderColor]="settings().layout.primary_color">
                         <p class="text-sm">Chave PIX: <span class="font-semibold">{{settings().pix_key}}</span></p>
-                        <button (click)="copyPixKey()" class="text-xs font-semibold py-1 px-2 rounded mt-1" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Copiar Chave</button>
+                        <button type="button" (click)="copyPixKey()" class="text-xs font-semibold py-1 px-2 rounded mt-1" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Copiar Chave</button>
                         <label class="block text-sm font-medium mt-2 mb-1">Anexe o comprovante:</label>
                         <input type="file" (change)="onFileSelected($event)" accept="image/*" class="w-full text-sm text-gray-500 file:bg-gray-100 file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-4">
                         @if(pixProofPreview()) {
@@ -475,226 +480,95 @@
               </div>
             </form>
           } @else if (checkoutStep() === 2) {
-             <div class="bg-white text-black font-mono text-xs w-full p-4 rounded-md">
-                <div class="text-center">
-                  <h2 class="text-lg font-bold">{{ settings().name }}</h2>
-                  <p>{{ settings().address }}</p>
-                  <p>WhatsApp: {{ settings().whatsapp }}</p>
-                </div>
-                <div class="border-t border-b border-dashed border-black my-2 py-1">
-                  <p class="flex justify-between"><span>Data:</span> <span>{{ now | date:'dd/MM/yy HH:mm' }}</span></p>
-                  <p class="font-bold mt-1">DADOS DO CLIENTE:</p>
-                  <p>Nome: {{ checkoutForm.value.customer_name }}</p>
-                  @if (checkoutForm.value.delivery_option === 'delivery') {
-                    <p>Endereço: {{ composedAddress }}, {{ checkoutForm.value.neighborhood }}</p>
-                  } @else {
-                    <p>Opção: Retirada na Loja</p>
-                  }
-                  @if (checkoutForm.value.scheduled_time) {
-                    <p>Agendado para: {{ checkoutForm.value.scheduled_time }}</p>
-                  }
-                </div>
+            <!-- Review Step -->
+            <div class="space-y-4 text-sm">
                 <div>
-                  <h3 class="text-center font-bold mb-1">ITENS</h3>
-                  @for(item of cartService.items(); track $index) {
-                    <div class="mb-1 border-b border-dotted border-black pb-1">
-                      <div class="flex justify-between">
-                        <span class="font-bold">{{ item.quantity }}x {{ item.product_name }} @if(item.size.name !== 'Único') { ({{ item.size.name }}) }</span>
-                        <span>{{ item.size.price * item.quantity | currency:'BRL' }}</span>
-                      </div>
-                      @if(item.notes) {
-                        <p class="pl-2 text-[10px] italic text-gray-700">Obs: {{ item.notes }}</p>
-                      }
-                      @if(getGroupedAddons(item).length > 0) {
-                        <div class="pl-2 text-[10px]">
-                            @for (group of getGroupedAddons(item); track group.categoryName) {
-                                <div class="mt-1">
-                                    <p class="font-semibold italic">{{ group.categoryName }}:</p>
-                                    @for (addon of group.addons; track addon.id) {
-                                        <p class="pl-2 flex justify-between">
-                                            <span>- {{ addon.name }}</span>
-                                            <span>{{ addon.price > 0 ? (addon.price * item.quantity | currency:'BRL') : 'Grátis' }}</span>
-                                        </p>
-                                    }
-                                </div>
-                            }
-                        </div>
-                      }
+                    <h3 class="font-bold mb-1">Seus Dados</h3>
+                    <div class="p-3 rounded" [style.backgroundColor]="settings().layout.card_color">
+                        <p><strong>Nome:</strong> {{ checkoutForm.get('customer_name')?.value }}</p>
+                        @if (checkoutForm.get('delivery_option')?.value === 'delivery') {
+                            <p><strong>Entrega em:</strong> {{ composedAddress() }}</p>
+                            <p><strong>Bairro:</strong> {{ checkoutForm.get('neighborhood')?.value }}</p>
+                        } @else {
+                            <p><strong>Opção:</strong> Retirada na Loja</p>
+                        }
                     </div>
-                  }
                 </div>
-                <div class="text-center mt-4">
-                  <p>Pagamento: {{ paymentMethodNames[checkoutForm.value.payment_method!] || checkoutForm.value.payment_method }}
-                    @if(checkoutForm.value.payment_method === 'cash' && checkoutForm.value.change_for) {
-                      <span>(Troco para {{checkoutForm.value.change_for | currency:'BRL'}})</span>
-                    }
-                  </p>
-                  <p class="font-bold mt-2">Obrigado pela preferência!</p>
+
+                <div>
+                    <h3 class="font-bold mb-1">Itens do Pedido</h3>
+                    <div class="space-y-2">
+                        @for(item of cartService.items(); track $index) {
+                            <div class="p-2 rounded" [style.backgroundColor]="settings().layout.card_color">
+                                <div class="flex justify-between font-semibold">
+                                    <span>{{item.quantity}}x {{item.product_name}} ({{item.size.name}})</span>
+                                    <span>{{item.total_price | currency:'BRL'}}</span>
+                                </div>
+                                 @if (item.notes) {
+                                    <p class="text-xs text-yellow-500 italic pl-2 mt-1">Obs: {{ item.notes }}</p>
+                                 }
+                                @if(item.addons.length > 0) {
+                                    <p class="text-xs pl-2" [style.color]="settings().layout.text_secondary_color">+ {{ getAddonNames(item.addons) }}</p>
+                                }
+                            </div>
+                        }
+                    </div>
                 </div>
-              </div>
+                
+                 <div>
+                    <h3 class="font-bold mb-1">Pagamento</h3>
+                    <div class="p-3 rounded" [style.backgroundColor]="settings().layout.card_color">
+                       <p><strong>Método:</strong> {{ paymentMethodNames[checkoutForm.get('payment_method')?.value] || '' }}</p>
+                       @if (checkoutForm.get('payment_method')?.value === 'cash' && checkoutForm.get('change_for')?.value) {
+                         <p><strong>Troco para:</strong> {{ checkoutForm.get('change_for')?.value | currency:'BRL' }}</p>
+                       }
+                    </div>
+                 </div>
+
+                <div>
+                    <h3 class="font-bold mb-1">Resumo Financeiro</h3>
+                    <div class="p-3 rounded space-y-1" [style.backgroundColor]="settings().layout.card_color">
+                        <p class="flex justify-between"><span>Subtotal:</span> <span>{{ cartService.subtotal() | currency:'BRL' }}</span></p>
+                        @if(currentDeliveryFee() > 0) {
+                            <p class="flex justify-between"><span>Taxa de Entrega:</span> <span>{{ currentDeliveryFee() | currency:'BRL' }}</span></p>
+                        }
+                        @if(discountAmount() > 0) {
+                            <p class="flex justify-between text-green-600"><span>Desconto (Cupom):</span> <span>-{{ discountAmount() | currency:'BRL' }}</span></p>
+                        }
+                        @if(shippingDiscount() > 0) {
+                            <p class="flex justify-between text-green-600"><span>Frete Grátis (Cupom):</span> <span>-{{ shippingDiscount() | currency:'BRL' }}</span></p>
+                        }
+                        @if(appliedLoyaltyDiscount() > 0) {
+                            <p class="flex justify-between text-green-600"><span>Desconto (Fidelidade):</span> <span>-{{ appliedLoyaltyDiscount() | currency:'BRL' }}</span></p>
+                        }
+                         @if(loyaltyShippingDiscount() > 0) {
+                            <p class="flex justify-between text-green-600"><span>Frete Grátis (Fidelidade):</span> <span>-{{ loyaltyShippingDiscount() | currency:'BRL' }}</span></p>
+                        }
+                        <p class="flex justify-between font-bold text-lg pt-1 border-t" [style.borderColor]="settings().layout.background_color"><span>Total:</span> <span>{{ total() | currency:'BRL' }}</span></p>
+                    </div>
+                </div>
+            </div>
           }
         </div>
-        
-        <div class="p-4 border-t" [style.borderColor]="settings().layout.background_color">
-           <div class="space-y-1 text-sm mb-3">
-              <div class="flex justify-between"><span>Subtotal</span><span>{{ cartService.subtotal() | currency:'BRL' }}</span></div>
-              <div class="flex justify-between"><span>Taxa de Entrega</span><span>{{ currentDeliveryFee() | currency:'BRL' }}</span></div>
-              @if(discountAmount() > 0 || shippingDiscount() > 0) {
-                <div class="flex justify-between text-green-500">
-                    <span>Desconto ({{appliedCoupon()?.code}})</span>
-                    <span>-{{ (discountAmount() + shippingDiscount()) | currency:'BRL' }}</span>
-                </div>
-              }
-               @if(appliedLoyaltyDiscount() > 0 || loyaltyShippingDiscount() > 0) {
-                <div class="flex justify-between text-green-500">
-                    <span>Desconto Fidelidade</span>
-                    <span>-{{ (appliedLoyaltyDiscount() + loyaltyShippingDiscount()) | currency:'BRL' }}</span>
-                </div>
-              }
-              <div class="flex justify-between font-bold text-lg pt-1 border-t" [style.borderColor]="settings().layout.background_color">
-                <span>Total</span><span [style.color]="settings().layout.accent_color">{{ total() | currency:'BRL' }}</span>
-              </div>
-           </div>
+
+        <div class="p-4 border-t flex justify-between items-center" [style.borderColor]="settings().layout.background_color">
            @if (checkoutStep() === 1) {
-             <button (click)="goToReviewStep()" class="w-full font-bold py-3 px-4 rounded-lg" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Continuar</button>
+            <button (click)="goToReviewStep()" class="w-full font-bold py-3 px-4 rounded-lg" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">
+              Ir para Revisão
+            </button>
            } @else {
-             <button (click)="finalizeOrder()" [disabled]="isSubmittingOrder()" class="w-full font-bold py-3 px-4 rounded-lg flex items-center justify-center disabled:opacity-50" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">
+              <button (click)="checkoutStep.set(1)" class="font-semibold py-3 px-4 rounded-lg" [style.color]="settings().layout.text_secondary_color">
+                Voltar
+              </button>
+              <button (click)="finalizeOrder()" [disabled]="isSubmittingOrder()" class="font-bold py-3 px-6 rounded-lg disabled:opacity-50" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">
                 @if (isSubmittingOrder()) {
-                   <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                   Enviando...
+                  <span>Enviando...</span>
                 } @else {
-                   Enviar Pedido para o WhatsApp
+                  <span>Confirmar e Enviar Pedido</span>
                 }
-             </button>
-             <button (click)="checkoutStep.set(1)" class="w-full mt-2 text-sm" [style.color]="settings().layout.text_secondary_color">Voltar e editar</button>
+              </button>
            }
         </div>
-      </div>
-    </div>
-  }
-  
-  <!-- Coupons Modal -->
-  @if(isCouponsModalOpen()) {
-    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" (click)="isCouponsModalOpen.set(false)">
-      <div class="w-full max-w-sm rounded-lg p-4 space-y-3 shadow-lg" [style.backgroundColor]="settings().layout.card_color" (click)="$event.stopPropagation()">
-        <h3 class="font-bold text-lg">Aplicar Cupom</h3>
-        <input [value]="couponCodeInput()" (input)="couponCodeInput.set($any($event.target).value)" (keyup.enter)="applyCoupon(couponCodeInput())" placeholder="Digite seu cupom" class="w-full p-2 rounded uppercase border-gray-200" [style.backgroundColor]="settings().layout.background_color">
-        @if(couponError()) {
-          <p class="text-red-500 text-sm">{{ couponError() }}</p>
-        }
-        <div class="flex justify-end space-x-2">
-          <button (click)="isCouponsModalOpen.set(false)" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm">Cancelar</button>
-          <button (click)="applyCoupon(couponCodeInput())" class="font-semibold px-4 py-2 rounded-lg text-sm" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Aplicar</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Available Coupons Modal -->
-  @if(isAvailableCouponsModalOpen()) {
-    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" (click)="isAvailableCouponsModalOpen.set(false)">
-      <div class="w-full max-w-sm rounded-lg p-4 space-y-3 max-h-[80vh] flex flex-col shadow-lg" [style.backgroundColor]="settings().layout.card_color" (click)="$event.stopPropagation()">
-        <h3 class="font-bold text-lg">Cupons Disponíveis</h3>
-        <div class="flex-grow overflow-y-auto space-y-2 p-1" [style.backgroundColor]="settings().layout.background_color">
-          @for(coupon of availableCoupons(); track coupon.id) {
-            <div class="p-3 rounded space-y-1" [style.backgroundColor]="settings().layout.card_color">
-              <p class="font-bold text-sm uppercase tracking-wider" [style.color]="settings().layout.accent_color">{{coupon.code}}</p>
-              <p class="text-xs">{{coupon.description}}</p>
-              @if(coupon.minimum_order_value) {
-                <p class="text-xs" [style.color]="settings().layout.text_secondary_color">Pedido mínimo: {{coupon.minimum_order_value | currency:'BRL'}}</p>
-              }
-              @if (cartService.subtotal() < (coupon.minimum_order_value ?? 0)) {
-                <p class="text-xs text-yellow-500 mt-2">Faltam {{ (coupon.minimum_order_value ?? 0) - cartService.subtotal() | currency:'BRL' }} no seu carrinho para usar este cupom.</p>
-                <button disabled class="w-full text-center py-2 mt-2 rounded text-sm font-semibold opacity-50 cursor-not-allowed" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">
-                  Aplicar Cupom
-                </button>
-              } @else {
-                <button (click)="applyCoupon(coupon.code); isAvailableCouponsModalOpen.set(false); isCartSidebarOpen.set(true);" 
-                        class="w-full text-center py-2 mt-2 rounded text-sm font-semibold transition-transform transform hover:scale-105" 
-                        [style.backgroundColor]="settings().layout.primary_color" 
-                        [style.color]="settings().layout.button_text_color">
-                  Aplicar Cupom
-                </button>
-              }
-            </div>
-          }
-          @if(availableCoupons().length === 0) {
-            <p class="text-sm text-center py-4" [style.color]="settings().layout.text_secondary_color">Nenhum cupom disponível no momento.</p>
-          }
-        </div>
-        <div class="flex justify-end">
-          <button (click)="isAvailableCouponsModalOpen.set(false)" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm">Fechar</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Loyalty Modal -->
-  @if(isLoyaltyModalOpen()) {
-    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" (click)="isLoyaltyModalOpen.set(false)">
-      <div class="w-full max-w-sm rounded-lg p-4 text-center shadow-lg" [style.backgroundColor]="settings().layout.card_color" (click)="$event.stopPropagation()">
-        <h3 class="font-bold text-lg">Resgatar Recompensa</h3>
-        <p class="my-4">Você tem <span class="font-bold" [style.color]="settings().layout.accent_color">{{user()?.loyalty_points}}</span> pontos e precisa de <span class="font-bold">{{settings().loyalty_program.points_for_reward}}</span> para resgatar.</p>
-        <p class="mb-4">Sua recompensa é: <span class="font-bold">{{ settings().loyalty_program.reward_type === 'fixed' ? (settings().loyalty_program.reward_value | currency:'BRL') + ' de desconto' : 'Frete Grátis' }}</span>.</p>
-        <p class="text-sm mb-6">Deseja usar seus pontos agora?</p>
-        <div class="flex justify-center space-x-2">
-          <button (click)="isLoyaltyModalOpen.set(false)" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">Não</button>
-          <button (click)="applyLoyaltyReward()" class="font-semibold px-4 py-2 rounded-lg" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Sim, Resgatar</button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Tracking Modal -->
-  @if (isTrackingModalOpen() && trackedOrder(); as order) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" (click)="isTrackingModalOpen.set(false)">
-        <div class="w-full max-w-sm rounded-lg p-6 text-center shadow-lg" [style.backgroundColor]="settings().layout.card_color" (click)="$event.stopPropagation()">
-            <h2 class="text-2xl font-bold mb-4">Acompanhar Pedido</h2>
-            <p class="text-lg mb-2">Status do Pedido #{{ order.id.slice(-4) }}:</p>
-            <p class="text-3xl font-bold py-3 px-5 rounded-lg inline-block" [style.backgroundColor]="settings().layout.background_color" [style.color]="settings().layout.primary_color">
-                {{ order.status }}
-            </p>
-            @if (order.status === 'Entregue' || order.status === 'Pago e Entregue' || order.status === 'Cancelado') {
-                <p class="text-sm mt-4" [style.color]="settings().layout.text_secondary_color">Seu pedido foi finalizado.</p>
-                <button (click)="clearTrackedOrder()" class="mt-6 w-full font-semibold py-2 px-4 rounded-lg bg-gray-200 text-gray-800">Fechar</button>
-            } @else {
-                <p class="text-sm mt-4" [style.color]="settings().layout.text_secondary_color">Seu pedido está em andamento. Fique de olho aqui para atualizações!</p>
-                <button (click)="isTrackingModalOpen.set(false)" class="mt-6 w-full font-semibold py-2 px-4 rounded-lg bg-gray-200 text-gray-800">Fechar</button>
-            }
-        </div>
-    </div>
-  }
-
-  <!-- Past Orders Modal -->
-  @if (isPastOrdersModalOpen()) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" (click)="isPastOrdersModalOpen.set(false)">
-        <div class="w-full max-w-sm rounded-lg p-4 max-h-[80vh] flex flex-col shadow-lg" [style.backgroundColor]="settings().layout.card_color" (click)="$event.stopPropagation()">
-            <h2 class="text-xl font-bold mb-4 border-b border-gray-200 pb-2">Seus Últimos Pedidos</h2>
-            <div class="flex-grow overflow-y-auto space-y-3 p-1" [style.backgroundColor]="settings().layout.background_color">
-                @for(order of pastOrders(); track order.id) {
-                    <div class="p-3 rounded-lg" [style.backgroundColor]="settings().layout.card_color">
-                        <div class="flex justify-between text-sm">
-                            <span class="font-semibold">Pedido #{{ order.id.slice(-4) }}</span>
-                            <span [style.color]="settings().layout.text_secondary_color">{{ order.date | date:'dd/MM/yy' }}</span>
-                        </div>
-                        <p class="text-xs mt-1" [style.color]="settings().layout.text_secondary_color">{{ order.items.length }} {{ order.items.length > 1 ? 'itens' : 'item' }} - {{ order.total | currency:'BRL' }}</p>
-                        <p class="text-xs font-semibold mt-1" [style.color]="settings().layout.accent_color">Status: {{ order.status }}</p>
-                    </div>
-                }
-                @if (pastOrders().length === 0) {
-                  <p class="text-center py-10" [style.color]="settings().layout.text_secondary_color">Você ainda não fez nenhum pedido.</p>
-                }
-            </div>
-             <button (click)="isPastOrdersModalOpen.set(false)" class="mt-4 w-full font-semibold py-2 px-4 rounded-lg bg-gray-200 text-gray-800">Fechar</button>
-        </div>
-    </div>
-  }
-
-  <!-- Wheel of Fortune Modal -->
-  @if (isWheelModalOpen()) {
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div class="w-full max-w-md rounded-lg p-4 text-center shadow-lg" [style.backgroundColor]="settings().layout.card_color" (click)="$event.stopPropagation()">
-        <app-wheel-of-fortune (prizeWon)="handlePrize($event)" [prizes]="settings().loyalty_program?.wheel_of_fortune?.prizes || []"></app-wheel-of-fortune>
       </div>
     </div>
   }

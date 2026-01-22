@@ -11,8 +11,10 @@ export class CartService {
   
   itemCount = computed(() => this.items().reduce((acc, item) => acc + item.quantity, 0));
 
-  addItem(product_id: string, product_name: string, size: ProductSize, addons: Addon[], quantity: number, notes?: string) {
-    const itemPrice = (size.price + addons.reduce((sum, addon) => sum + addon.price, 0)) * quantity;
+  addItem(product_id: string, product_name: string, size: ProductSize, addons: Addon[], quantity: number, notes?: string, overridePrice?: number) {
+    const itemPrice = (overridePrice !== undefined) 
+      ? overridePrice 
+      : (size.price + addons.reduce((sum, addon) => sum + addon.price, 0)) * quantity;
     
     const newItem: CartItem = {
       product_id,

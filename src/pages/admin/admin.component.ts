@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed, effect, ViewChild, ElementRef, OnInit, OnDestroy, Signal, WritableSignal } from '@angular/core';
 import { CurrencyPipe, DatePipe, KeyValuePipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, FormArray, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, FormArray, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
@@ -135,6 +135,8 @@ export class AdminComponent implements OnInit, OnDestroy {
   isUploading = signal(false);
   
   private productFile = signal<File | null>(null);
+  
+  prizeSizesMap = new Map<AbstractControl, ProductSize[]>();
 
   reportDeliveries = computed(() => {
     const driverId = this.selectedDriverForReport()?.id;
@@ -648,7 +650,14 @@ export class AdminComponent implements OnInit, OnDestroy {
       value: [{value: prize?.value || 0, disabled: prize?.type === 'none' || prize?.type === 'free_shipping' || prize?.type === 'free_product'}, [Validators.min(0)]],
       couponCode: [prize?.couponCode || ''],
       description: [prize?.description || ''],
-      color: [prize?.color || defaultColor, Validators.required]
+      color: [prize?.color || defaultColor, Validators.required],
+      eligible_free_products: this.fb.array(
+        prize?.eligible_free_products?.map(p => this.fb.group({
+            productId: [p.productId, Validators.required],
+            sizeName: [p.sizeName, Validators.required]
+        })) || []
+      ),
+      minimum_order_value_for_free_product: [prize?.minimum_order_value_for_free_product || 0, [Validators.min(0)]]
     });
 
     prizeForm.get('type')?.valueChanges.subscribe(type => {
@@ -661,6 +670,33 @@ export class AdminComponent implements OnInit, OnDestroy {
       }
     });
     this.wheelPrizes.push(prizeForm);
+  }
+
+  getProductName(productId: string): string {
+    return this.dataService.products().find(p => p.id === productId)?.name || 'Produto não encontrado';
+  }
+
+  onProductSelectForPrize(event: Event, prizeControl: AbstractControl) {
+    const productId = (event.target as HTMLSelectElement).value;
+    const product = this.dataService.products().find(p => p.id === productId);
+    this.prizeSizesMap.set(prizeControl, product?.sizes || []);
+  }
+
+  addEligibleFreeProduct(prizeControl: AbstractControl, productId: string, sizeName: string) {
+    if (!productId || !sizeName) {
+      alert('Por favor, selecione um produto e um tamanho.');
+      return;
+    }
+    const eligibleProductsArray = prizeControl.get('eligible_free_products') as FormArray;
+    eligibleProductsArray.push(this.fb.group({
+      productId: [productId],
+      sizeName: [sizeName]
+    }));
+  }
+
+  removeEligibleFreeProduct(prizeControl: AbstractControl, index: number) {
+    const eligibleProductsArray = prizeControl.get('eligible_free_products') as FormArray;
+    eligibleProductsArray.removeAt(index);
   }
 
   removeWheelPrize(index: number) { this.wheelPrizes.removeAt(index); }
