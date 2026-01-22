@@ -165,7 +165,7 @@ export class MenuComponent implements OnInit {
   canSpinWheel = signal(true);
 
   showWheelButton = computed(() => {
-    const wheelSettings = this.settings().wheel_of_fortune;
+    const wheelSettings = this.settings().loyalty_program?.wheel_of_fortune;
     // We show the button if the feature is enabled and the user is allowed to spin.
     // The minimum order value check is now handled on click.
     return !!wheelSettings?.enabled && this.canSpinWheel();
@@ -180,6 +180,15 @@ export class MenuComponent implements OnInit {
     if (coupon.minimum_order_value && subtotal < coupon.minimum_order_value) return 0;
     if (coupon.discount_type === 'fixed') return Math.min(coupon.discount_value, subtotal);
     if (coupon.discount_type === 'percentage') return (subtotal * coupon.discount_value) / 100;
+    if (coupon.discount_type === 'free_product') {
+        const items = this.cartService.items();
+        if (items.length === 0) return 0;
+        const cheapestItemPrice = items.reduce((min, item) => {
+            const unitPrice = item.total_price / item.quantity;
+            return Math.min(min, unitPrice);
+        }, Infinity);
+        return cheapestItemPrice === Infinity ? 0 : cheapestItemPrice;
+    }
     return 0;
   });
   
@@ -591,7 +600,7 @@ export class MenuComponent implements OnInit {
   };
 
   openWheelOrShowMessage() {
-    const wheelSettings = this.settings().wheel_of_fortune;
+    const wheelSettings = this.settings().loyalty_program?.wheel_of_fortune;
     const subtotal = this.cartService.subtotal();
     const minValue = wheelSettings?.minimum_order_value || 0;
 

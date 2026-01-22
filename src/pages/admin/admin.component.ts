@@ -17,7 +17,7 @@ import { GeminiService } from '../../services/gemini.service';
   imports: [ReactiveFormsModule, CurrencyPipe, DatePipe, KeyValuePipe, LayoutPreviewComponent, ReceiptComponent, RouterLink]
 })
 export class AdminComponent implements OnInit, OnDestroy {
-  private dataService: DataService = inject(DataService);
+  dataService: DataService = inject(DataService);
   private authService: AuthService = inject(AuthService);
   private fb: FormBuilder = inject(FormBuilder);
   private router: Router = inject(Router);
@@ -565,13 +565,14 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.sliderImages.clear();
     settings.slider_images?.forEach(image => this.addSliderImage(image));
 
-    if(settings.wheel_of_fortune) {
+    const wheelSettings = settings.loyalty_program?.wheel_of_fortune;
+    if(wheelSettings) {
       this.wheelForm.patchValue({
-        enabled: settings.wheel_of_fortune.enabled,
-        minimum_order_value: settings.wheel_of_fortune.minimum_order_value
+        enabled: wheelSettings.enabled,
+        minimum_order_value: wheelSettings.minimum_order_value
       });
       this.wheelPrizes.clear();
-      settings.wheel_of_fortune.prizes.forEach(prize => this.addWheelPrize(prize));
+      wheelSettings.prizes.forEach(prize => this.addWheelPrize(prize));
     }
   }
   
@@ -626,9 +627,13 @@ export class AdminComponent implements OnInit, OnDestroy {
       return;
     }
     const currentSettings = this.dataService.settings();
+    const updatedLoyaltyProgram = {
+      ...currentSettings.loyalty_program,
+      wheel_of_fortune: this.wheelForm.getRawValue()
+    };
     const settingsToSave: ShopSettings = { 
       ...currentSettings, 
-      wheel_of_fortune: this.wheelForm.getRawValue(), 
+      loyalty_program: updatedLoyaltyProgram, 
       id: 1 
     };
     await this.dataService.saveSettings(settingsToSave);
@@ -636,17 +641,19 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   addWheelPrize(prize?: WheelPrize) {
+    const defaultColor = this.wheelPrizes.length % 2 === 0 ? '#7C3AED' : '#FBBF24';
     const prizeForm = this.fb.group({
       label: [prize?.label || '', Validators.required],
       type: [prize?.type || 'none', Validators.required],
-      value: [{value: prize?.value || 0, disabled: prize?.type === 'none' || prize?.type === 'free_shipping'}, [Validators.min(0)]],
+      value: [{value: prize?.value || 0, disabled: prize?.type === 'none' || prize?.type === 'free_shipping' || prize?.type === 'free_product'}, [Validators.min(0)]],
       couponCode: [prize?.couponCode || ''],
-      description: [prize?.description || '']
+      description: [prize?.description || ''],
+      color: [prize?.color || defaultColor, Validators.required]
     });
 
     prizeForm.get('type')?.valueChanges.subscribe(type => {
       const valueControl = prizeForm.get('value');
-      if (type === 'none' || type === 'free_shipping') {
+      if (type === 'none' || type === 'free_shipping' || type === 'free_product') {
         valueControl?.setValue(0);
         valueControl?.disable();
       } else {

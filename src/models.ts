@@ -6,10 +6,11 @@ export interface DayOpeningHours {
 
 export interface WheelPrize {
   label: string;
-  type: 'percentage' | 'fixed' | 'free_shipping' | 'none';
+  type: 'percentage' | 'fixed' | 'free_shipping' | 'none' | 'free_product';
   value: number;
   couponCode: string;
   description: string;
+  color: string;
 }
 
 export interface ShopSettings {
@@ -60,11 +61,11 @@ export interface ShopSettings {
     points_for_reward: number;
     reward_type: 'fixed' | 'free_shipping';
     reward_value: number;
-  };
-  wheel_of_fortune?: {
-    enabled: boolean;
-    minimum_order_value: number;
-    prizes: WheelPrize[];
+    wheel_of_fortune?: {
+      enabled: boolean;
+      minimum_order_value: number;
+      prizes: WheelPrize[];
+    };
   };
   is_temporarily_closed: boolean;
   temporary_closure_message: string;
@@ -135,7 +136,7 @@ export interface Coupon {
   id: string;
   code: string;
   description: string;
-  discount_type: 'percentage' | 'fixed' | 'free_shipping';
+  discount_type: 'percentage' | 'fixed' | 'free_shipping' | 'free_product';
   discount_value: number;
   minimum_order_value?: number;
 }

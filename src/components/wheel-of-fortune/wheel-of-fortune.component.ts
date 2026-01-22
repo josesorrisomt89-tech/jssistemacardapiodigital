@@ -7,7 +7,6 @@ import { WheelPrize } from '../../models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WheelOfFortuneComponent {
-  colors = input<[string, string]>(['#7C3AED', '#000000']);
   prizes = input.required<WheelPrize[]>();
   prizeWon = output<WheelPrize>();
   
@@ -18,13 +17,11 @@ export class WheelOfFortuneComponent {
   
   conicGradient = computed(() => {
     const prizesList = this.prizes();
-    if (!prizesList || prizesList.length === 0) return '';
-    const color1 = this.colors()[0];
-    const color2 = this.colors()[1];
+    if (!prizesList || prizesList.length === 0) return 'radial-gradient(circle, #888, #ccc)';
     const segmentDegree = 360 / prizesList.length;
     let gradient = 'conic-gradient(';
     for (let i = 0; i < prizesList.length; i++) {
-        const color = i % 2 === 0 ? color1 : color2;
+        const color = prizesList[i].color || '#CCCCCC';
         gradient += `${color} ${i * segmentDegree}deg ${(i + 1) * segmentDegree}deg`;
         if (i < prizesList.length - 1) {
             gradient += ', ';
