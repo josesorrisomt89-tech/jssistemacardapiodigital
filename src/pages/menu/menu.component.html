@@ -112,14 +112,21 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @for(product of group.products; track product.id) {
                   <div (click)="openProductModal(product)" class="rounded-lg overflow-hidden flex h-32 shadow" [style.backgroundColor]="settings().layout.card_color" [class.cursor-pointer]="product.is_available" [class.cursor-not-allowed]="!product.is_available" [class.opacity-50]="!product.is_available">
-                    <div class="flex-1 p-3">
-                      <h3 class="font-bold">{{product.name}}</h3>
-                      <p class="text-xs mb-2 line-clamp-2" [style.color]="settings().layout.text_secondary_color">{{product.description}}</p>
+                    <div class="flex-1 p-3 flex flex-col justify-between">
+                      <div>
+                        <div class="flex items-center gap-2 mb-1">
+                          <h3 class="font-bold">{{product.name}}</h3>
+                          @if(isProductOnSale(product)) {
+                            <span class="text-sm font-bold bg-yellow-400 text-black px-3 py-1 rounded-full shadow">PROMOÇÃO</span>
+                          }
+                        </div>
+                        <p class="text-xs line-clamp-2" [style.color]="settings().layout.text_secondary_color">{{product.description}}</p>
+                      </div>
                       <span class="font-semibold" [style.color]="settings().layout.accent_color">
                         @if (product.price_type === 'fixed') {
                           {{ product.price | currency:'BRL' }}
                         } @else {
-                          A partir de {{ (product.sizes.length > 0 ? product.sizes[0].price : 0) | currency:'BRL' }}
+                          A partir de {{ getLowestPrice(product) | currency:'BRL' }}
                         }
                       </span>
                     </div>
@@ -134,14 +141,21 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           @for(product of filteredProducts(); track product.id) {
             <div (click)="openProductModal(product)" class="rounded-lg overflow-hidden flex h-32 shadow" [style.backgroundColor]="settings().layout.card_color" [class.cursor-pointer]="product.is_available" [class.cursor-not-allowed]="!product.is_available" [class.opacity-50]="!product.is_available">
-              <div class="flex-1 p-3">
-                <h3 class="font-bold">{{product.name}}</h3>
-                <p class="text-xs mb-2 line-clamp-2" [style.color]="settings().layout.text_secondary_color">{{product.description}}</p>
+              <div class="flex-1 p-3 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="font-bold">{{product.name}}</h3>
+                    @if(isProductOnSale(product)) {
+                      <span class="text-sm font-bold bg-yellow-400 text-black px-3 py-1 rounded-full shadow">PROMOÇÃO</span>
+                    }
+                  </div>
+                  <p class="text-xs line-clamp-2" [style.color]="settings().layout.text_secondary_color">{{product.description}}</p>
+                </div>
                 <span class="font-semibold" [style.color]="settings().layout.accent_color">
                   @if (product.price_type === 'fixed') {
                     {{ product.price | currency:'BRL' }}
                   } @else {
-                    A partir de {{ (product.sizes.length > 0 ? product.sizes[0].price : 0) | currency:'BRL' }}
+                    A partir de {{ getLowestPrice(product) | currency:'BRL' }}
                   }
                 </span>
               </div>
@@ -305,7 +319,14 @@
                               [style.borderColor]="selectedSize() === size ? settings().layout.primary_color : settings().layout.card_color"
                               [style.backgroundColor]="selectedSize() === size ? settings().layout.primary_color + '1A' : settings().layout.card_color">
                         <span class="font-medium block">{{ size.name }}</span>
-                        <span class="block text-sm" [style.color]="settings().layout.accent_color">{{ size.price | currency:'BRL' }}</span>
+                        @if (size.promotional_price && size.promotional_price > 0) {
+                          <div>
+                            <span class="block text-xs line-through" [style.color]="settings().layout.text_secondary_color">{{ size.price | currency:'BRL' }}</span>
+                            <span class="block text-sm font-bold text-yellow-500">{{ size.promotional_price | currency:'BRL' }}</span>
+                          </div>
+                        } @else {
+                          <span class="block text-sm" [style.color]="settings().layout.accent_color">{{ size.price | currency:'BRL' }}</span>
+                        }
                         @if (!size.is_available) { <span class="absolute top-1 right-1 text-xs bg-red-600 text-white px-1.5 py-0.5 rounded">Indisponível</span> }
                         @if (selectedSize() === size) {
                           <div class="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">

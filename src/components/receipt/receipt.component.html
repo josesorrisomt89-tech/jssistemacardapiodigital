@@ -59,7 +59,14 @@
             <div class="mb-1 border-b border-dotted border-black pb-1">
               <div class="flex justify-between">
                 <span class="font-bold">{{ item.quantity }}x {{ item.product_name }} @if(item.size.name !== 'Único') { ({{ item.size.name }}) }</span>
-                <span>{{ item.size.price | currency:'BRL' }}</span>
+                @if(item.size.promotional_price && item.size.promotional_price > 0) {
+                  <div class="text-right">
+                    <span class="line-through text-[10px]">{{ item.size.price | currency:'BRL' }}</span>
+                    <span>{{ item.size.promotional_price | currency:'BRL' }}</span>
+                  </div>
+                } @else {
+                  <span>{{ item.size.price | currency:'BRL' }}</span>
+                }
               </div>
               @if (item.notes) {
                 <p class="pl-2 text-[10px] italic">Obs: {{ item.notes }}</p>

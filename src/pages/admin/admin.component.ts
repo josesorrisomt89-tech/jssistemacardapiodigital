@@ -151,7 +151,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (!driverId) return [];
     return this.dataService.orders()
       .filter(o => o.assigned_driver_id === driverId && o.status === 'Entregue')
-      .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a,b) => new Date(b.date).getTime() - new Date(b.date).getTime());
   });
 
   reportPayments = computed(() => {
@@ -771,30 +771,30 @@ export class AdminComponent implements OnInit, OnDestroy {
   removeWheelPrize(index: number) { this.wheelPrizes.removeAt(index); }
 
   addNeighborhood(hood?: NeighborhoodFee) { this.deliveryNeighborhoods.push(this.fb.group({ name: [hood?.name || ''], fee: [hood?.fee || 0] })); }
-  removeNeighborhood(index: number) { this.deliveryNeighborhoods.removeAt(index); }
+  
+  removeNeighborhood(controlToRemove: AbstractControl) {
+    const index = this.deliveryNeighborhoods.controls.indexOf(controlToRemove);
+    if (index > -1) {
+        this.deliveryNeighborhoods.removeAt(index);
+    }
+  }
   
   sortNeighborhoods() {
     const neighborhoodsArray = this.deliveryNeighborhoods;
-    const currentValues = neighborhoodsArray.value as NeighborhoodFee[];
-  
-    if (!currentValues || currentValues.length < 2) {
+    if (neighborhoodsArray.controls.length < 2) {
       return;
     }
-  
-    const sortedValues = [...currentValues].sort((a, b) =>
-      (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' })
-    );
-  
-    // Limpa o FormArray preservando a referência
-    neighborhoodsArray.clear();
-  
-    // Repopula o FormArray com os novos FormGroups na ordem correta
-    sortedValues.forEach(hood => {
-      neighborhoodsArray.push(this.fb.group({
-        name: hood.name || '',
-        fee: hood.fee || 0
-      }));
+    
+    const controls = [...neighborhoodsArray.controls];
+    
+    controls.sort((a, b) => {
+      const aName = a.get('name')?.value || '';
+      const bName = b.get('name')?.value || '';
+      return (aName).localeCompare(bName, 'pt-BR', { sensitivity: 'base' });
     });
+    
+    neighborhoodsArray.clear();
+    controls.forEach(control => neighborhoodsArray.push(control));
   }
 
   addSliderImage(image: string = '') { this.sliderImages.push(this.fb.control(image)); }
@@ -928,7 +928,8 @@ export class AdminComponent implements OnInit, OnDestroy {
   addProductSize(size?: ProductSize) { 
     this.productSizes.push(this.fb.group({ 
         name: [size?.name || '', Validators.required], 
-        price: [size?.price || 0], 
+        price: [size?.price || 0],
+        promotional_price: [size?.promotional_price || null],
         is_available: [size?.is_available ?? true] 
     })); 
   }
@@ -1088,7 +1089,17 @@ export class AdminComponent implements OnInit, OnDestroy {
     }
   }
 
-  async deleteCoupon(id: string) { if (confirm('Tem certeza?')) { await this.dataService.deleteCoupon(id); } }
+  async deleteCoupon(id: string) {
+    if (confirm('Tem certeza que deseja excluir este cupom?')) {
+      try {
+        await this.dataService.deleteCoupon(id);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('Failed to delete coupon:', error);
+        alert(`Falha ao excluir o cupom. ${message}`);
+      }
+    }
+  }
 
   async updateOrderStatus(orderId: string, event: Event) {
     const status = (event.target as HTMLSelectElement).value as OrderStatus;
@@ -1173,6 +1184,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   getAddonCategoryById(id: string): AddonCategory | undefined { return this.dataService.addonCategories().find(ac => ac.id === id); }
   getAddonNames(addons: Addon[]): string { return addons.map(a => a.name).join(', '); }
 
+  isProductOnSale(product: Product): boolean {
+    if (!product.is_available) return false;
+    if (product.price_type === 'sized') {
+        return product.sizes.some(s => s.is_available && s.promotional_price && s.promotional_price > 0);
+    }
+    return false;
+  }
+
   startPdvOrder(type: 'balcao' | 'delivery') {
     this.pdvState.set(type);
     const form = this.pdvCheckoutForm;
@@ -1232,9 +1251,13 @@ export class AdminComponent implements OnInit, OnDestroy {
     const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
     if (priceType === 'fixed') { size = { name: 'Único', price: product.price ?? 0, is_available: true }; }
     else { const selected = this.pdvSelectedSize(); if (!selected) { alert('Selecione um tamanho.'); return; } size = selected; }
+    
     const addons: Addon[] = Object.values(this.pdvSelectedAddons());
     const quantity = this.pdvProductQuantity();
-    const totalPrice = (size.price + addons.reduce((sum, addon) => sum + addon.price, 0)) * quantity;
+    const basePrice = (size.promotional_price && size.promotional_price > 0) ? size.promotional_price : size.price;
+    const addonsPrice = addons.reduce((sum, addon) => sum + addon.price, 0);
+    const totalPrice = (basePrice + addonsPrice) * quantity;
+
     const newItem: CartItem = { product_id: product.id, product_name: product.name, size, addons, quantity, total_price: totalPrice, notes: this.pdvProductNotes() || undefined };
     this.pdvCart.update(items => [...items, newItem]);
     this.closePdvProductModal();

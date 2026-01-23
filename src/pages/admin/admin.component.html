@@ -241,12 +241,15 @@
                           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             @for(product of sortedProducts(); track product.id) {
                                 @if(product.category_id === category.id) {
-                                   <button (click)="openPdvProductModal(product)" [disabled]="!product.is_available" class="p-2 rounded-lg text-left h-24 flex flex-col justify-between disabled:opacity-50 disabled:cursor-not-allowed" [style.backgroundColor]="product.is_available ? '#2d3748' : '#4a5568'">
+                                   <button (click)="openPdvProductModal(product)" [disabled]="!product.is_available" class="relative p-2 rounded-lg text-left h-24 flex flex-col justify-between disabled:opacity-50 disabled:cursor-not-allowed" [style.backgroundColor]="product.is_available ? '#2d3748' : '#4a5568'">
                                         <span class="text-sm font-semibold">{{ product.name }}</span>
                                         <span class="text-xs font-bold text-green-400">
                                             @if (product.price_type === 'fixed') { {{ product.price | currency:'BRL' }} }
                                             @else { A partir de {{ (product.sizes.length > 0 ? product.sizes[0].price : 0) | currency:'BRL' }} }
                                         </span>
+                                        @if (isProductOnSale(product)) {
+                                          <span class="absolute top-1 right-1 text-[10px] font-bold bg-yellow-400 text-black px-1 rounded shadow">PROMO</span>
+                                        }
                                     </button>
                                 }
                             }
@@ -1171,11 +1174,11 @@
                   <input type="number" formControlName="fixed_fee" placeholder="Valor da taxa fixa" class="bg-gray-700 p-2 rounded">
                 } @else {
                   <div formArrayName="neighborhoods" class="space-y-2">
-                    @for(hood of deliveryNeighborhoods.controls; track $index) {
-                      <div [formGroupName]="$index" class="flex gap-2">
+                    @for(hood of deliveryNeighborhoods.controls; track hood; let i = $index) {
+                      <div [formGroupName]="i" class="flex gap-2">
                         <input formControlName="name" placeholder="Nome do Bairro" class="flex-grow bg-gray-700 p-1 rounded text-sm">
                         <input type="number" formControlName="fee" placeholder="Taxa" class="w-24 bg-gray-700 p-1 rounded text-sm">
-                        <button type="button" (click)="removeNeighborhood($index)" class="text-red-400">×</button>
+                        <button type="button" (click)="removeNeighborhood(hood)" class="text-red-400">×</button>
                       </div>
                     }
                   </div>
@@ -1329,11 +1332,12 @@
                     } @else {
                       <div formArrayName="sizes" class="space-y-2">
                         @for(size of productSizes.controls; track $index) {
-                          <div [formGroupName]="$index" class="flex items-center gap-2">
-                            <input formControlName="name" placeholder="Ex: 300ml" class="w-full bg-gray-700 p-1 rounded text-sm">
-                            <input formControlName="price" type="number" placeholder="Preço" class="w-24 bg-gray-700 p-1 rounded text-sm">
-                            <label class="flex items-center text-sm"><input type="checkbox" formControlName="is_available" class="mr-1">Disp.</label>
-                            <button type="button" (click)="removeProductSize($index)" class="text-red-400">x</button>
+                          <div [formGroupName]="$index" class="grid grid-cols-12 gap-2 items-center">
+                            <input formControlName="name" placeholder="Ex: 300ml" class="col-span-4 bg-gray-700 p-1 rounded text-sm">
+                            <input formControlName="price" type="number" placeholder="Preço Normal" class="col-span-3 bg-gray-700 p-1 rounded text-sm">
+                            <input formControlName="promotional_price" type="number" placeholder="Promo (0=off)" class="col-span-3 bg-yellow-800/50 p-1 rounded text-sm placeholder:text-yellow-300/50">
+                            <label class="col-span-1 flex items-center text-sm"><input type="checkbox" formControlName="is_available" class="mr-1">Disp.</label>
+                            <button type="button" (click)="removeProductSize($index)" class="col-span-1 text-red-400">x</button>
                           </div>
                         }
                       </div>
@@ -1383,7 +1387,14 @@
                     @for(size of product.sizes; track size.name) {
                       <button (click)="pdvSelectedSize.set(size)" [disabled]="!size.is_available" class="p-3 border-2 rounded text-left disabled:opacity-50" [class.border-purple-500]="pdvSelectedSize() === size" [class.border-gray-700]="pdvSelectedSize() !== size">
                         <span class="font-medium">{{size.name}}</span>
-                        <span class="block text-sm text-green-400">{{size.price | currency:'BRL'}}</span>
+                        @if (size.promotional_price && size.promotional_price > 0) {
+                          <div>
+                            <span class="block text-xs line-through text-gray-400">{{size.price | currency:'BRL'}}</span>
+                            <span class="block text-sm text-yellow-400 font-bold">{{size.promotional_price | currency:'BRL'}}</span>
+                          </div>
+                        } @else {
+                          <span class="block text-sm text-green-400">{{size.price | currency:'BRL'}}</span>
+                        }
                       </button>
                     }
                   </div>

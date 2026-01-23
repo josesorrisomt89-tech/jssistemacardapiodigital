@@ -105,6 +105,7 @@ export interface AddonCategory {
 export interface ProductSize {
   name: string;
   price: number;
+  promotional_price?: number;
   is_available: boolean;
 }
 

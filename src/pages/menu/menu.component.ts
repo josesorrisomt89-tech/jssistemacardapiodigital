@@ -96,19 +96,19 @@ export class MenuComponent implements OnInit {
   modalTotalPrice = computed(() => {
     const product = this.selectedProduct();
     if (!product) return 0;
-
     const quantity = this.productQuantity();
-    
     let sizePrice = 0;
+
     const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
     if (priceType === 'fixed') {
-        sizePrice = product.price ?? 0;
+        sizePrice = product.price ?? 0; // Fixed price products don't have promo price in this model
     } else {
-        sizePrice = this.selectedSize()?.price ?? 0;
+        const size = this.selectedSize();
+        if (size) {
+            sizePrice = (size.promotional_price && size.promotional_price > 0) ? size.promotional_price : size.price;
+        }
     }
     
-    // FIX: Explicitly cast the result of Object.values to Addon[] to ensure type safety.
-    // This prevents `addon` being inferred as `unknown` inside the reduce function.
     const addonsPrice = (Object.values(this.selectedAddons()) as Addon[]).reduce((sum, addon) => sum + addon.price, 0);
     
     return (sizePrice + addonsPrice) * quantity;
@@ -392,6 +392,30 @@ export class MenuComponent implements OnInit {
     return `${hours.start} - ${hours.end}`;
   });
 
+  isProductOnSale(product: Product): boolean {
+    if (!product.is_available) return false;
+    if (product.price_type === 'sized') {
+        return product.sizes.some(s => s.is_available && s.promotional_price && s.promotional_price > 0);
+    }
+    return false;
+  }
+
+  getLowestPrice(product: Product): number {
+    if (product.price_type === 'fixed') {
+        return product.price ?? 0;
+    }
+    if (!product.sizes || product.sizes.length === 0) {
+        return 0;
+    }
+    const availableSizes = product.sizes.filter(s => s.is_available);
+    if (availableSizes.length === 0) return 0;
+
+    return availableSizes.reduce((min, size) => {
+        const activePrice = (size.promotional_price && size.promotional_price > 0) ? size.promotional_price : size.price;
+        return Math.min(min, activePrice);
+    }, Infinity);
+  }
+
   openProductModal(product: Product) {
     if (!product.is_available) return;
     this.selectedProduct.set(product);
@@ -401,7 +425,7 @@ export class MenuComponent implements OnInit {
     
     const priceType = product.price_type || (product.sizes && product.sizes.length > 0 ? 'sized' : 'fixed');
     if (priceType === 'sized' && product.sizes?.length > 0) {
-      this.selectedSize.set(product.sizes[0]);
+      this.selectedSize.set(product.sizes.find(s => s.is_available) || product.sizes[0]);
     } else {
       this.selectedSize.set(null);
     }
@@ -453,13 +477,22 @@ export class MenuComponent implements OnInit {
         size = selected;
     }
 
+    // FIX: Explicitly type `addons` to resolve `Object.values` type inference issues.
+    const addons: Addon[] = Object.values(this.selectedAddons());
+    const quantity = this.productQuantity();
+    
+    const basePrice = (size.promotional_price && size.promotional_price > 0) ? size.promotional_price : size.price;
+    const addonsPrice = addons.reduce((sum, addon) => sum + addon.price, 0);
+    const finalTotalPrice = (basePrice + addonsPrice) * quantity;
+
     this.cartService.addItem(
       product.id,
       product.name,
       size,
-      Object.values(this.selectedAddons()),
-      this.productQuantity(),
-      this.productNotes()
+      addons,
+      quantity,
+      this.productNotes(),
+      finalTotalPrice
     );
     this.closeProductModal();
     this.isCartSidebarOpen.set(true);
@@ -840,6 +873,7 @@ export class MenuComponent implements OnInit {
     }
   }
 
+  // FIX: Complete the implementation of this method to generate the WhatsApp message and return a string.
   private generateWhatsAppMessage(order: Order): string {
     const settings = this.settings();
     let message = `*NOVO PEDIDO DO CARDÁPIO DIGITAL* 🎉\n\n`;
@@ -849,67 +883,61 @@ export class MenuComponent implements OnInit {
     }
     message += `*Cliente:* ${order.customer_name}\n\n`;
 
+    message += `*Itens do Pedido:*\n`;
     order.items.forEach(item => {
-        message += `*${item.quantity}x ${item.product_name}*`;
-        if (item.size.name !== 'Único') {
-            message += ` (${item.size.name})`;
-        }
-        message += ` - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total_price / item.quantity)}\n`;
-
+        message += `- ${item.quantity}x *${item.product_name}* (${item.size.name}) - ${item.total_price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`;
         if (item.addons.length > 0) {
-            const grouped = this.getGroupedAddons(item);
-            grouped.forEach(g => {
-                message += `  *_${g.categoryName}:_*\n`;
-                g.addons.forEach(addon => {
-                    message += `    - ${addon.name}`;
-                    if(addon.price > 0) message += ` (+${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(addon.price)})`
-                    message += '\n';
-                })
-            })
+            message += `  *Adicionais:* ${this.getAddonNames(item.addons)}\n`;
         }
         if (item.notes) {
             message += `  *Obs:* ${item.notes}\n`;
         }
     });
 
-    message += `\n*Subtotal:* ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.subtotal)}\n`;
-
+    message += `\n*Subtotal:* ${order.subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`;
     if (order.delivery_fee > 0) {
-        message += `*Taxa de Entrega:* ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.delivery_fee)}\n`;
+      message += `*Taxa de Entrega:* ${order.delivery_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`;
     }
+    if ((order.discount_amount || 0) > 0) {
+      message += `*Desconto (Cupom):* -${(order.discount_amount || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`;
+    }
+    if ((order.shipping_discount_amount || 0) > 0) {
+      message += `*Desconto (Frete):* -${(order.shipping_discount_amount || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`;
+    }
+    if ((order.loyalty_discount_amount || 0) > 0) {
+      message += `*Desconto (Fidelidade):* -${(order.loyalty_discount_amount || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`;
+    }
+     if ((order.loyalty_shipping_discount_amount || 0) > 0) {
+      message += `*Desconto Frete (Fidelidade):* -${(order.loyalty_shipping_discount_amount || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`;
+    }
+    message += `*Total:* *${order.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}*\n\n`;
 
-    if (order.discount_amount && order.discount_amount > 0) {
-        message += `*Desconto:* -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.discount_amount)}\n`;
-    }
-    if (order.shipping_discount_amount && order.shipping_discount_amount > 0) {
-        message += `*Desconto Frete:* -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.shipping_discount_amount)}\n`;
-    }
-     if (order.loyalty_discount_amount && order.loyalty_discount_amount > 0) {
-        message += `*Desconto Fidelidade:* -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.loyalty_discount_amount)}\n`;
-    }
-      if (order.loyalty_shipping_discount_amount && order.loyalty_shipping_discount_amount > 0) {
-        message += `*Frete Grátis Fidelidade:* -${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.loyalty_shipping_discount_amount)}\n`;
-    }
-
-    message += `*Total:* *${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}*\n\n`;
-
-    if (order.delivery_option === 'delivery') {
-        message += `*ENTREGA:* ${order.delivery_address}, ${order.neighborhood}\n\n`;
-    } else {
-        message += `*RETIRADA NA LOJA*\n\n`;
-    }
-
-    message += `*Pagamento:* ${this.paymentMethodNames[order.payment_method] || order.payment_method}\n`;
+    message += `*Forma de Pagamento:* ${this.paymentMethodNames[order.payment_method]}\n`;
     if (order.payment_method === 'cash' && order.change_for) {
-        message += `*Troco para:* ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.change_for)}\n`;
+      message += `*Troco para:* ${order.change_for.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}\n`;
     }
+
+    message += `\n*Opção de Entrega:* ${order.delivery_option === 'delivery' ? 'Entrega' : (order.delivery_option === 'pickup' ? 'Retirada na Loja' : 'Balcão')}\n`;
+    if (order.delivery_option === 'delivery' && order.delivery_address) {
+      message += `*Endereço:* ${order.delivery_address}${order.neighborhood ? `, Bairro: ${order.neighborhood}` : ''}\n`;
+    }
+    
+    message += `\nObrigado pela preferência, ${settings.name}!`;
 
     return message;
   }
 
+  // FIX: Add the missing openWhatsApp method.
   private openWhatsApp(message: string): void {
-    const whatsappNumber = this.settings().whatsapp.replace(/\D/g, '');
-    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    const settings = this.settings();
+    const whatsappNumber = settings.whatsapp;
+    if (!whatsappNumber) {
+        console.error('Número de WhatsApp da loja não configurado.');
+        alert('Ocorreu um erro ao tentar contatar a loja. Por favor, tente novamente mais tarde.');
+        return;
+    }
+    const sanitizedNumber = whatsappNumber.replace(/\D/g, '');
+    const url = `https://wa.me/${sanitizedNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
 }
