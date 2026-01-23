@@ -55,7 +55,11 @@ export class AdminComponent implements OnInit, OnDestroy {
     status_open_color: 'Cor Status (Aberto)',
     status_closed_color: 'Cor Status (Fechado)',
     header_text_color: 'Cor do Título no Banner',
-    category_text_color: 'Cor do Título da Categoria'
+    category_text_color: 'Cor do Título da Categoria',
+    form_background_color: 'Fundo do Formulário/Modal',
+    form_text_color: 'Texto do Formulário',
+    input_background_color: 'Fundo do Campo (Input)',
+    input_text_color: 'Texto do Campo (Input)'
   };
 
   paymentMethodNames: { [key: string]: string } = {
@@ -207,7 +211,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       if (status && o.status !== status) return false;
       if (payment && o.payment_method !== payment) return false;
       return true;
-    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }).sort((a,b) => new Date(b.date).getTime() - new Date(b.date).getTime());
   });
   
   salesDashboardStats = computed(() => {
@@ -347,7 +351,11 @@ export class AdminComponent implements OnInit, OnDestroy {
         status_open_color: [''],
         status_closed_color: [''],
         header_text_color: [''],
-        category_text_color: ['']
+        category_text_color: [''],
+        form_background_color: [''],
+        form_text_color: [''],
+        input_background_color: [''],
+        input_text_color: ['']
       }),
       is_temporarily_closed: [false],
       temporary_closure_message: [''],

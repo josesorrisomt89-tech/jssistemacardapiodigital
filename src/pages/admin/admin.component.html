@@ -1021,16 +1021,70 @@
           <h2 class="text-2xl font-bold mb-4">Aparência da Loja</h2>
           <form [formGroup]="mainSettingsForm" (ngSubmit)="saveMainSettings()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-gray-900 p-6 rounded-lg">
-                <div [formGroupName]="'layout'" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                  @for (item of colorNames | keyvalue; track item.key) {
-                    <div>
-                      <label [for]="item.key" class="block text-sm font-medium text-gray-300">{{ item.value }}</label>
-                      <div class="mt-1 flex items-center gap-2">
-                        <input [id]="item.key" [formControlName]="item.key" type="color" class="w-10 h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
-                        <input [formControlName]="item.key" type="text" class="w-full bg-gray-700 p-2 rounded-md">
-                      </div>
+                <div [formGroupName]="'layout'" class="space-y-6">
+                  <!-- Cores Gerais e de Texto -->
+                  <fieldset class="border border-gray-700 p-4 rounded-md">
+                    <legend class="px-2 font-semibold">Geral e Textos</legend>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-2">
+                        @for (key of ['background_color', 'card_color', 'text_color', 'text_secondary_color']; track key) {
+                          <div>
+                            <label [for]="key" class="block text-sm font-medium text-gray-300">{{ colorNames[key] }}</label>
+                            <div class="mt-1 flex items-center gap-2">
+                              <input [id]="key" [formControlName]="key" type="color" class="w-10 h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
+                              <input [formControlName]="key" type="text" class="w-full bg-gray-700 p-2 rounded-md">
+                            </div>
+                          </div>
+                        }
                     </div>
-                  }
+                  </fieldset>
+
+                  <!-- Cores de Botões e Destaques -->
+                   <fieldset class="border border-gray-700 p-4 rounded-md">
+                    <legend class="px-2 font-semibold">Botões e Destaques</legend>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-2">
+                        @for (key of ['primary_color', 'button_text_color', 'accent_color', 'category_text_color']; track key) {
+                           <div>
+                            <label [for]="key" class="block text-sm font-medium text-gray-300">{{ colorNames[key] }}</label>
+                            <div class="mt-1 flex items-center gap-2">
+                              <input [id]="key" [formControlName]="key" type="color" class="w-10 h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
+                              <input [formControlName]="key" type="text" class="w-full bg-gray-700 p-2 rounded-md">
+                            </div>
+                          </div>
+                        }
+                    </div>
+                  </fieldset>
+                  
+                  <!-- Cores de Formulários e Modais -->
+                   <fieldset class="border border-gray-700 p-4 rounded-md">
+                    <legend class="px-2 font-semibold">Formulários e Modais</legend>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-2">
+                       @for (key of ['form_background_color', 'form_text_color', 'input_background_color', 'input_text_color']; track key) {
+                           <div>
+                            <label [for]="key" class="block text-sm font-medium text-gray-300">{{ colorNames[key] }}</label>
+                            <div class="mt-1 flex items-center gap-2">
+                              <input [id]="key" [formControlName]="key" type="color" class="w-10 h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
+                              <input [formControlName]="key" type="text" class="w-full bg-gray-700 p-2 rounded-md">
+                            </div>
+                          </div>
+                        }
+                    </div>
+                  </fieldset>
+
+                   <!-- Outras Cores -->
+                   <fieldset class="border border-gray-700 p-4 rounded-md">
+                    <legend class="px-2 font-semibold">Outros</legend>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-2">
+                       @for (key of ['header_text_color', 'status_open_color', 'status_closed_color']; track key) {
+                           <div>
+                            <label [for]="key" class="block text-sm font-medium text-gray-300">{{ colorNames[key] }}</label>
+                            <div class="mt-1 flex items-center gap-2">
+                              <input [id]="key" [formControlName]="key" type="color" class="w-10 h-10 p-1 bg-gray-700 border-gray-600 rounded-md cursor-pointer">
+                              <input [formControlName]="key" type="text" class="w-full bg-gray-700 p-2 rounded-md">
+                            </div>
+                          </div>
+                        }
+                    </div>
+                  </fieldset>
                 </div>
                 <div class="mt-8 pt-6 border-t border-gray-700">
                     <button type="submit" [disabled]="isUploading()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg disabled:opacity-50">

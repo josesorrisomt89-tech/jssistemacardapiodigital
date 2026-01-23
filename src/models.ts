@@ -56,6 +56,10 @@ export interface ShopSettings {
     status_closed_color: string;
     header_text_color: string;
     category_text_color: string;
+    form_background_color: string;
+    form_text_color: string;
+    input_background_color: string;
+    input_text_color: string;
   };
   loyalty_program: {
     enabled: boolean;

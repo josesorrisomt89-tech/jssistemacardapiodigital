@@ -50,9 +50,9 @@
       </div>
     }
     @case ('product-detail') {
-      <div class="flex flex-col h-full overflow-hidden">
+      <div class="flex flex-col h-full overflow-hidden" [style.backgroundColor]="layout().form_background_color || layout().card_color" [style.color]="layout().form_text_color || layout().text_color">
         <div class="w-full h-24 bg-gray-500 flex-shrink-0"></div>
-        <div class="p-2 border-b" [style.borderColor]="layout().card_color">
+        <div class="p-2 border-b" [style.borderColor]="layout().background_color">
           <h2 class="text-base font-bold">Produto de Exemplo</h2>
           <p class="text-xs" [style.color]="layout().text_secondary_color">Descrição do produto.</p>
         </div>
@@ -60,7 +60,7 @@
           <div>
             <h3 class="font-semibold text-sm mb-1">Tamanho</h3>
             <div class="grid grid-cols-2 gap-1">
-              <div class="p-2 border-2 rounded-md relative" [style.borderColor]="layout().card_color">
+              <div class="p-2 border-2 rounded-md relative" [style.borderColor]="layout().input_background_color || layout().card_color" [style.backgroundColor]="layout().input_background_color || layout().card_color" [style.color]="layout().input_text_color || layout().text_color">
                 <span>300ml</span> <span class="block" [style.color]="layout().accent_color">R$ 15,00</span>
               </div>
               <div class="p-2 border-2 rounded-md relative ring-2" [style.borderColor]="layout().primary_color" [style.ringColor]="layout().primary_color" [style.backgroundColor]="layout().primary_color + '1A'">
@@ -77,18 +77,18 @@
               <div class="p-2 rounded-md border-2" [style.borderColor]="layout().primary_color" [style.backgroundColor]="layout().primary_color + '1A'">
                 <p>Leite em pó</p>
               </div>
-              <div class="p-2 rounded-md" [style.backgroundColor]="layout().card_color">
+              <div class="p-2 rounded-md" [style.backgroundColor]="layout().input_background_color || layout().card_color" [style.color]="layout().input_text_color || layout().text_color">
                 <p>Frutas</p>
               </div>
             </div>
           </div>
         </div>
-        <div class="p-2 border-t mt-auto" [style.borderColor]="layout().card_color">
+        <div class="p-2 border-t mt-auto" [style.borderColor]="layout().background_color">
           <div class="flex justify-between items-center">
             <div class="flex items-center space-x-1">
-              <button class="w-6 h-6 rounded" [style.backgroundColor]="layout().card_color">-</button>
+              <button class="w-6 h-6 rounded" [style.backgroundColor]="layout().input_background_color || layout().card_color" [style.color]="layout().input_text_color || layout().text_color">-</button>
               <span>1</span>
-              <button class="w-6 h-6 rounded" [style.backgroundColor]="layout().card_color">+</button>
+              <button class="w-6 h-6 rounded" [style.backgroundColor]="layout().input_background_color || layout().card_color" [style.color]="layout().input_text_color || layout().text_color">+</button>
             </div>
             <button (click)="currentView.set('cart')" class="font-bold py-2 px-3 rounded-md text-sm" [style.backgroundColor]="layout().primary_color" [style.color]="layout().button_text_color">Adicionar</button>
           </div>
@@ -97,16 +97,16 @@
       </div>
     }
     @case ('cart') {
-      <div class="flex flex-col h-full">
+      <div class="flex flex-col h-full" [style.backgroundColor]="layout().form_background_color || layout().card_color" [style.color]="layout().form_text_color || layout().text_color">
         <div class="p-2 border-b" [style.borderColor]="layout().background_color">
           <h2 class="text-base font-bold">Meu Carrinho</h2>
         </div>
-        <div class="flex-1 p-2 overflow-y-auto space-y-2">
+        <div class="flex-1 p-2 overflow-y-auto space-y-2" [style.backgroundColor]="layout().background_color">
           @for (item of [1, 2]; track item) {
-            <div class="p-2 rounded-md" [style.backgroundColor]="layout().background_color">
+            <div class="p-2 rounded-md" [style.backgroundColor]="layout().card_color">
               <div class="flex justify-between items-start">
                 <div>
-                  <p class="font-semibold text-sm">Produto Exemplo</p>
+                  <p class="font-semibold text-sm" [style.color]="layout().text_color">Produto Exemplo</p>
                   <p class="text-xs" [style.color]="layout().text_secondary_color">Adicionais: Banana, Leite Pó</p>
                 </div>
                 <p class="font-semibold" [style.color]="layout().accent_color">{{ 18.00 | currency:'BRL' }}</p>
@@ -125,7 +125,7 @@
       </div>
     }
     @case ('checkout') {
-      <div class="flex flex-col h-full p-2 overflow-y-auto scrollbar-hide">
+      <div class="flex flex-col h-full p-2 overflow-y-auto scrollbar-hide" [style.backgroundColor]="layout().form_background_color || layout().background_color" [style.color]="layout().form_text_color || layout().text_color">
         <div class="border-b pb-2 mb-2 flex justify-between items-center" [style.borderColor]="layout().card_color">
           <h2 class="text-base font-bold">Finalizar Pedido</h2>
           <button (click)="currentView.set('cart')" class="text-xs" [style.color]="layout().text_secondary_color">Voltar</button>
@@ -134,22 +134,22 @@
           <div>
             <h3 class="font-semibold text-sm mb-1">Opção de Entrega</h3>
             <div class="flex space-x-2">
-              <div class="flex-1 text-center p-2 rounded-md ring-2" [style.backgroundColor]="layout().background_color" [style.ringColor]="layout().primary_color"><span>Entrega</span></div>
-              <div class="flex-1 text-center p-2 rounded-md" [style.backgroundColor]="layout().background_color"><span>Retirada</span></div>
+              <div class="flex-1 text-center p-2 rounded-md ring-2" [style.backgroundColor]="layout().input_background_color || layout().background_color" [style.color]="layout().input_text_color || layout().text_color" [style.ringColor]="layout().primary_color"><span>Entrega</span></div>
+              <div class="flex-1 text-center p-2 rounded-md" [style.backgroundColor]="layout().input_background_color || layout().background_color" [style.color]="layout().input_text_color || layout().text_color"><span>Retirada</span></div>
             </div>
           </div>
           <div>
             <h3 class="font-semibold text-sm mb-1">Seus Dados</h3>
             <div class="space-y-1">
-              <input type="text" placeholder="Nome Completo" class="w-full p-1 rounded-md border-0 text-xs" [style.backgroundColor]="layout().card_color">
-              <input type="text" placeholder="Endereço" class="w-full p-1 rounded-md border-0 text-xs" [style.backgroundColor]="layout().card_color">
+              <input type="text" placeholder="Nome Completo" class="w-full p-1 rounded-md border-0 text-xs" [style.backgroundColor]="layout().input_background_color || layout().card_color" [style.color]="layout().input_text_color || layout().text_color">
+              <input type="text" placeholder="Endereço" class="w-full p-1 rounded-md border-0 text-xs" [style.backgroundColor]="layout().input_background_color || layout().card_color" [style.color]="layout().input_text_color || layout().text_color">
             </div>
           </div>
           <div>
             <h3 class="font-semibold text-sm mb-1">Pagamento</h3>
             <div class="space-y-1">
-              <div class="p-2 rounded-md" [style.backgroundColor]="layout().card_color">PIX</div>
-              <div class="p-2 rounded-md" [style.backgroundColor]="layout().card_color">Cartão de Crédito/Débito</div>
+              <div class="p-2 rounded-md" [style.backgroundColor]="layout().input_background_color || layout().card_color" [style.color]="layout().input_text_color || layout().text_color">PIX</div>
+              <div class="p-2 rounded-md" [style.backgroundColor]="layout().input_background_color || layout().card_color" [style.color]="layout().input_text_color || layout().text_color">Cartão de Crédito/Débito</div>
             </div>
           </div>
         </div>
