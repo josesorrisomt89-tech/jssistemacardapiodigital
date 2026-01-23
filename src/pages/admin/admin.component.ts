@@ -246,6 +246,32 @@ export class AdminComponent implements OnInit, OnDestroy {
     { title: 'Entregue', orders: this.deliveredOrders },
   ];
 
+  allPdvCoupons = computed(() => {
+    const standardCoupons = this.sortedCoupons();
+    const wheelSettings = this.dataService.settings().loyalty_program?.wheel_of_fortune;
+    
+    if (!wheelSettings?.enabled) {
+      return standardCoupons;
+    }
+    
+    const wheelCoupons: Coupon[] = (wheelSettings.prizes || [])
+      .filter(prize => prize.couponCode && prize.type !== 'none' && prize.type !== 'free_product')
+      .map(prize => ({
+        id: `WHEEL-${prize.couponCode}`,
+        code: prize.couponCode,
+        description: prize.description || `Prêmio da Roleta: ${prize.label}`,
+        discount_type: prize.type as 'percentage' | 'fixed' | 'free_shipping',
+        discount_value: prize.value,
+        minimum_order_value: 0
+      }));
+      
+    const uniqueWheelCoupons = wheelCoupons.filter(wc => 
+      !standardCoupons.some(sc => sc.code.toUpperCase() === wc.code.toUpperCase())
+    );
+      
+    return [...standardCoupons, ...uniqueWheelCoupons];
+  });
+
   pdvState = signal<'selecting' | 'balcao' | 'delivery'>('selecting');
   pdvCart = signal<CartItem[]>([]);
   pdvSubtotal = computed(() => this.pdvCart().reduce((sum, item) => sum + item.total_price, 0));
@@ -1220,7 +1246,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     const code = this.pdvCheckoutForm.get('coupon_code')?.value?.toUpperCase().trim();
     if (!code) return;
 
-    const coupon = this.sortedCoupons().find(c => c.code.toUpperCase() === code);
+    const coupon = this.allPdvCoupons().find(c => c.code.toUpperCase() === code);
     if (!coupon) {
       this.pdvCouponError.set('Cupom inválido');
       this.pdvAppliedCoupon.set(null);

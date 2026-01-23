@@ -25,6 +25,11 @@
             <div class="mt-2 inline-block bg-gray-700 text-white text-2xl font-mono tracking-widest px-6 py-3 rounded-lg">
               {{ prize.couponCode }}
             </div>
+            <button (click)="sendCouponToWhatsapp()" 
+                    class="mt-4 w-full max-w-xs mx-auto flex items-center justify-center gap-3 py-3 px-4 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105 bg-green-600 text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.996 0-3.942-.524-5.63-1.475l-6.768 2.247zM6.78 18.92c1.462.875 3.134 1.366 4.887 1.367 5.405 0 9.792-4.385 9.793-9.791s-4.387-9.792-9.793-9.792c-5.404 0-9.792 4.387-9.792 9.792 0 1.896.546 3.719 1.58 5.257l.34.5-.24 1.44z"/></svg>
+              <span>Enviar Cupom para a Loja</span>
+            </button>
           }
         } @else {
             <h3 class="text-2xl font-bold text-yellow-400">Não foi dessa vez!</h3>
