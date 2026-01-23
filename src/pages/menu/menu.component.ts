@@ -27,9 +27,15 @@ export class MenuComponent implements OnInit {
   settings = this.dataService.settings;
   categories = computed(() => this.dataService.categories().sort((a, b) => a.order - b.order));
   products = this.dataService.products;
-  coupons = this.dataService.coupons;
+  private dbCoupons = this.dataService.coupons; // Renamed to indicate source
   shopStatus = computed(() => this.dataService.isShopOpen());
   user = this.authService.currentUser;
+
+  // State for temporary, component-level coupons (e.g., from wheel)
+  private componentCoupons = signal<Coupon[]>([]);
+
+  // Combined list of coupons from database and temporary ones
+  coupons = computed(() => [...this.dbCoupons(), ...this.componentCoupons()]);
 
   selectedCategory = signal<string>('all');
   searchTerm = signal('');
@@ -311,6 +317,17 @@ export class MenuComponent implements OnInit {
         this.freeProductRequirement.set(0);
       }
     });
+
+    // Definitive fix for the checkout button issue.
+    // This effect ensures that whenever the checkout modal is opened,
+    // the cart sidebar is closed as a reaction. This decouples the two
+    // UI actions and prevents the race condition where the button was
+    // being removed from the DOM before its click event was fully processed.
+    effect(() => {
+      if (this.isCheckoutModalOpen()) {
+        this.isCartSidebarOpen.set(false);
+      }
+    });
   }
 
   ngOnInit() {
@@ -458,7 +475,9 @@ export class MenuComponent implements OnInit {
       alert(`Você precisa adicionar mais ${remaining} em produtos para resgatar seu prêmio!`);
       return;
     }
-    this.isCartSidebarOpen.set(false);
+
+    // The button's only responsibility is to signal the intent to open the checkout.
+    // The new `effect` in the constructor handles closing the sidebar reactively.
     this.isCheckoutModalOpen.set(true);
   }
 
@@ -501,13 +520,19 @@ export class MenuComponent implements OnInit {
 
   availableCoupons = computed(() => {
     const subtotal = this.cartService.subtotal();
-    return this.coupons().filter(c => subtotal >= (c.minimum_order_value || 0));
+    return this.coupons().filter(c => c.code && subtotal >= (c.minimum_order_value || 0));
   });
 
   applyCoupon(code: string) {
     this.couponError.set(null);
-    const couponCode = code.toUpperCase().trim();
-    const coupon = this.coupons().find(c => c.code.toUpperCase() === couponCode);
+    const couponCode = code ? code.toUpperCase().trim() : '';
+
+    if (!couponCode) {
+        this.couponError.set('Cupom inválido.');
+        return;
+    }
+    
+    const coupon = this.coupons().find(c => c.code && c.code.toUpperCase() === couponCode);
 
     if (!coupon) {
       this.couponError.set('Cupom inválido.');
@@ -681,20 +706,26 @@ export class MenuComponent implements OnInit {
         alert('Parabéns! Você ganhou um produto grátis, mas não há opções elegíveis disponíveis no momento. Entre em contato com a loja.');
       }
     } else {
-      const coupon: Coupon = {
-        id: prize.couponCode,
-        code: prize.couponCode,
-        description: prize.description,
-        discount_type: prize.type,
-        discount_value: prize.value
-      };
+      const couponCode = prize.couponCode;
+
+      // Check if a coupon with this code already exists in the main DB list
+      const existingCoupon = this.dbCoupons().find(c => c.code && c.code.toUpperCase() === couponCode.toUpperCase());
       
-      const existingCoupon = this.coupons().find(c => c.id === coupon.id);
-      if(!existingCoupon) {
-        this.dataService.coupons.update(c => [...c, coupon]);
+      // If it doesn't exist in DB or local temporary list, create a new temporary one.
+      if (!existingCoupon && !this.componentCoupons().find(c => c.code && c.code.toUpperCase() === couponCode.toUpperCase())) {
+        const newCoupon: Coupon = {
+          id: `WHEEL-${couponCode}-${Date.now()}`,
+          code: couponCode,
+          description: prize.description,
+          discount_type: prize.type as 'percentage' | 'fixed' | 'free_shipping',
+          discount_value: prize.value,
+          minimum_order_value: 0
+        };
+        // Add the temporary coupon to the local component list.
+        this.componentCoupons.update(c => [...c, newCoupon]);
       }
       
-      this.applyCoupon(coupon.code);
+      this.applyCoupon(couponCode);
       this.isCartSidebarOpen.set(true);
     }
   }
@@ -732,6 +763,10 @@ export class MenuComponent implements OnInit {
 
   getAddonNames(addons: Addon[]): string {
     return addons.map(a => a.name).join(', ');
+  }
+
+  getOrderItemNames(items: CartItem[]): string {
+    return items.map(i => `${i.quantity}x ${i.product_name}`).join(', ');
   }
 
   async finalizeOrder() {
@@ -786,6 +821,7 @@ export class MenuComponent implements OnInit {
         this.closeCheckout();
         this.removeCoupon();
         this.removeLoyaltyReward();
+        this.componentCoupons.set([]); // Clear temporary coupons
         
         this.setTrackedOrderId(newOrder.id);
         this.isTrackingModalOpen.set(true);

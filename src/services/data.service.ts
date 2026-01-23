@@ -377,17 +377,17 @@ export class DataService {
       opening_hours: { monday: { ...weekTemplate }, tuesday: { ...weekTemplate }, wednesday: { ...weekTemplate }, thursday: { ...weekTemplate }, friday: { ...weekTemplate }, saturday: { ...weekTemplate }, sunday: { is_open: false, start: "14:00", end: "22:00" }, },
       delivery: { type: 'fixed', fixed_fee: 5.00, neighborhoods: [] }, pix_key: "seu-email-pix@dominio.com",
       layout: { 
-        primary_color: '#7C3AED', 
-        accent_color: '#FBBF24', 
-        background_color: '#F9FAFB', 
-        text_color: '#1F2937', 
-        card_color: '#FFFFFF',
+        primary_color: '#A855F7', 
+        accent_color: '#EC4899', 
+        background_color: '#374151', 
+        text_color: '#F9FAFB', 
+        card_color: '#4B5563',
         button_text_color: '#FFFFFF',
-        text_secondary_color: '#6B7280',
+        text_secondary_color: '#D1D5DB',
         status_open_color: '#10B981',
         status_closed_color: '#EF4444',
         header_text_color: '#FFFFFF',
-        category_text_color: '#1F2937'
+        category_text_color: '#EC4899'
       },
       loyalty_program: { 
         enabled: true, 
