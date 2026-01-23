@@ -1,0 +1,36 @@
+<div class="min-h-screen flex flex-col items-center justify-center p-4" [style.backgroundColor]="settings().layout.background_color" [style.color]="settings().layout.text_color">
+  <div class="w-full max-w-md mx-auto text-center">
+    <a routerLink="/" class="inline-block mb-8">
+      <img [src]="settings().logo_url || 'https://picsum.photos/id/1060/200/200'" alt="Logo" class="w-24 h-24 rounded-full border-4 shadow-lg" [style.borderColor]="settings().layout.primary_color">
+    </a>
+    
+    @if (settings().loyalty_program.wheel_of_fortune?.prizes; as prizes) {
+      <div class="bg-white rounded-lg shadow-2xl overflow-hidden">
+        <app-wheel-of-fortune [prizes]="prizes" [logoUrl]="settings().logo_url" (prizeWon)="handlePrize($event)"></app-wheel-of-fortune>
+      </div>
+    } @else {
+      <div class="bg-white text-gray-800 p-8 rounded-lg">
+        <h2 class="text-2xl font-bold">Roleta Indisponível</h2>
+        <p class="mt-2">A roleta da sorte não está configurada no momento.</p>
+      </div>
+    }
+
+    @if(wonPrize(); as prize) {
+      <div class="mt-8 bg-gray-900/80 p-6 rounded-lg border-2 border-dashed" [style.borderColor]="prize.color || settings().layout.primary_color">
+        @if(prize.type !== 'none') {
+          <h3 class="text-2xl font-bold text-green-400">Parabéns!</h3>
+          <p class="mt-2 text-lg">Você ganhou: <span class="font-bold" [style.color]="prize.color">{{ prize.label }}</span></p>
+          @if(prize.couponCode) {
+            <p class="mt-4">Informe o código abaixo no caixa para aplicar seu desconto:</p>
+            <div class="mt-2 inline-block bg-gray-700 text-white text-2xl font-mono tracking-widest px-6 py-3 rounded-lg">
+              {{ prize.couponCode }}
+            </div>
+          }
+        } @else {
+            <h3 class="text-2xl font-bold text-yellow-400">Não foi dessa vez!</h3>
+            <p class="mt-2">Mais sorte na próxima!</p>
+        }
+      </div>
+    }
+  </div>
+</div>

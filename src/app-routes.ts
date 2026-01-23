@@ -17,5 +17,9 @@ export const APP_ROUTES: Routes = [
     path: 'delivery',
     loadComponent: () => import('./pages/delivery/delivery.component').then(m => m.DeliveryComponent)
   },
+  {
+    path: 'roleta',
+    loadComponent: () => import('./pages/wheel-page/wheel-page.component').then(m => m.WheelPageComponent)
+  },
   { path: '**', redirectTo: '' }
 ];

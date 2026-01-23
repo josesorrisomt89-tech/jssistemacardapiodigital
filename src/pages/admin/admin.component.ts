@@ -250,7 +250,32 @@ export class AdminComponent implements OnInit, OnDestroy {
   pdvCart = signal<CartItem[]>([]);
   pdvSubtotal = computed(() => this.pdvCart().reduce((sum, item) => sum + item.total_price, 0));
   pdvDeliveryFee = signal(0);
-  pdvTotal = computed(() => this.pdvSubtotal() + this.pdvDeliveryFee());
+  pdvAppliedCoupon = signal<Coupon | null>(null);
+  pdvCouponError = signal<string | null>(null);
+
+  pdvDiscountAmount = computed(() => {
+    const coupon = this.pdvAppliedCoupon();
+    const subtotal = this.pdvSubtotal();
+    if (!coupon) return 0;
+    if (coupon.discount_type === 'fixed') return coupon.discount_value;
+    if (coupon.discount_type === 'percentage') return (subtotal * coupon.discount_value) / 100;
+    return 0;
+  });
+
+  pdvShippingDiscount = computed(() => {
+    const coupon = this.pdvAppliedCoupon();
+    if (!coupon || coupon.discount_type !== 'free_shipping') return 0;
+    return this.pdvDeliveryFee();
+  });
+
+  pdvTotal = computed(() => {
+    const subtotal = this.pdvSubtotal();
+    const fee = this.pdvDeliveryFee();
+    const discount = this.pdvDiscountAmount();
+    const shippingDiscount = this.pdvShippingDiscount();
+    return Math.max(0, subtotal + fee - discount - shippingDiscount);
+  });
+  
   pdvCheckoutForm: FormGroup;
   tempPdvCustomerPhone = signal<string|null>(null);
 
@@ -333,6 +358,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         phone: [''],
         payment_method: ['cash', Validators.required],
         change_for: [{value: '', disabled: true}],
+        coupon_code: [''],
         address: [''],
         payment_due_date: [''],
         street: [''],
@@ -1128,6 +1154,8 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.pdvCart.set([]);
     this.pdvCheckoutForm.reset();
     this.pdvDeliveryFee.set(0);
+    this.pdvAppliedCoupon.set(null);
+    this.pdvCouponError.set(null);
     this.pdvState.set('selecting');
   }
   
@@ -1187,12 +1215,84 @@ export class AdminComponent implements OnInit, OnDestroy {
     return [`${street || ''}, ${number || ''}`, complement, reference ? `(Ref: ${reference})` : ''].filter(p => p).join(' - ');
   }
 
+  applyPdvCoupon() {
+    this.pdvCouponError.set(null);
+    const code = this.pdvCheckoutForm.get('coupon_code')?.value?.toUpperCase().trim();
+    if (!code) return;
+
+    const coupon = this.sortedCoupons().find(c => c.code.toUpperCase() === code);
+    if (!coupon) {
+      this.pdvCouponError.set('Cupom inválido');
+      this.pdvAppliedCoupon.set(null);
+      return;
+    }
+
+    const subtotal = this.pdvSubtotal();
+    if (coupon.minimum_order_value && subtotal < coupon.minimum_order_value) {
+      this.pdvCouponError.set(`Pedido mínimo de ${coupon.minimum_order_value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})} necessário.`);
+      this.pdvAppliedCoupon.set(null);
+      return;
+    }
+    this.pdvAppliedCoupon.set(coupon);
+  }
+
+  removePdvCoupon() {
+    this.pdvAppliedCoupon.set(null);
+    this.pdvCouponError.set(null);
+    this.pdvCheckoutForm.get('coupon_code')?.setValue('');
+  }
+
+  sendWheelLink() {
+    let phone = this.pdvCheckoutForm.get('phone')?.value;
+
+    // Se o campo do formulário estiver vazio, pergunta ao usuário.
+    if (!phone || String(phone).trim() === '') {
+      phone = prompt("O campo 'Telefone' está vazio. Por favor, digite o WhatsApp do cliente (com DDD):");
+    }
+    
+    // Se ainda não houver telefone (usuário cancelou o prompt), encerra a função.
+    if (!phone) {
+      return;
+    }
+
+    // Limpa o número, deixando apenas dígitos, e adiciona o código do Brasil.
+    const sanitizedPhone = `55${String(phone).replace(/\D/g, '')}`;
+    
+    // Validação simples do comprimento do número. (55 + 2 DDD + 8 ou 9 dígitos)
+    if (sanitizedPhone.length < 12) {
+        alert('Número de telefone parece inválido. Por favor, verifique se incluiu o DDD.');
+        return;
+    }
+    
+    const baseUrl = window.location.href.split('#')[0];
+    const wheelUrl = `${baseUrl}#/roleta`;
+    const message = `Olá! Gire a nossa Roleta da Sorte e ganhe um prêmio para usar agora na sua compra! 🍀\n\n${wheelUrl}`;
+    const whatsappUrl = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(message)}`;
+    
+    window.open(whatsappUrl, '_blank');
+  }
+
   async finalizePdvOrder() {
     this.pdvCheckoutForm.markAllAsTouched();
     if(this.pdvCart().length === 0) { alert('O carrinho está vazio.'); return; }
     if(this.pdvCheckoutForm.invalid) { alert('Preencha todos os campos obrigatórios.'); return; }
+    
     const formValue = this.pdvCheckoutForm.getRawValue();
-    const baseOrder: Omit<Order, 'id' | 'date' | 'status' | 'delivery_option'> = { customer_name: formValue.customer_name, payment_method: formValue.payment_method as any, change_for: formValue.payment_method === 'cash' ? Number(formValue.change_for) || undefined : undefined, items: this.pdvCart(), subtotal: this.pdvSubtotal(), total: this.pdvTotal(), delivery_fee: this.pdvDeliveryFee(), };
+    const coupon = this.pdvAppliedCoupon();
+
+    const baseOrder: Omit<Order, 'id' | 'date' | 'status' | 'delivery_option'> = { 
+      customer_name: formValue.customer_name, 
+      payment_method: formValue.payment_method as any, 
+      change_for: formValue.payment_method === 'cash' ? Number(formValue.change_for) || undefined : undefined, 
+      items: this.pdvCart(), 
+      subtotal: this.pdvSubtotal(), 
+      total: this.pdvTotal(), 
+      delivery_fee: this.pdvDeliveryFee(),
+      coupon_code: coupon?.code,
+      discount_amount: this.pdvDiscountAmount(),
+      shipping_discount_amount: this.pdvShippingDiscount()
+    };
+
     if (this.pdvState() === 'balcao') {
         const newOrder = await this.dataService.addOrder({ ...baseOrder, delivery_option: 'counter' });
         await this.dataService.updateOrderStatus(newOrder.id, 'Entregue');
