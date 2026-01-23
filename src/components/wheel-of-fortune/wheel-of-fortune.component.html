@@ -105,7 +105,11 @@
         }
       }
     </div>
-    <div class="wheel-center"></div>
+    <div class="wheel-center">
+      @if (logoUrl()) {
+        <img [src]="logoUrl()" alt="Logo da loja" class="w-full h-full object-cover rounded-full">
+      }
+    </div>
   </div>
 
   <button (click)="spin()" [disabled]="isSpinning() || !!winningPrize() || prizes().length === 0" 

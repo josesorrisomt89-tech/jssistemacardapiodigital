@@ -104,6 +104,10 @@ export class AdminComponent implements OnInit, OnDestroy {
   addonCategoryForm: FormGroup;
 
   couponForm: FormGroup;
+  
+  editOrderForm: FormGroup;
+  isEditOrderModalOpen = signal(false);
+  editingOrder = signal<Order | null>(null);
 
   editingProduct = signal<Product | null>(null);
   editingCategory = signal<Category | null>(null);
@@ -151,7 +155,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (!driverId) return [];
     return this.dataService.driverPayments()
       .filter(p => p.driver_id === driverId)
-      .sort((a,b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
+      .sort((a,b) => new Date(b.payment_date).getTime() - new Date(b.payment_date).getTime());
   });
 
   reportTotals = computed(() => {
@@ -203,7 +207,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       if (status && o.status !== status) return false;
       if (payment && o.payment_method !== payment) return false;
       return true;
-    }).sort((a,b) => new Date(b.date).getTime() - new Date(b.date).getTime());
+    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });
   
   salesDashboardStats = computed(() => {
@@ -361,6 +365,11 @@ export class AdminComponent implements OnInit, OnDestroy {
       notes: [''],
     });
     
+    this.editOrderForm = this.fb.group({
+      payment_method: ['', Validators.required],
+      status: ['', Validators.required]
+    });
+
     effect(() => this.patchSettingsForm(this.dataService.settings()));
 
     this.productForm.get('price_type')?.valueChanges.subscribe(type => {
@@ -1313,5 +1322,51 @@ export class AdminComponent implements OnInit, OnDestroy {
   
   printHelpGuide(): void {
     window.print();
+  }
+
+  openEditOrderModal(order: Order) {
+    this.editingOrder.set(order);
+    this.editOrderForm.patchValue({
+      payment_method: order.payment_method,
+      status: order.status
+    });
+    this.isEditOrderModalOpen.set(true);
+  }
+
+  closeEditOrderModal() {
+    this.isEditOrderModalOpen.set(false);
+    this.editingOrder.set(null);
+    this.editOrderForm.reset();
+  }
+
+  async saveEditedOrder() {
+    if (this.editOrderForm.invalid || !this.editingOrder()) {
+      return;
+    }
+    const orderId = this.editingOrder()!.id;
+    const updatedData = this.editOrderForm.getRawValue();
+    
+    try {
+      await this.dataService.updateOrder(orderId, updatedData);
+      alert('Pedido atualizado com sucesso!');
+      this.closeEditOrderModal();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Failed to update order:', error);
+      alert(`Falha ao atualizar o pedido. ${message}`);
+    }
+  }
+
+  async deleteOrder(orderId: string) {
+    if (confirm('Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.')) {
+      try {
+        await this.dataService.deleteOrder(orderId);
+        alert('Pedido excluído com sucesso!');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('Failed to delete order:', error);
+        alert(`Falha ao excluir o pedido. ${message}`);
+      }
+    }
   }
 }

@@ -301,6 +301,24 @@ export class DataService {
      await this.fetchTable('orders'); return data[0];
   }
 
+  async updateOrder(orderId: string, updateData: Partial<Order>): Promise<Order> {
+    const data = await firstValueFrom(this.apiService.patch<Order>('orders', `id=eq.${orderId}`, updateData));
+    await this.fetchTable('orders');
+    return data[0];
+  }
+
+  async deleteOrder(orderId: string) {
+    const orderToDelete = this.orders().find(o => o.id === orderId);
+    if (orderToDelete && orderToDelete.receivable_id) {
+        // We don't want to fail the whole operation if this fails, so we catch errors here.
+        await firstValueFrom(this.apiService.delete('receivables', `id=eq.${orderToDelete.receivable_id}`)).catch(err => {
+            console.error(`Could not delete associated receivable ${orderToDelete.receivable_id}. Error: ${err.message}`);
+        });
+    }
+    await firstValueFrom(this.apiService.delete('orders', `id=eq.${orderId}`));
+    this.orders.update(orders => orders.filter(o => o.id !== orderId));
+  }
+
   async addExpense(expense: Omit<Expense, 'id'>): Promise<Expense> {
     const newExpense = { ...expense, id: this.generateUUID() };
     const data = await firstValueFrom(this.apiService.post<Expense>('expenses', [newExpense], 'return=representation'));

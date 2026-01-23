@@ -8,6 +8,7 @@ import { WheelPrize } from '../../models';
 })
 export class WheelOfFortuneComponent {
   prizes = input.required<WheelPrize[]>();
+  logoUrl = input<string | null>(null);
   prizeWon = output<WheelPrize>();
   
   isSpinning = signal(false);
