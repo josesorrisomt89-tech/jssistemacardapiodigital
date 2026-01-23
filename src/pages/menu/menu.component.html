@@ -268,7 +268,10 @@
               Faltam <strong>{{ remainingForFreebie() | currency:'BRL' }}</strong> em outros produtos para você resgatar seu prêmio!
             </div>
           }
-        <button (click)="startCheckout()" [disabled]="isCheckoutBlockedByFreebie()" class="w-full font-bold py-3 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Finalizar Pedido ({{total() | currency:'BRL'}})</button>
+        <button (click)="startCheckout()" [disabled]="isCheckoutBlockedByFreebie() || !shopStatus().is_open || shopStatus().is_temporarily_closed" class="w-full font-bold py-3 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" [style.backgroundColor]="settings().layout.primary_color" [style.color]="settings().layout.button_text_color">Finalizar Pedido ({{total() | currency:'BRL'}})</button>
+        @if (!shopStatus().is_open || shopStatus().is_temporarily_closed) {
+          <p class="text-xs text-center mt-2" [style.color]="settings().layout.status_closed_color">A loja está fechada e não aceita pedidos no momento.</p>
+        }
       </div>
     </div>
   }
