@@ -687,7 +687,15 @@ export class AdminComponent implements OnInit, OnDestroy {
       return;
     }
     const currentSettings = this.dataService.settings();
-    const settingsToSave: ShopSettings = { ...currentSettings, loyalty_program: this.loyaltyForm.getRawValue(), id: 1 };
+    const updatedLoyaltyProgram = {
+      ...currentSettings.loyalty_program,
+      ...this.loyaltyForm.getRawValue()
+    };
+    const settingsToSave: ShopSettings = { 
+      ...currentSettings, 
+      loyalty_program: updatedLoyaltyProgram, 
+      id: 1 
+    };
     await this.dataService.saveSettings(settingsToSave);
     alert('Configurações de fidelidade salvas!');
   }
